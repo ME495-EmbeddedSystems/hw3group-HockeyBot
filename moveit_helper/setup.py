@@ -19,7 +19,8 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': ['move_action_intercept=intercept.move_action_intercept:interept_entry'
+        'console_scripts': ['move_action_intercept=intercept.move_action_intercept:interept_entry',
+                            'ik_hanyin_intercept=moveit_helper.ik_hanyin_intercept:interept_entry'
         ],
     },
 )
