@@ -1,12 +1,16 @@
 import rclpy
 from rclpy.node import Node
-from moveit_msgs.msg import PositionIKRequest
+from moveit_msgs.msg import PositionIKRequest, JointConstraint
 from moveit_msgs.srv import GetPositionIK
 
 
 class InverseKinematics(Node):
     def __init__(self):
         super().__init__('inverse_kinematics')
+
+        self.computeik_done = 0
+        self.joint_constr_list = []
+
         self.ik_client = self.create_client(GetPositionIK, "compute_ik")
         self.timer = self.create_timer(0.1, self.timer_callback)
         self.rq = PositionIKRequest()
@@ -15,15 +19,9 @@ class InverseKinematics(Node):
         self.rq.robot_state.joint_state.header.frame_id='panda_link0'
         self.rq.robot_state.joint_state.name=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
         self.rq.robot_state.joint_state.position=[0.0,-0.70, 0.0, -2.35, 0.0, 1.57, 0.79]
-        # self.rq.robot_state.joint_state.velocity=[]
-        # self.rq.robot_state.joint_state.effort=[]
         self.rq.robot_state.multi_dof_joint_state.header.stamp=self.get_clock().now().to_msg()
         self.rq.robot_state.multi_dof_joint_state.header.frame_id='panda_link0'
         self.rq.robot_state.multi_dof_joint_state.joint_names=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
-        # self.rq.robot_state.multi_dof_joint_state.transforms=[]
-        # self.rq.robot_state.multi_dof_joint_state.twist=[]
-        # self.rq.robot_state.multi_dof_joint_state.wrench=[]
-        # self.rq.robot_state.attached_collision_objects=[]
         self.rq.robot_state.is_diff=False
         self.rq.avoid_collisions = True
         self.rq.ik_link_name = 'panda_link8'
@@ -43,10 +41,27 @@ class InverseKinematics(Node):
         self.future= self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
 
     def timer_callback(self):
-        # self.get_logger().info(f'waiting')
-        if self.future.done():
-            self.get_logger().info(f'{self.future.result()}')
+        if self.computeik_done == 0:
+            if self.future.done():
+                self.get_logger().info(f'{self.future.result()}')
+                self.ik_result = self.future.result()
+                self.computeik_done = 1
         
+        if self.computeik_done == 1:
+            for i in range(len(self.ik_result.solution.joint_state.name)):
+                constraint = JointConstraint()
+                constraint.joint_name = self.ik_result.solution.joint_state.name[i]
+                constraint.position = self.ik_result.solution.joint_state.position[i]
+                constraint.tolerance_above = 0.0001
+                constraint.tolerance_below = 0.0001
+                constraint.weight=1.0
+                self.joint_constr_list.append(constraint)
+
+            self.computeik_done += 1
+
+            print('\njoint constraint list')
+            for const in self.joint_constr_list:
+                print(const)        
 
 
 def IK_entry(args=None):
