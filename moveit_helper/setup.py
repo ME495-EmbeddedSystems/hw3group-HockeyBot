@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': ['move_action_intercept=intercept.move_action_intercept:interept_entry',
                             'marno_move_group_plan=moveit_helper.marno_move_group_plan:interept_entry', # For Marno Test code
-                            'marno_move_group_execute=moveit_helper.marno_move_group_execute:interept_entry'
+                            'marno_move_group_execute=moveit_helper.marno_move_group_execute:interept_entry',
+                            'subscriber_joint_states=moveit_helper.subscriber_joint_states:joint_state_entry'
         ],
     },
 )
