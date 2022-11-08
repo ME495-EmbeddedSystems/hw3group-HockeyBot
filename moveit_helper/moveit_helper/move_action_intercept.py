@@ -16,12 +16,21 @@ class Intercept(Node):
 
     def move_action_callback(self, goal):
         self.get_logger().info(f"{goal.request}")
+        # get_result.async()
         result = MoveGroup.Result()
+
+
+        # self.get_logger().info(f"{goal.result.request}")
         return result
 
 def interept_entry(args=None):
     rclpy.init(args=args)
-    node = Intercept()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    # node = Intercept()
+    # rclpy.spin(node)
+    # rclpy.shutdown()
+
+
+    action_client = Intercept()
+    future = action_client.send_goal()
+    rclpy.spin_until_future_complete(action_client, future)
 

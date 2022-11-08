@@ -14,16 +14,29 @@ import builtin_interfaces.msg
 import geometry_msgs.msg
 import sensor_msgs.msg
 import octomap_msgs.msg
+from sensor_msgs.msg import JointState
 
 class Intercept(Node):
     def __init__(self):
         super().__init__("fake_movegroup")
+
+        # Subscribers
+        self.sub = self.create_subscription(
+            JointState, "/joint_states", self.update_joint_states, 10)
+        self.joint_states = JointState()  # Current joint_states
 
         self._action_client = ActionClient(
             self,
             MoveGroup,
             "move_action"
             )
+
+    def update_joint_states(self, data):
+        """
+        Subscribtion topic: /joint_states
+        """
+        self.joint_states = data
+
 
         # self._action_server = ActionServer(
         #     self,
@@ -55,7 +68,7 @@ class Intercept(Node):
             y=1.0,
             z=1.0)),
             start_state=moveit_msgs.msg.RobotState(
-            joint_state=sensor_msgs.msg.JointState(
+            joint_state=sensor_msgs.msg.JointState(  ## We can pass objects without decomposing
             header=std_msgs.msg.Header(
             stamp=builtin_interfaces.msg.Time(
             sec=0,
@@ -230,10 +243,18 @@ class Intercept(Node):
             replan=False,
             replan_attempts=0,
             replan_delay=0.0))
+
+
+        """ Populate plan request messege """
+        # Set start position of Franka 
+        plan_msg.request.start_state.joint_state = self.joint_states
+
+
         # goal_msg.order = order
+        # self.get_logger().info(f"{plan_msg}")
 
-        self.get_logger().info(f"{plan_msg}")
-
+        # self.get_logger().info(f"{plan_msg.request.start_state.joint_state}")
+        
         self._action_client.wait_for_server()
 
         return self._action_client.send_goal_async(plan_msg)
