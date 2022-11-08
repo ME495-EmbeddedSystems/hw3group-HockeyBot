@@ -46,7 +46,7 @@ class InverseKinematics(Node):
         # self.get_logger().info(f'waiting')
         if self.future.done():
             self.get_logger().info(f'{self.future.result()}')
-        
+
 
 
 def IK_entry(args=None):
