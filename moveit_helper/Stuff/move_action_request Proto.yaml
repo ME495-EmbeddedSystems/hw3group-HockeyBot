@@ -28,7 +28,7 @@ request:
           nanosec: 0
         frame_id: ''
       name: []
-      position: []
+      position: [] # Start Positions
       velocity: []
       effort: []
     multi_dof_joint_state:
@@ -46,7 +46,7 @@ request:
   goal_constraints: []
   path_constraints:
     name: ''
-    joint_constraints: []
+    joint_constraints: []  # End Goal Positions
     position_constraints: []
     orientation_constraints: []
     visibility_constraints: []

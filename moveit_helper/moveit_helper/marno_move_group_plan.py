@@ -5,7 +5,6 @@ Command to run:
 
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionServer
 from rclpy.action import ActionClient
 
 from moveit_msgs.action import MoveGroup
@@ -232,6 +231,8 @@ class Intercept(Node):
             replan_attempts=0,
             replan_delay=0.0))
         # goal_msg.order = order
+
+        self.get_logger().info(f"{plan_msg}")
 
         self._action_client.wait_for_server()
 
