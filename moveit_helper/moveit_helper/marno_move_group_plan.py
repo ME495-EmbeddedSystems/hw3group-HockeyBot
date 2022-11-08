@@ -253,7 +253,7 @@ class Intercept(Node):
         # goal_msg.order = order
         # self.get_logger().info(f"{plan_msg}")
 
-        # self.get_logger().info(f"{plan_msg.request.start_state.joint_state}")
+        self.get_logger().info(f"{plan_msg.request.start_state.joint_state}")
         
         self._action_client.wait_for_server()
 
