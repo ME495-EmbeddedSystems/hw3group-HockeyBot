@@ -23,8 +23,8 @@ from moveit_interface.srv import Goal, Execute
 from moveit_msgs.srv import GetPositionIK
 from enum import Enum, auto
 from moveit_msgs.action import ExecuteTrajectory
-
-
+from tf2_ros.buffer import Buffer
+from tf2_ros.transform_listener import TransformListener
 
 
 class State(Enum):
@@ -91,6 +91,11 @@ class SimpleMove(Node):
         self.max_corner = Vector3(x=1.0, y=1.0, z=1.0)
 
 
+        # Transform lister
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+
+
 
 
     def update_joint_states(self, data):
@@ -135,7 +140,7 @@ class SimpleMove(Node):
         # Compute_IK variables
         self.joint_constr_list = []
 
-        self.rq.group_name='panda_arm'
+        self.rq.group_name='panda_arm' # TODO Change to franka_manipulator
         self.rq.robot_state.joint_state.header.stamp=self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id='panda_link0'
         self.rq.robot_state.joint_state.name=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
@@ -221,14 +226,13 @@ class SimpleMove(Node):
             return
 
         self.get_logger().info('Goal accepted :)')
-
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
 
     def get_result_callback(self, future):
         self.plan_result = future.result().result
-        self.state = State.READY_EXECUTE
+        # self.state = State.READY_EXECUTE
 
 
     def execute_traj(self):
@@ -243,6 +247,19 @@ class SimpleMove(Node):
 
     def timer_callback(self):
 
+
+        try:
+            t = self.tf_buffer.lookup_transform(
+                'panda_link0',
+                'panda_hand',
+                rclpy.time.Time())
+            # Set end effector x,y,z position
+            self.eeX = t.transform.translation.x
+            self.eeY = t.transform.translation.y
+            self.eeZ = t.transform.translation.z
+        except BaseException:
+            self.get_logger().info('Panda frames does not exist')
+
         if self.state == State.IK_CAL:
             if self.Flag_IK_CAL == 0:
                 self.Compute_IK_Callback()
@@ -256,12 +273,16 @@ class SimpleMove(Node):
                 self.create_jointStates()
                 self.plan_request()
 
-        # if self.state == State.READY_EXECUTE:
-        #     self.state = State.EXECUTE
-
         if self.state == State.EXECUTE:
             self.execute_traj()
             self.state = State.INITIAL
+             # Reset all Flags
+            self.Flag_IK_CAL = 0
+            self.Flag_PLAN = 0
+            self.Flag_Execute = 0
+
+            # Compute_IK variables
+            self.joint_constr_list = []
 
 
 
