@@ -4,6 +4,8 @@
 /panda_arm_controller/follow_joint_trajectory [control_msgs/action/FollowJointTrajectory]
 /panda_gripper/gripper_action [control_msgs/action/GripperCommand]
 
+
+
 ### Filled in interface Proto
 request:
   workspace_parameters:
@@ -134,6 +136,112 @@ planning_options:
   replan: false
   replan_attempts: 0
   replan_delay: 0.0
+
+
+
+  plan_request_msg = moveit_msgs.action.MoveGroup.Goal(
+            request=moveit_msgs.msg.MotionPlanRequest(
+            workspace_parameters=moveit_msgs.msg.WorkspaceParameters(
+            header=std_msgs.msg.Header(
+            stamp=builtin_interfaces.msg.Time(
+            sec=1667668827,
+            nanosec=729437629),
+            frame_id='panda_link0'),
+            min_corner=geometry_msgs.msg.Vector3(
+            x=-1.0,
+            y=-1.0,
+            z=-1.0),
+            max_corner=geometry_msgs.msg.Vector3(
+            x=1.0,
+            y=1.0,
+            z=1.0)),
+            start_state=moveit_msgs.msg.RobotState(
+            joint_state=sensor_msgs.msg.JointState(  ## We can pass objects without decomposing
+            header=std_msgs.msg.Header(
+            frame_id='panda_link0'),
+            name=['panda_joint1',
+            'panda_joint2',
+            'panda_joint3',
+            'panda_joint4',
+            'panda_joint5',
+            'panda_joint6',
+            'panda_joint7',
+            'panda_finger_joint1',
+            'panda_finger_joint2'],
+            position=[-3.05743667552222e-05,
+            0.45826129385071196,
+            0.36520248871411476,
+            -1.8763676740530548,
+            -0.21278170570578495,
+            2.2968262699790225,
+            1.2581421343073955,
+            0.035,
+            0.035]),
+            multi_dof_joint_state=sensor_msgs.msg.MultiDOFJointState(
+            header=std_msgs.msg.Header(
+            frame_id='panda_link0')),
+            is_diff=False),
+            goal_constraints=[moveit_msgs.msg.Constraints(
+            joint_constraints=[moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint1',
+            position=-0.799720847385826,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0),
+            moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint2',
+            position=0.6631403268111388,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0),
+            moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint3',
+            position=0.1428222590095236,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0),
+            moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint4',
+            position=-1.9078958035320892,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0),
+            moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint5',
+            position=-0.16023113114248438,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0),
+            moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint6',
+            position=2.5601750273131985,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0),
+            moveit_msgs.msg.JointConstraint(
+            joint_name='panda_joint7',
+            position=0.2327714355052132,
+            tolerance_above=0.0001,
+            tolerance_below=0.0001,
+            weight=1.0)]
+            )],
+            pipeline_id='move_group',
+            group_name='panda_manipulator',
+            num_planning_attempts=10,
+            allowed_planning_time=5.0,
+            max_velocity_scaling_factor=0.1,
+            max_acceleration_scaling_factor=0.1),
+            planning_options=moveit_msgs.msg.PlanningOptions(
+            planning_scene_diff=moveit_msgs.msg.PlanningScene(
+            robot_state=moveit_msgs.msg.RobotState(
+            is_diff=True),
+            is_diff=True),
+            plan_only=True))
+
+
+
+
+            
 
 
 
