@@ -16,7 +16,7 @@ setup(
     maintainer='avaz',
     maintainer_email='AvaZahedi2023@u.northwestern.edu',
     description='TODO: Package description',
-    license='TODO: License declaration',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': ['move_action_intercept=moveit_helper.move_action_intercept:interept_entry',
