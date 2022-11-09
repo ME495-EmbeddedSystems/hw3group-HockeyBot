@@ -91,7 +91,6 @@ class SimpleMove(Node):
         self.max_corner = Vector3(x=1.0, y=1.0, z=1.0)
 
 
-        
 
 
     def update_joint_states(self, data):
