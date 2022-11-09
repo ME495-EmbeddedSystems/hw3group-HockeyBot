@@ -257,8 +257,8 @@ class SimpleMove(Node):
                 self.create_jointStates()
                 self.plan_request()
 
-        if self.state == State.READY_EXECUTE:
-            self.state = State.EXECUTE
+        # if self.state == State.READY_EXECUTE:
+        #     self.state = State.EXECUTE
 
         if self.state == State.EXECUTE:
             self.execute_traj()
