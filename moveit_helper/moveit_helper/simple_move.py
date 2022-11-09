@@ -13,14 +13,13 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from moveit_msgs.action import MoveGroup
 import moveit_msgs.action
-import std_msgs.msg
 import geometry_msgs.msg
 import sensor_msgs.msg
 from sensor_msgs.msg import JointState
 import geometry_msgs
 from geometry_msgs.msg import Vector3
 from moveit_msgs.msg import PositionIKRequest, JointConstraint
-from moveit_interface.srv import Goal
+from moveit_interface.srv import Goal, Execute
 from moveit_msgs.srv import GetPositionIK
 from enum import Enum, auto
 from moveit_msgs.action import ExecuteTrajectory
@@ -44,8 +43,14 @@ class SimpleMove(Node):
     def __init__(self):
         super().__init__("simple_move")
 
+        # Initial guess for joint angles
+        # These are the home configuration joint angles
+        self.initial_js = [0.0,-0.785, 0.0, -2.356, 0.0, 1.57, 0.785]
+
         # Service
         self.goal = self.create_service(Goal, "/goal_service", self.goal_service)
+        self.execute_srv = self.create_service(Execute, "/execute_service", self.execute_service)
+
         # Clients
         self.ik_client = self.create_client(GetPositionIK, "compute_ik")
 
@@ -53,7 +58,6 @@ class SimpleMove(Node):
         self.sub = self.create_subscription(
             JointState, "/joint_states", self.update_joint_states, 10)
         self.joint_states = JointState()  # Current joint_states
-
 
 
         self.timer = self.create_timer(0.1, self.timer_callback)
@@ -113,14 +117,30 @@ class SimpleMove(Node):
         self.ori_w=request.orientation_w
         return response
 
+    
+    def execute_service(self, request, response):
+        if request.exec_bool is True:
+            self.state = State.EXECUTE
+        else:
+            self.state = State.INITIAL
+        return response
+
 
 
     def Compute_IK_Callback(self):
+        # Reset all Flags
+        self.Flag_IK_CAL = 0
+        self.Flag_PLAN = 0
+        self.Flag_Execute = 0
+
+        # Compute_IK variables
+        self.joint_constr_list = []
+
         self.rq.group_name='panda_arm'
         self.rq.robot_state.joint_state.header.stamp=self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id='panda_link0'
         self.rq.robot_state.joint_state.name=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
-        self.rq.robot_state.joint_state.position=[0.0,-0.70, 0.0, -2.35, 0.0, 1.57, 0.79]
+        self.rq.robot_state.joint_state.position=self.initial_js
         self.rq.robot_state.multi_dof_joint_state.header.stamp=self.get_clock().now().to_msg()
         self.rq.robot_state.multi_dof_joint_state.header.frame_id='panda_link0'
         self.rq.robot_state.multi_dof_joint_state.joint_names=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
@@ -139,7 +159,7 @@ class SimpleMove(Node):
         self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0', 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
         self.rq.pose_stamped_vector = []
         self.rq.timeout.sec = 60
-        # self.get_logger().info(f'before async')
+
         self.future_compute_IK = self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
 
 
@@ -210,7 +230,6 @@ class SimpleMove(Node):
     def get_result_callback(self, future):
         self.plan_result = future.result().result
         self.state = State.READY_EXECUTE
-        # self.get_logger().info('Result: {0}'.format(self.plan_result))
 
 
     def execute_traj(self):
@@ -237,32 +256,13 @@ class SimpleMove(Node):
                 self.Flag_PLAN = 1
                 self.create_jointStates()
                 self.plan_request()
-            if self.future_plan_request.done():
-                # self.future_plan_response = self.future_plan_request.result().get_result_async()
-                # self.get_logger().info(f"207")
-                pass
-                # if self.future_plan_response.done(): # TODO Never completes
-                #     self.get_logger().info(f"209")
-                #     self.state = State.READY_EXECUTE
 
         if self.state == State.READY_EXECUTE:
-            # self.get_logger().info(f"213")
-            # self.get_logger().info('Result: {0}'.format(self.plan_result.planned_trajectory))
-            # self.get_logger().info(f"{self.future_plan_response}")
             self.state = State.EXECUTE
 
         if self.state == State.EXECUTE:
             self.execute_traj()
             self.state = State.INITIAL
-            # Reset all Flags
-            # State machine variables
-            self.state = State.INITIAL
-            self.Flag_IK_CAL = 0
-            self.Flag_PLAN = 0
-            self.Flag_Execute = 0
-
-            # Compute_IK variables
-            self.joint_constr_list = []
 
 
 
