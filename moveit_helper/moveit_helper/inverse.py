@@ -96,6 +96,7 @@ class InverseKinematics(Node):
             self.state = State.GOTIT
         if self.state == State.GOTIT:
             if self.future.done():
+                
                 self.get_logger().info(f'{self.future.result()}')
                 self.state = State.INITIAL
 
