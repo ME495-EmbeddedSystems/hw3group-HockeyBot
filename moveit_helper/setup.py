@@ -23,7 +23,8 @@ setup(
                             'marno_move_group_plan=moveit_helper.marno_move_group_plan:interept_entry', # For Marno Test code
                             'marno_move_group_execute=moveit_helper.marno_move_group_execute:interept_entry',
                             'subscriber_joint_states=moveit_helper.subscriber_joint_states:joint_state_entry',
-                            'inverse=moveit_helper.inverse:IK_entry'
+                            'inverse=moveit_helper.inverse:IK_entry',
+                            'simple_move=moveit_helper.simple_move:simple_move_entry'
         ],
     },
 )
