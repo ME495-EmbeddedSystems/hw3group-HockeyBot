@@ -254,6 +254,16 @@ class SimpleMove(Node):
         if self.state == State.EXECUTE:
             self.execute_traj()
             self.state = State.INITIAL
+            # Reset all Flags
+            # State machine variables
+            self.state = State.INITIAL
+            self.Flag_IK_CAL = 0
+            self.Flag_PLAN = 0
+            self.Flag_Execute = 0
+
+            # Compute_IK variables
+            self.joint_constr_list = []
+
 
 
 
