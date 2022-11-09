@@ -23,6 +23,8 @@ from moveit_msgs.msg import PositionIKRequest, JointConstraint
 from moveit_interface.srv import Goal
 from moveit_msgs.srv import GetPositionIK
 from enum import Enum, auto
+from moveit_msgs.action import ExecuteTrajectory
+
 
 
 
@@ -32,9 +34,10 @@ class State(Enum):
         depending on the state
     """
     INITIAL = auto(),
-    GETTING = auto(),
-    GOTIT = auto(),
-    PLAN = auto()
+    IK_CAL = auto(),
+    PLAN = auto(),
+    READY_EXECUTE = auto(),
+    EXECUTE = auto()
 
 
 class SimpleMove(Node):
@@ -61,9 +64,18 @@ class SimpleMove(Node):
             "move_action"
             )
 
+        self._action_client_execute_traj = ActionClient(
+            self,
+            ExecuteTrajectory,
+            "execute_trajectory"
+            )
 
 
+        # State machine variables
         self.state = State.INITIAL
+        self.Flag_IK_CAL = 0
+        self.Flag_PLAN = 0
+        self.Flag_Execute = 0
 
         # Compute_IK variables
         self.joint_constr_list = []
@@ -91,7 +103,7 @@ class SimpleMove(Node):
         """
         Service: Goal Service - Enter goal position and orientation
         """
-        self.state = State.GETTING
+        self.state = State.IK_CAL
         self.pose_x=request.pose_x
         self.pose_y=request.pose_y
         self.pose_z=request.pose_z
@@ -103,7 +115,7 @@ class SimpleMove(Node):
 
 
 
-    def load_callback(self):
+    def Compute_IK_Callback(self):
         self.rq.group_name='panda_arm'
         self.rq.robot_state.joint_state.header.stamp=self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id='panda_link0'
@@ -127,126 +139,30 @@ class SimpleMove(Node):
         self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0', 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
         self.rq.pose_stamped_vector = []
         self.rq.timeout.sec = 60
-        self.get_logger().info(f'before async')
+        # self.get_logger().info(f'before async')
         self.future_compute_IK = self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
+
+
+
+    def create_jointStates(self):
+        """
+        Parse the Compute_IK result and populating JointConstraint list
+        """
+        self.ik_result = self.future_compute_IK.result()
+        for i in range(len(self.ik_result.solution.joint_state.name)):
+            constraint = JointConstraint()
+            constraint.joint_name = self.ik_result.solution.joint_state.name[i]
+            constraint.position = self.ik_result.solution.joint_state.position[i]
+            constraint.tolerance_above = 0.0001
+            constraint.tolerance_below = 0.0001
+            constraint.weight=1.0
+            self.joint_constr_list.append(constraint)
 
 
 
     def plan_request(self):
 
-        plan_request_msg = moveit_msgs.action.MoveGroup.Goal(
-            request=moveit_msgs.msg.MotionPlanRequest(
-            goal_constraints=[moveit_msgs.msg.Constraints()]))
-
-        # plan_request_msg = moveit_msgs.action.MoveGroup.Goal(
-        #     request=moveit_msgs.msg.MotionPlanRequest(
-        #     # workspace_parameters=moveit_msgs.msg.WorkspaceParameters(
-        #     # # header=std_msgs.msg.Header(
-        #     # # stamp=builtin_interfaces.msg.Time(
-        #     # # sec=1667668827,
-        #     # # nanosec=729437629),
-        #     # # frame_id='panda_link0'),
-        #     # min_corner=geometry_msgs.msg.Vector3(
-        #     # x=-1.0,
-        #     # y=-1.0,
-        #     # z=-1.0),
-        #     # max_corner=geometry_msgs.msg.Vector3(
-        #     # x=1.0,
-        #     # y=1.0,
-        #     # z=1.0)
-        #     # ),
-        #     # start_state=moveit_msgs.msg.RobotState(
-        #     # joint_state=sensor_msgs.msg.JointState(  ## We can pass objects without decomposing
-        #     # header=std_msgs.msg.Header(
-        #     # frame_id='panda_link0'),
-        #     # name=['panda_joint1',
-        #     # 'panda_joint2',
-        #     # 'panda_joint3',
-        #     # 'panda_joint4',
-        #     # 'panda_joint5',
-        #     # 'panda_joint6',
-        #     # 'panda_joint7',
-        #     # 'panda_finger_joint1',
-        #     # 'panda_finger_joint2'],
-        #     # position=[-3.05743667552222e-05,
-        #     # 0.45826129385071196,
-        #     # 0.36520248871411476,
-        #     # -1.8763676740530548,
-        #     # -0.21278170570578495,
-        #     # 2.2968262699790225,
-        #     # 1.2581421343073955,
-        #     # 0.035,
-        #     # 0.035]),
-        #     # multi_dof_joint_state=sensor_msgs.msg.MultiDOFJointState(
-        #     # header=std_msgs.msg.Header(
-        #     # frame_id='panda_link0')),
-        #     # is_diff=False),
-        #     goal_constraints=[moveit_msgs.msg.Constraints(
-        #     # joint_constraints=[moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint1',
-        #     # position=-0.799720847385826,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0),
-        #     # moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint2',
-        #     # position=0.6631403268111388,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0),
-        #     # moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint3',
-        #     # position=0.1428222590095236,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0),
-        #     # moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint4',
-        #     # position=-1.9078958035320892,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0),
-        #     # moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint5',
-        #     # position=-0.16023113114248438,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0),
-        #     # moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint6',
-        #     # position=2.5601750273131985,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0),
-        #     # moveit_msgs.msg.JointConstraint(
-        #     # joint_name='panda_joint7',
-        #     # position=0.2327714355052132,
-        #     # tolerance_above=0.0001,
-        #     # tolerance_below=0.0001,
-        #     # weight=1.0)]
-        #     # )]
-
-
-        #     # joint_constraints = [moveit_msgs.msg.JointConstraint(joint_name='panda_joint1', position=0.4653249156877396, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint2', position=0.6364748471474883, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint3', position=0.4010811629510251, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint4', position=-1.5635399671690575, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint5', position=2.8973, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint6', position=1.08220079358666, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint7', position=0.2476650932285474, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_finger_joint1', position=0.035, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_finger_joint2', position=0.035, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0)]
-        #     )]
-        #     # ,
-        #     # pipeline_id='move_group',
-        #     # group_name='panda_manipulator',
-        #     # num_planning_attempts=10,
-        #     # allowed_planning_time=5.0,
-        #     # max_velocity_scaling_factor=0.1,
-        #     # max_acceleration_scaling_factor=0.1
-        #     ),
-        #     # planning_options=moveit_msgs.msg.PlanningOptions(
-        #     # planning_scene_diff=moveit_msgs.msg.PlanningScene(
-        #     # robot_state=moveit_msgs.msg.RobotState(
-        #     # is_diff=True),
-        #     # # is_diff=True
-        #     # ),
-        #     # # plan_only=True
-        #     # )
-        #     )
-
+        plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
         """ Populate plan request messege """
         # Set start position of Franka 
@@ -272,41 +188,72 @@ class SimpleMove(Node):
         plan_request_msg.planning_options.planning_scene_diff.is_diff = True
         plan_request_msg.planning_options.plan_only = True
         # Goal joint_states of Franka - From compute_ik
-        plan_request_msg.request.path_constraints.joint_constraints = self.joint_constr_list
+        plan_request_msg.request.goal_constraints = [moveit_msgs.msg.Constraints(joint_constraints = self.joint_constr_list)]
 
-
+        # Future object of plan request
         self.future_plan_request = self._action_client_plan_request.send_goal_async(plan_request_msg)
+        self.future_plan_request.add_done_callback(self.plan_response_callback)
+
+
+    def plan_response_callback(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rejected :(')
+            return
+
+        self.get_logger().info('Goal accepted :)')
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.get_result_callback)
+
+
+    def get_result_callback(self, future):
+        self.plan_result = future.result().result
+        self.state = State.READY_EXECUTE
+        # self.get_logger().info('Result: {0}'.format(self.plan_result))
+
+
+    def execute_traj(self):
+
+        execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
+
+        execute_traj_msg.trajectory = self.plan_result.planned_trajectory
+
+        self._action_client_execute_traj.send_goal_async(execute_traj_msg)
 
 
 
     def timer_callback(self):
 
-        if self.state == State.GETTING:
-            self.load_callback()
-            self.state = State.GOTIT
-
-        if self.state == State.GOTIT:
+        if self.state == State.IK_CAL:
+            if self.Flag_IK_CAL == 0:
+                self.Compute_IK_Callback()
+                self.Flag_IK_CAL = 1
             if self.future_compute_IK.done():
                 self.state = State.PLAN
-                # self.get_logger().info(f'{self.future_compute_IK.result()}')
-                self.ik_result = self.future_compute_IK.result()
-                # Parse the Compute_IK result and populating JointConstraint list
-                for i in range(len(self.ik_result.solution.joint_state.name)):
-                    constraint = JointConstraint()
-                    constraint.joint_name = self.ik_result.solution.joint_state.name[i]
-                    constraint.position = self.ik_result.solution.joint_state.position[i]
-                    constraint.tolerance_above = 0.0001
-                    constraint.tolerance_below = 0.0001
-                    constraint.weight=1.0
-                    self.joint_constr_list.append(constraint)
-
-                self.get_logger().info(f'{self.joint_constr_list}')
-                # Call plan request function
-                self.plan_request()
 
         if self.state == State.PLAN:
+            if self.Flag_PLAN == 0:
+                self.Flag_PLAN = 1
+                self.create_jointStates()
+                self.plan_request()
             if self.future_plan_request.done():
-                self.get_logger().info(f'{self.future_plan_request.result()}')
+                # self.future_plan_response = self.future_plan_request.result().get_result_async()
+                # self.get_logger().info(f"207")
+                pass
+                # if self.future_plan_response.done(): # TODO Never completes
+                #     self.get_logger().info(f"209")
+                #     self.state = State.READY_EXECUTE
+
+        if self.state == State.READY_EXECUTE:
+            # self.get_logger().info(f"213")
+            # self.get_logger().info('Result: {0}'.format(self.plan_result.planned_trajectory))
+            # self.get_logger().info(f"{self.future_plan_response}")
+            self.state = State.EXECUTE
+
+        if self.state == State.EXECUTE:
+            self.execute_traj()
+            self.state = State.INITIAL
 
 
 
