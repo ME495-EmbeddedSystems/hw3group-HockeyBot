@@ -25,6 +25,7 @@ setup(
                             'subscriber_joint_states=moveit_helper.subscriber_joint_states:joint_state_entry',
                             'inverse=moveit_helper.inverse:IK_entry',
                             'simple_move=moveit_helper.simple_move:simple_move_entry'
+                            'box_new=moveit_helper.box_new:main'
         ],
     },
 )
