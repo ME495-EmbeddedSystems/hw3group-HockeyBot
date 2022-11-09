@@ -1,8 +1,0 @@
-{
-    "python.autoComplete.extraPaths": [
-        "/home/hanyin/homework3/install/moveit_helper/lib/python3.10/site-packages",
-        "/home/hanyin/homework3/install/diff_drive/lib/python3.10/site-packages",
-        "/opt/ros/humble/lib/python3.10/site-packages",
-        "/opt/ros/humble/local/lib/python3.10/dist-packages"
-    ]
-}
