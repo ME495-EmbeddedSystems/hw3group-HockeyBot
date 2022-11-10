@@ -237,7 +237,10 @@ class SimpleMove(Node):
 
     def start_IK_Callback(self):
         """
-        This function send updated request with desired starting configuration and calls the compute_ik service
+        This function send updated request with desired starting configuration and 
+        calls the compute_ik service
+        Returns:
+            None
         """
         self.Flag_start_ik = 1
         # Compute_IK variables
@@ -271,7 +274,10 @@ class SimpleMove(Node):
 
     def Compute_IK_Callback(self):
         """
-        This function send updated request with desired end configuration of the end effector and calls the compute_ik service
+        This function send updated request with desired end configuration of the 
+        end effector and calls the compute_ik service
+        Returns:
+            None
         """
         # Reset all Flags
         self.Flag_IK_CAL = 0
@@ -318,6 +324,8 @@ class SimpleMove(Node):
     def start_jointStates(self):
         """
         Parse the Compute_IK result and populating JointConstraint list
+        Returns:
+            None
         """
         self.start_ik_result = self.future_start_IK.result()
         self.start_joint_states = JointState()
@@ -328,7 +336,9 @@ class SimpleMove(Node):
 
     def create_jointStates(self):
         """
-        Parse the Compute_IK result and populating JointConstraint list
+        Create the joint states and some parameters used in the algorithm
+        Returns:
+            None
         """
         self.ik_result = self.future_compute_IK.result()
         for i in range(len(self.ik_result.solution.joint_state.name)):
@@ -344,6 +354,11 @@ class SimpleMove(Node):
 
 
     def plan_request(self):
+        """ 
+        Get the request messege form MoveGroup. Set workspace parameters.
+        Returns:
+            None
+        """
 
         plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
@@ -382,6 +397,12 @@ class SimpleMove(Node):
 
 
     def plan_response_callback(self, future):
+        """
+        Test if the result is received. Goal not accept: rejected. 
+        Goal successful accept:accepted
+        Returns:
+            None
+        """
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
@@ -393,11 +414,24 @@ class SimpleMove(Node):
 
 
     def get_result_callback(self, future):
+        """
+        Store the future result in a variable
+
+        Keyword arguments:
+            plan_result: Store future result
+        Returns:
+            None
+        """
         self.plan_result = future.result().result
         # self.state = State.READY_EXECUTE
 
 
     def execute_traj(self):
+        """
+        Store the trajectory messages and use action client to send the trajectory messages.
+        Returns:
+            None
+        """
 
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
 
@@ -408,7 +442,25 @@ class SimpleMove(Node):
 
 
     def timer_callback(self):
+        """
+        Use the state machine to set the state for inverse kinematics and
+        excutute trajectory.
+        Create and add box into Planning Scene.
 
+        Keyword arguments:
+            Flag_IK_CAL: trigger conditon for inverse kinematics calculation
+            Flag_start_ik: trigger conditon for start inverse Kinematics
+            Flag_PLAN: trigger condition for plan a path
+            Flag_Execute: trigger condition for execute path
+            Flag_box_dim: trigger conditon for box dimension
+        Parameters
+        ----------
+            param eeX: x-axis position
+            param eeY: y-axis position
+            param eeZ: z-axis position
+        Returns:
+            None
+        """
 
         try:
             t = self.tf_buffer.lookup_transform(
@@ -452,10 +504,6 @@ class SimpleMove(Node):
 
             # Compute_IK variables
             self.joint_constr_list = []
-
-
-
-
         if self.Flag_box_dim == 1:
             if self.box_future_client.done():
                 self.get_logger().info(f'done ')
