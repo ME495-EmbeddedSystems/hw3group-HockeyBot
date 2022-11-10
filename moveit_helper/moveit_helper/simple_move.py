@@ -19,8 +19,9 @@ from sensor_msgs.msg import JointState
 import geometry_msgs
 from geometry_msgs.msg import Vector3
 from moveit_msgs.msg import PositionIKRequest, JointConstraint
-from moveit_interface.srv import Goal, Execute
+from moveit_interface.srv import Initial, Goal, Execute
 from moveit_msgs.srv import GetPositionIK
+from .quaternion import euler_quaternion
 from enum import Enum, auto
 from moveit_msgs.action import ExecuteTrajectory
 from tf2_ros.buffer import Buffer
@@ -48,6 +49,7 @@ class SimpleMove(Node):
         self.initial_js = [0.0,-0.785, 0.0, -2.356, 0.0, 1.57, 0.785]
 
         # Service
+        self.initial = self.create_service(Initial, "/initial_service", self.initial_service)
         self.goal = self.create_service(Goal, "/goal_service", self.goal_service)
         self.execute_srv = self.create_service(Execute, "/execute_service", self.execute_service)
 
@@ -77,6 +79,7 @@ class SimpleMove(Node):
 
         # State machine variables
         self.state = State.INITIAL
+        self.Flag_start_ik = 0
         self.Flag_IK_CAL = 0
         self.Flag_PLAN = 0
         self.Flag_Execute = 0
@@ -105,21 +108,46 @@ class SimpleMove(Node):
         self.joint_states = data
 
 
+    # def initial_service(self, request, response):
+    #     # self.state = State.GETTING
+    #     self.init_x=request.x
+    #     self.init_y=request.y
+    #     self.init_z=request.z
+    #     self.init_roll=request.roll
+    #     self.init_pitch=request.pitch
+    #     self.init_yaw=request.yaw
+    #     self.ini_ori_x, self.init_ori_y, self.init_ori_z, self.init_ori_w = euler_quaternion(
+    #                                                 self.goal_roll, self.goal_pitch, self.goal_yaw)
+    #     return response
 
-    
-    def goal_service(self, request, response):
-        """
-        Service: Goal Service - Enter goal position and orientation
-        """
-        self.state = State.IK_CAL
-        self.pose_x=request.pose_x
-        self.pose_y=request.pose_y
-        self.pose_z=request.pose_z
-        self.ori_x=request.orientation_x
-        self.ori_y=request.orientation_y
-        self.ori_z=request.orientation_z
-        self.ori_w=request.orientation_w
+
+    def initial_service(self, request, response):
+        # self.state = State.GETTING
+        self.init_x=request.x
+        self.init_y=request.y
+        self.init_z=request.z
+        self.init_roll=request.roll
+        self.init_pitch=request.pitch
+        self.init_yaw=request.yaw
+        self.init_ori_x, self.init_ori_y, self.init_ori_z, self.init_ori_w = euler_quaternion(
+                                                    self.init_roll, self.init_pitch, self.init_yaw)
+
+        self.start_IK_Callback()
         return response
+
+
+    def goal_service(self, request, response):
+        self.state = State.IK_CAL
+        self.goal_x=request.x
+        self.goal_y=request.y
+        self.goal_z=request.z
+        self.goal_roll=request.roll
+        self.goal_pitch=request.pitch
+        self.goal_yaw=request.yaw
+        self.goal_ori_x, self.goal_ori_y, self.goal_ori_z, self.goal_ori_w = euler_quaternion(
+                                                    self.goal_roll, self.goal_pitch, self.goal_yaw)
+        return response
+
 
     
     def execute_service(self, request, response):
@@ -127,8 +155,39 @@ class SimpleMove(Node):
             self.state = State.EXECUTE
         else:
             self.state = State.INITIAL
+            self.Flag_start_ik = 0
         return response
 
+
+    def start_IK_Callback(self):
+        self.Flag_start_ik = 1
+        # Compute_IK variables
+
+        self.rq.group_name='panda_arm' # TODO Change to franka_manipulator
+        self.rq.robot_state.joint_state.header.stamp=self.get_clock().now().to_msg()
+        self.rq.robot_state.joint_state.header.frame_id='panda_link0'
+        self.rq.robot_state.joint_state.name=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
+        self.rq.robot_state.joint_state.position=self.initial_js
+        self.rq.robot_state.multi_dof_joint_state.header.stamp=self.get_clock().now().to_msg()
+        self.rq.robot_state.multi_dof_joint_state.header.frame_id='panda_link0'
+        self.rq.robot_state.multi_dof_joint_state.joint_names=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
+        self.rq.robot_state.is_diff=False
+        self.rq.avoid_collisions = True
+        self.rq.ik_link_name = 'panda_link8'
+        self.rq.pose_stamped.header.stamp = self.get_clock().now().to_msg()
+        self.rq.pose_stamped.header.frame_id = 'panda_link0'
+        self.rq.pose_stamped.pose.position.x = self.init_x
+        self.rq.pose_stamped.pose.position.y = self.init_y
+        self.rq.pose_stamped.pose.position.z = self.init_z
+        self.rq.pose_stamped.pose.orientation.x = self.init_ori_x
+        self.rq.pose_stamped.pose.orientation.y = self.init_ori_y
+        self.rq.pose_stamped.pose.orientation.z = self.init_ori_z
+        self.rq.pose_stamped.pose.orientation.w = self.init_ori_w
+        self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0', 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
+        self.rq.pose_stamped_vector = []
+        self.rq.timeout.sec = 60
+
+        self.future_start_IK = self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
 
 
     def Compute_IK_Callback(self):
@@ -153,19 +212,29 @@ class SimpleMove(Node):
         self.rq.ik_link_name = 'panda_link8'
         self.rq.pose_stamped.header.stamp = self.get_clock().now().to_msg()
         self.rq.pose_stamped.header.frame_id = 'panda_link0'
-        self.rq.pose_stamped.pose.position.x = self.pose_x
-        self.rq.pose_stamped.pose.position.y = self.pose_y
-        self.rq.pose_stamped.pose.position.z = self.pose_z
-        self.rq.pose_stamped.pose.orientation.x = self.ori_x
-        self.rq.pose_stamped.pose.orientation.y = self.ori_y
-        self.rq.pose_stamped.pose.orientation.z = self.ori_z
-        self.rq.pose_stamped.pose.orientation.w = self.ori_w
+        self.rq.pose_stamped.pose.position.x = self.goal_x
+        self.rq.pose_stamped.pose.position.y = self.goal_y
+        self.rq.pose_stamped.pose.position.z = self.goal_z
+        self.rq.pose_stamped.pose.orientation.x = self.goal_ori_x
+        self.rq.pose_stamped.pose.orientation.y = self.goal_ori_y
+        self.rq.pose_stamped.pose.orientation.z = self.goal_ori_z
+        self.rq.pose_stamped.pose.orientation.w = self.goal_ori_w
         self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0', 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
         self.rq.pose_stamped_vector = []
         self.rq.timeout.sec = 60
 
         self.future_compute_IK = self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
 
+
+    def start_jointStates(self):
+        """
+        Parse the Compute_IK result and populating JointConstraint list
+        """
+        self.start_ik_result = self.future_start_IK.result()
+        self.start_joint_states = JointState()
+        self.start_joint_states.header = self.start_ik_result.solution.joint_state.header
+        self.start_joint_states.name = self.start_ik_result.solution.joint_state.name
+        self.start_joint_states.position = self.start_ik_result.solution.joint_state.position
 
 
     def create_jointStates(self):
@@ -184,13 +253,17 @@ class SimpleMove(Node):
 
 
 
+
     def plan_request(self):
 
         plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
         """ Populate plan request messege """
-        # Set start position of Franka 
-        plan_request_msg.request.start_state.joint_state = self.joint_states
+        # Set start position of Franka
+        if self.Flag_start_ik == 1:
+            plan_request_msg.request.start_state.joint_state = self.start_joint_states
+        else:
+            plan_request_msg.request.start_state.joint_state = self.joint_states
         # Set time stamp
         plan_request_msg.request.workspace_parameters.header.stamp = self.get_clock().now().to_msg()
         # Header
@@ -264,8 +337,14 @@ class SimpleMove(Node):
             if self.Flag_IK_CAL == 0:
                 self.Compute_IK_Callback()
                 self.Flag_IK_CAL = 1
+
             if self.future_compute_IK.done():
-                self.state = State.PLAN
+                if self.Flag_start_ik == 1:
+                    if self.future_start_IK.done():
+                        self.state = State.PLAN
+                        self.start_jointStates()
+                else:
+                    self.state = State.PLAN
 
         if self.state == State.PLAN:
             if self.Flag_PLAN == 0:
@@ -276,7 +355,8 @@ class SimpleMove(Node):
         if self.state == State.EXECUTE:
             self.execute_traj()
             self.state = State.INITIAL
-             # Reset all Flags
+            # Reset all Flags
+            self.Flag_start_ik = 0
             self.Flag_IK_CAL = 0
             self.Flag_PLAN = 0
             self.Flag_Execute = 0
