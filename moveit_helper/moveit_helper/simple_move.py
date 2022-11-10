@@ -430,7 +430,6 @@ class SimpleMove(Node):
         Returns:
             None
         """
-
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
         execute_traj_msg.trajectory = self.plan_result.planned_trajectory
         self._action_client_execute_traj.send_goal_async(execute_traj_msg)
