@@ -236,12 +236,14 @@ class SimpleMove(Node):
         self.rq.pose_stamped.pose.orientation.y = self.goal_ori_y
         self.rq.pose_stamped.pose.orientation.z = self.goal_ori_z
         self.rq.pose_stamped.pose.orientation.w = self.goal_ori_w
-        self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0', 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
+        self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0',
+                    'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5',
+                'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
         self.rq.pose_stamped_vector = []
         self.rq.timeout.sec = 60
 
-        self.future_compute_IK = self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
-
+        self.future_compute_IK = self.ik_client.call_async(GetPositionIK.Request(
+            ik_request=self.rq))
 
     def start_jointStates(self):
         """
@@ -252,7 +254,6 @@ class SimpleMove(Node):
         self.start_joint_states.header = self.start_ik_result.solution.joint_state.header
         self.start_joint_states.name = self.start_ik_result.solution.joint_state.name
         self.start_joint_states.position = self.start_ik_result.solution.joint_state.position
-
 
     def create_jointStates(self):
         """
@@ -265,14 +266,10 @@ class SimpleMove(Node):
             constraint.position = self.ik_result.solution.joint_state.position[i]
             constraint.tolerance_above = 0.0001
             constraint.tolerance_below = 0.0001
-            constraint.weight=1.0
+            constraint.weight = 1.0
             self.joint_constr_list.append(constraint)
 
-
-
-
     def plan_request(self):
-
         plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
         """ Populate plan request messege """
@@ -282,7 +279,8 @@ class SimpleMove(Node):
         else:
             plan_request_msg.request.start_state.joint_state = self.joint_states
         # Set time stamp
-        plan_request_msg.request.workspace_parameters.header.stamp = self.get_clock().now().to_msg()
+        plan_request_msg.request.workspace_parameters.header.stamp = \
+            self.get_clock().now().to_msg()
         # Header
         plan_request_msg.request.workspace_parameters.header.frame_id = 'panda_link0'
         # Min & Max workspace_parameters
@@ -302,12 +300,13 @@ class SimpleMove(Node):
         plan_request_msg.planning_options.planning_scene_diff.is_diff = True
         plan_request_msg.planning_options.plan_only = True
         # Goal joint_states of Franka - From compute_ik
-        plan_request_msg.request.goal_constraints = [moveit_msgs.msg.Constraints(joint_constraints = self.joint_constr_list)]
+        plan_request_msg.request.goal_constraints = [moveit_msgs.msg.Constraints(
+            joint_constraints=self.joint_constr_list)]
 
         # Future object of plan request
-        self.future_plan_request = self._action_client_plan_request.send_goal_async(plan_request_msg)
+        self.future_plan_request = self._action_client_plan_request.send_goal_async(
+            plan_request_msg)
         self.future_plan_request.add_done_callback(self.plan_response_callback)
-
 
     def plan_response_callback(self, future):
         goal_handle = future.result()
@@ -319,25 +318,18 @@ class SimpleMove(Node):
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
 
-
     def get_result_callback(self, future):
         self.plan_result = future.result().result
-        # self.state = State.READY_EXECUTE
-
 
     def execute_traj(self):
-
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
-
         execute_traj_msg.trajectory = self.plan_result.planned_trajectory
-
         self._action_client_execute_traj.send_goal_async(execute_traj_msg)
 
-
-
     def timer_callback(self):
-
-
+        """
+        State Machine
+        """
         try:
             t = self.tf_buffer.lookup_transform(
                 'panda_link0',
@@ -377,39 +369,30 @@ class SimpleMove(Node):
             self.Flag_IK_CAL = 0
             self.Flag_PLAN = 0
             self.Flag_Execute = 0
-
             # Compute_IK variables
             self.joint_constr_list = []
 
-
-
-
         if self.Flag_box_dim == 1:
             if self.box_future_client.done():
-                self.get_logger().info(f'done ')
                 self.input_box = self.box_future_client.result()
                 self.Flag_box_create = 1
                 self.Flag_box_dim = 0
         if self.Flag_box_create == 1:
-            self.box_info= self.input_box.scene
+            self.box_info = self.input_box.scene
             self.box_set = CollisionObject()
             self.box_set.header.stamp = self.get_clock().now().to_msg()
             self.box_set.header.frame_id = 'panda_link0'
             self.box_set.pose.position.x = self.pos_x
             self.box_set.pose.position.y = self.pos_y
             self.box_set.pose.position.z = self.pos_z
-            self.box_set.id = "Box"+ str(self.id)
+            self.box_set.id = "Box" + str(self.id)
             self.box_prim = SolidPrimitive()
             self.box_prim.type = 1
-            self.box_prim.dimensions = [self.dim_x,self.dim_y,self.dim_z]
+            self.box_prim.dimensions = [self.dim_x, self.dim_y, self.dim_z]
             self.box_set.primitives = [self.box_prim]
             self.box_info.world.collision_objects = [self.box_set]
-            self.get_logger().info(f'result ')
             self.box_pub.publish(self.box_info)
             self.Flag_box_create = 0
-
-
-
 
 
 def simple_move_entry(args=None):
@@ -417,5 +400,3 @@ def simple_move_entry(args=None):
     node = SimpleMove()
     rclpy.spin(node)
     rclpy.shutdown()
-
-
