@@ -1,6 +1,4 @@
 """ Convert from angle-axis to quaternion and calculate the distance between 2 point"""
-
-from geometry_msgs.msg import Quaternion
 from math import sin, cos
 
 
@@ -17,5 +15,5 @@ def euler_quaternion(r, p, y):
     y = cos(r/2) * sin(p/2) * cos(y/2) + sin(r/2) * cos(p/2) * sin(y/2)
     z = cos(r/2) * cos(p/2) * sin(y/2) - sin(r/2) * sin(p/2) * cos(y/2)
     w = cos(r/2) * cos(p/2) * cos(y/2) + sin(r/2) * sin(p/2) * sin(y/2)
- 
+
     return x, y, z, w
