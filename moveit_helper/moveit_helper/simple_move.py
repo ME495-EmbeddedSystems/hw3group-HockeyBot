@@ -158,12 +158,16 @@ class SimpleMove(Node):
 
         This service obtains and stores the positions and dimension of the box along with an id to
         uniquely identify the object and dynamically place it in the planning scene.
+
         Args:
             request (moveit_interface/srv/Addobj): Contains the id of the box object (any int),
             the x, y, z position and the dim_x, dim_y, dim_z dimensions
             response: None
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         self.Flag_box_dim = 1
         self.id = request.id
@@ -185,8 +189,11 @@ class SimpleMove(Node):
         Args:
             data (sensor_msgs/msg/JointState): Contains the the joint angles of the robot
             manipulator
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         self.joint_states = data
 
@@ -198,8 +205,11 @@ class SimpleMove(Node):
             request: (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
                      pitch and yaw orientation values
             response: None
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         self.init_x = request.x
         self.init_y = request.y
@@ -221,8 +231,11 @@ class SimpleMove(Node):
             request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
             pitch and yaw orientation values
             response: None
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         self.state = State.IK_CAL
         self.goal_x = request.x
@@ -243,8 +256,11 @@ class SimpleMove(Node):
             request (moveit_interface/srv/Execute): Contains the exec_bool flag which is either
             True or False
             response: None
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         if request.exec_bool is True:
             self.state = State.EXECUTE
@@ -259,8 +275,11 @@ class SimpleMove(Node):
 
         This function send updated request with desired starting configuration and
         calls the compute_ik service.
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         self.Flag_start_ik = 1
         # Compute_IK variables
@@ -304,8 +323,11 @@ class SimpleMove(Node):
 
         This function send updated request with desired end configuration of the
         end effector and calls the compute_ik service.
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         # Reset all Flags
         self.Flag_IK_CAL = 0
@@ -361,8 +383,10 @@ class SimpleMove(Node):
         """
         Parse the Compute_IK result and populating JointConstraint list.
 
-        Returns:
+        Returns
+        -------
             None
+
         """
         self.start_ik_result = self.future_start_IK.result()
         self.start_joint_states = JointState()
@@ -374,8 +398,10 @@ class SimpleMove(Node):
         """
         Create the joint states and some parameters used in the algorithm.
 
-        Returns:
+        Returns
+        -------
             None
+
         """
         self.ik_result = self.future_compute_IK.result()
         for i in range(len(self.ik_result.solution.joint_state.name)):
@@ -391,8 +417,10 @@ class SimpleMove(Node):
         """
         Get the request messege form MoveGroup. Set workspace parameters.
 
-        Returns:
+        Returns
+        -------
             None
+
         """
         plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
@@ -438,8 +466,11 @@ class SimpleMove(Node):
 
         Goal not accept: rejected.
         Goal successful accept:accepted
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         goal_handle = future.result()
         if not goal_handle.accepted:
@@ -456,8 +487,11 @@ class SimpleMove(Node):
 
         Keyword arguments:
             plan_result: Store future result
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         self.plan_result = future.result().result
 
@@ -465,8 +499,10 @@ class SimpleMove(Node):
         """
         Store the trajectory messages and use action client to send the trajectory messages.
 
-        Returns:
+        Returns
+        -------
             None
+
         """
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
         execute_traj_msg.trajectory = self.plan_result.planned_trajectory
@@ -486,13 +522,17 @@ class SimpleMove(Node):
             Flag_PLAN: trigger condition for plan a path
             Flag_Execute: trigger condition for execute path
             Flag_box_dim: trigger conditon for box dimension
+
         Parameters
         ----------
             param eeX: x-axis position
             param eeY: y-axis position
             param eeZ: z-axis position
-        Returns:
+
+        Returns
+        -------
             None
+
         """
         try:
             t = self.tf_buffer.lookup_transform(

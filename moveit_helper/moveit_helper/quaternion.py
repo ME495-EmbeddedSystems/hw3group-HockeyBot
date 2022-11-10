@@ -3,7 +3,8 @@ from math import sin, cos
 
 
 def euler_quaternion(r, p, y):
-    """Convert from roll, pitch, yaw of rotation to a quaternion.
+    """
+    Convert from roll, pitch, yaw of rotation to a quaternion.
 
     Arg:
       r: The roll (rotation around x-axis) angle in radians
