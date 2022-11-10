@@ -13,19 +13,19 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from moveit_msgs.action import MoveGroup
 import moveit_msgs.action
-import geometry_msgs.msg
-import sensor_msgs.msg
 from sensor_msgs.msg import JointState
-import geometry_msgs
 from geometry_msgs.msg import Vector3
 from moveit_msgs.msg import PositionIKRequest, JointConstraint
-from moveit_interface.srv import Initial, Goal, Execute
+from moveit_interface.srv import Initial, Goal, Execute, Addobj
 from moveit_msgs.srv import GetPositionIK
 from .quaternion import euler_quaternion
 from enum import Enum, auto
 from moveit_msgs.action import ExecuteTrajectory
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
+from shape_msgs.msg import SolidPrimitive
+from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents
+from moveit_msgs.srv import GetPlanningScene
 
 
 class State(Enum):
@@ -37,7 +37,9 @@ class State(Enum):
     IK_CAL = auto(),
     PLAN = auto(),
     READY_EXECUTE = auto(),
-    EXECUTE = auto()
+    EXECUTE = auto(),
+    BOX_DIMS = auto(),
+    BOX_CREATE = auto()
 
 
 class SimpleMove(Node):
@@ -83,6 +85,8 @@ class SimpleMove(Node):
         self.Flag_IK_CAL = 0
         self.Flag_PLAN = 0
         self.Flag_Execute = 0
+        self.Flag_box_dim = 0
+        self.Flag_box_create = 0
 
         # Compute_IK variables
         self.joint_constr_list = []
@@ -98,7 +102,27 @@ class SimpleMove(Node):
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
+        # Box
+        self.box_pub = self.create_publisher(PlanningScene, "/planning_scene", 10)
+        self.box_client = self.create_client(GetPlanningScene, 'get_planning_scene')
+        self.goal = self.create_service(Addobj, "/add_obj", self.obj_service)
+        self.robot_state_order = PlanningSceneComponents()
+        self.robot_state_order.components = 0
+        self.box_future_client = self.box_client.call_async(GetPlanningScene.Request(components=self.robot_state_order))
 
+
+
+    def obj_service(self, request, response):
+        self.Flag_box_dim = 1
+        self.id = request.id
+        self.pos_x=request.x
+        self.pos_y=request.y
+        self.pos_z=request.z
+        self.dim_x=request.dim_x
+        self.dim_y=request.dim_y
+        self.dim_z=request.dim_z
+
+        return response
 
 
     def update_joint_states(self, data):
@@ -363,6 +387,31 @@ class SimpleMove(Node):
 
             # Compute_IK variables
             self.joint_constr_list = []
+
+        
+        if self.Flag_box_dim == 1:
+            if self.box_future_client.done():
+                self.get_logger().info(f'done ')
+                self.input_box = self.box_future_client.result()
+                self.Flag_box_create = 1
+                self.Flag_box_dim = 0
+        if self.Flag_box_create == 1:
+            self.box_info= self.input_box.scene
+            self.box_set = CollisionObject()
+            self.box_set.header.stamp = self.get_clock().now().to_msg()
+            self.box_set.header.frame_id = 'panda_link0'
+            self.box_set.pose.position.x = self.pos_x
+            self.box_set.pose.position.y = self.pos_y
+            self.box_set.pose.position.z = self.pos_z
+            self.box_set.id = "Box"+ str(self.id)
+            self.box_prim = SolidPrimitive()
+            self.box_prim.type = 1
+            self.box_prim.dimensions = [self.dim_x,self.dim_y,self.dim_z]
+            self.box_set.primitives = [self.box_prim]
+            self.box_info.world.collision_objects = [self.box_set]
+            self.get_logger().info(f'result ')
+            self.box_pub.publish(self.box_info)
+            self.Flag_box_create = 0
 
 
 
