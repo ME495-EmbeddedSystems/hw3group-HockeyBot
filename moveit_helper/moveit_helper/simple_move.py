@@ -132,21 +132,7 @@ class SimpleMove(Node):
         self.joint_states = data
 
 
-    # def initial_service(self, request, response):
-    #     # self.state = State.GETTING
-    #     self.init_x=request.x
-    #     self.init_y=request.y
-    #     self.init_z=request.z
-    #     self.init_roll=request.roll
-    #     self.init_pitch=request.pitch
-    #     self.init_yaw=request.yaw
-    #     self.ini_ori_x, self.init_ori_y, self.init_ori_z, self.init_ori_w = euler_quaternion(
-    #                                                 self.goal_roll, self.goal_pitch, self.goal_yaw)
-    #     return response
-
-
     def initial_service(self, request, response):
-        # self.state = State.GETTING
         self.init_x=request.x
         self.init_y=request.y
         self.init_z=request.z
