@@ -1,11 +1,34 @@
 """
-Command to run:
-    ros2 run moveit_helper marno_move_group_plan
-
-    Plan:
-    1) Delete and run and see what is not necessary
-    2) Populate the messege
-    3) Integrate messeges
+Enables the planning and execution of paths using the move group node. It can plan a path to a
+specified pose or just a position or or just an orientation from any start configuration and it can
+also dynamically add a box to the planning scene.
+SERVERS:
++/initial_service(moveit_interface/srv/Initial)- Gets the starting configuration (position and
+orientation) of the end effector, response is None
++/goal_service(moveit_interface/srv/Goal)- Gets the goal pose (position and orientation) of the end
+effector, response is None
++/execute_service(moveit_interface/srv/Execute)- It has a bool request flag that indicates whether
+a plan should be executed, response is None. 
++/add_obj(moveit_interface/srv/Addobj)- It takes in the box id, position and dimensions of a box
+object to be added to the planning scene, response is None.
+CLIENTS:
++compute_ik(moveit_msgs/srv/GetPositionIK)- Send the goal position of the end effector and gets
+the corresponding joint angles of the manipulator
++get_planning_scene(moveit_msgs/srv/GetPlanningScene)-Send the components and gets the planning
+scene as response
+ACTION CLIENTS:
++move_action(moveit_msgs/action/MoveGroup)-
++execute_trajectory(moveit_msgs/action/ExecuteTrajectory)- 
+PUBLISHERS:
+  + /planning_scene (moveit_msgs/msg/PlanningScene) - Publishes the box object to the planning scene
+SUBSCRIPTIONS:
+  + /joint_states (sensor_msgs/msg/JointStates) - Gets the current joint vector of the robot
+  manipulator
+LISTENERS:
+  + panda_link0->panda_hand (tf2_ros/transform_listener/TransformListener) - Gets the transform of
+  end effector configuration w.r.t panda_link0 frame
+FUNCTIONS:
+  + quaternion.euler_quarternion - Converts euler roll, pitch and yaw to a quaternion
 """
 
 import rclpy
@@ -29,9 +52,9 @@ from moveit_msgs.srv import GetPlanningScene
 
 
 class State(Enum):
-    """ The 3 states of the system.
-        Determines what the main timer function and other callback should be doing on each iteration
-        depending on the state
+    """ 
+    These are the 7 states of the system.It determines what the main timer function and other
+    callback functions should be doing on each iteration in the correct order
     """
     INITIAL = auto(),
     IK_CAL = auto(),
@@ -43,6 +66,12 @@ class State(Enum):
 
 
 class SimpleMove(Node):
+    """ 
+    This node receives a starting position and an end goal position of the end effector, plans the
+    path to the end goal configuration and then executes the path with the help of different
+    services. It can also dynamically add a box object to the planning scene. It does not execute
+    trajectories which lead to collisions.
+    """ 
     def __init__(self):
         super().__init__("simple_move")
 
@@ -63,7 +92,6 @@ class SimpleMove(Node):
             JointState, "/joint_states", self.update_joint_states, 10)
         self.joint_states = JointState()  # Current joint_states
 
-
         self.timer = self.create_timer(0.1, self.timer_callback)
 
         self._action_client_plan_request = ActionClient(
@@ -78,7 +106,6 @@ class SimpleMove(Node):
             "execute_trajectory"
             )
 
-
         # State machine variables
         self.state = State.INITIAL
         self.Flag_start_ik = 0
@@ -92,11 +119,9 @@ class SimpleMove(Node):
         self.joint_constr_list = []
         self.rq = PositionIKRequest()
 
-
         # Plan request variables
         self.min_corner = Vector3(x=-1.0, y=-1.0, z=-1.0)
         self.max_corner = Vector3(x=1.0, y=1.0, z=1.0)
-
 
         # Transform lister
         self.tf_buffer = Buffer()
@@ -111,8 +136,17 @@ class SimpleMove(Node):
         self.box_future_client = self.box_client.call_async(GetPlanningScene.Request(components=self.robot_state_order))
 
 
-
     def obj_service(self, request, response):
+        """
+        This service obtains and stores the positions and dimension of the box along with an id to
+        uniquely identify the object and dynamically place it in the planning scene
+        Args:
+            request (moveit_interface/srv/Addobj): Contains the id of the box object (any int),
+            the x, y, z position and the dim_x, dim_y, dim_z dimensions 
+            response: None
+        Returns:
+            None
+        """
         self.Flag_box_dim = 1
         self.id = request.id
         self.pos_x=request.x
@@ -128,11 +162,25 @@ class SimpleMove(Node):
     def update_joint_states(self, data):
         """
         Subscribtion topic: /joint_states
+        This subscription callback obtains and stores the joint angles of the robot manipulator
+        Args:
+            data (sensor_msgs/msg/JointState): Contains the the joint angles of the robot manipulator
+        Returns:
+            None
         """
         self.joint_states = data
 
 
     def initial_service(self, request, response):
+        """
+        This service obtains and stores the starting position and orientation of the end effector
+        Args:
+            request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll, pitch
+        and yaw orientation values 
+            response: None
+        Returns:
+            None
+        """
         self.init_x=request.x
         self.init_y=request.y
         self.init_z=request.z
@@ -147,6 +195,15 @@ class SimpleMove(Node):
 
 
     def goal_service(self, request, response):
+        """
+        This service obtains and stores the desired end position and orientation of the end effector
+        Args:
+            request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll, 
+            pitch and yaw orientation values 
+            response: None
+        Returns: 
+            None
+        """
         self.state = State.IK_CAL
         self.goal_x=request.x
         self.goal_y=request.y
@@ -161,6 +218,15 @@ class SimpleMove(Node):
 
     
     def execute_service(self, request, response):
+        """
+        This service updates the state according to the bool flag in the request
+        Args:
+            request (moveit_interface/srv/Execute): Contains the exec_bool flag which is either
+            True or False
+            response: None
+        Returns:
+            None
+        """
         if request.exec_bool is True:
             self.state = State.EXECUTE
         else:
@@ -170,6 +236,9 @@ class SimpleMove(Node):
 
 
     def start_IK_Callback(self):
+        """
+        This function send updated request with desired starting configuration and calls the compute_ik service
+        """
         self.Flag_start_ik = 1
         # Compute_IK variables
 
@@ -201,6 +270,9 @@ class SimpleMove(Node):
 
 
     def Compute_IK_Callback(self):
+        """
+        This function send updated request with desired end configuration of the end effector and calls the compute_ik service
+        """
         # Reset all Flags
         self.Flag_IK_CAL = 0
         self.Flag_PLAN = 0
