@@ -236,9 +236,16 @@ class SimpleMove(Node):
         self.rq.ik_link_name = 'panda_link8'
         self.rq.pose_stamped.header.stamp = self.get_clock().now().to_msg()
         self.rq.pose_stamped.header.frame_id = 'panda_link0'
-        self.rq.pose_stamped.pose.position.x = self.goal_x
-        self.rq.pose_stamped.pose.position.y = self.goal_y
-        self.rq.pose_stamped.pose.position.z = self.goal_z
+
+        if self.goal_x == 0 and self.goal_y == 0 and self.goal_z == 0:
+            self.rq.pose_stamped.pose.position.x = self.eeX
+            self.rq.pose_stamped.pose.position.y = self.eeY
+            self.rq.pose_stamped.pose.position.z = self.eeZ
+        else:
+            self.rq.pose_stamped.pose.position.x = self.goal_x
+            self.rq.pose_stamped.pose.position.y = self.goal_y
+            self.rq.pose_stamped.pose.position.z = self.goal_z
+
         self.rq.pose_stamped.pose.orientation.x = self.goal_ori_x
         self.rq.pose_stamped.pose.orientation.y = self.goal_ori_y
         self.rq.pose_stamped.pose.orientation.z = self.goal_ori_z
@@ -388,7 +395,9 @@ class SimpleMove(Node):
             # Compute_IK variables
             self.joint_constr_list = []
 
-        
+
+
+
         if self.Flag_box_dim == 1:
             if self.box_future_client.done():
                 self.get_logger().info(f'done ')
