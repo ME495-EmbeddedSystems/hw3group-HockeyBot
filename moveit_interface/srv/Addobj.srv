@@ -1,0 +1,8 @@
+int64 id
+float32 x
+float32 y
+float32 z
+float32 dim_x
+float32 dim_y
+float32 dim_z
+---
