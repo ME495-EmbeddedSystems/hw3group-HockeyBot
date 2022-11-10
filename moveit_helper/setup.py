@@ -15,7 +15,8 @@ setup(
     zip_safe=True,
     maintainer='avaz',
     maintainer_email='AvaZahedi2023@u.northwestern.edu',
-    description='Contains simple_move node which allows a user to specify an end-effector location to plan and/or execute a path to.',
+    description='Contains simple_move node which allows a user to specify an end-effector '
+                'location to plan and/or execute a path to.',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

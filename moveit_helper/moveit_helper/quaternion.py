@@ -1,9 +1,10 @@
-""" Convert from angle-axis to quaternion and calculate the distance between 2 point"""
+"""Convert from angle-axis to quaternion and calculate the distance between 2 points."""
 from math import sin, cos
 
 
 def euler_quaternion(r, p, y):
-    """ Convert from roll, pitch, yaw of rotation to a quaternion
+    """Convert from roll, pitch, yaw of rotation to a quaternion.
+
     Arg:
       r: The roll (rotation around x-axis) angle in radians
       p: The pitch (rotation around y-axis) angle in radians.

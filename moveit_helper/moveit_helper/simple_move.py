@@ -1,7 +1,9 @@
 """
-Enables the planning and execution of paths using the move group node. It can plan a path to a
-specified pose or just a position or or just an orientation from any start configuration and it can
-also dynamically add a box to the planning scene.
+Enables the planning and execution of paths using the move group node.
+
+It can plan a path to a specified pose or just a position or or just an orientation from any start
+configuration and it can also dynamically add a box to the planning scene.
+
 SERVERS:
     + /initial_service(moveit_interface/srv/Initial)- Gets the starting configuration (position and
     orientation) of the end effector, response is None
@@ -56,9 +58,12 @@ from moveit_msgs.srv import GetPlanningScene
 
 class State(Enum):
     """
-    These are the 7 states of the system.It determines what the main timer function and other
-    callback functions should be doing on each iteration in the correct order
+    These are the 7 states of the system.
+
+    It determines what the main timer function and other callback functions should be doing
+    on each iteration in the correct order.
     """
+
     INITIAL = auto(),
     IK_CAL = auto(),
     PLAN = auto(),
@@ -70,12 +75,20 @@ class State(Enum):
 
 class SimpleMove(Node):
     """
+    Trajectory planning and optional execution.
+
     This node receives a starting position and an end goal position of the end effector, plans the
     path to the end goal configuration and then executes the path with the help of different
     services. It can also dynamically add a box object to the planning scene. It does not execute
     trajectories which lead to collisions.
     """
+
     def __init__(self):
+        """
+        Initialize services, clients, and subscribers.
+
+        Also initializes class variables for creating a box and initial robot joint states.
+        """
         super().__init__("simple_move")
 
         # Initial guess for joint angles
@@ -141,8 +154,10 @@ class SimpleMove(Node):
 
     def obj_service(self, request, response):
         """
+        Service for the box.
+
         This service obtains and stores the positions and dimension of the box along with an id to
-        uniquely identify the object and dynamically place it in the planning scene
+        uniquely identify the object and dynamically place it in the planning scene.
         Args:
             request (moveit_interface/srv/Addobj): Contains the id of the box object (any int),
             the x, y, z position and the dim_x, dim_y, dim_z dimensions
@@ -163,6 +178,8 @@ class SimpleMove(Node):
 
     def update_joint_states(self, data):
         """
+        Get current joint states of the robot.
+
         Subscribtion topic: /joint_states
         This subscription callback obtains and stores the joint angles of the robot manipulator
         Args:
@@ -175,7 +192,8 @@ class SimpleMove(Node):
 
     def initial_service(self, request, response):
         """
-        This service obtains and stores the starting position and orientation of the end effector
+        Obtain and store the starting position and orientation of the end effector.
+
         Args:
             request: (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
                      pitch and yaw orientation values
@@ -197,8 +215,8 @@ class SimpleMove(Node):
 
     def goal_service(self, request, response):
         """
-        This service obtains and stores the desired end position and orientation of the end
-        effector
+        Obtain and store the desired end pose of the end-effector.
+
         Args:
             request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
             pitch and yaw orientation values
@@ -219,7 +237,8 @@ class SimpleMove(Node):
 
     def execute_service(self, request, response):
         """
-        This service updates the state according to the bool flag in the request
+        Update the state according to the bool flag in the request.
+
         Args:
             request (moveit_interface/srv/Execute): Contains the exec_bool flag which is either
             True or False
@@ -236,8 +255,10 @@ class SimpleMove(Node):
 
     def start_IK_Callback(self):
         """
+        Populate desired starting configuration.
+
         This function send updated request with desired starting configuration and
-        calls the compute_ik service
+        calls the compute_ik service.
         Returns:
             None
         """
@@ -279,8 +300,10 @@ class SimpleMove(Node):
 
     def Compute_IK_Callback(self):
         """
+        Compute the inverse kinematics of the goal end-effector position.
+
         This function send updated request with desired end configuration of the
-        end effector and calls the compute_ik service
+        end effector and calls the compute_ik service.
         Returns:
             None
         """
@@ -336,7 +359,8 @@ class SimpleMove(Node):
 
     def start_jointStates(self):
         """
-        Parse the Compute_IK result and populating JointConstraint list
+        Parse the Compute_IK result and populating JointConstraint list.
+
         Returns:
             None
         """
@@ -348,7 +372,8 @@ class SimpleMove(Node):
 
     def create_jointStates(self):
         """
-        Create the joint states and some parameters used in the algorithm
+        Create the joint states and some parameters used in the algorithm.
+
         Returns:
             None
         """
@@ -365,10 +390,10 @@ class SimpleMove(Node):
     def plan_request(self):
         """
         Get the request messege form MoveGroup. Set workspace parameters.
+
         Returns:
             None
         """
-
         plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
         """ Populate plan request messege """
@@ -409,7 +434,9 @@ class SimpleMove(Node):
 
     def plan_response_callback(self, future):
         """
-        Test if the result is received. Goal not accept: rejected.
+        Test if the result is received.
+
+        Goal not accept: rejected.
         Goal successful accept:accepted
         Returns:
             None
@@ -425,7 +452,7 @@ class SimpleMove(Node):
 
     def get_result_callback(self, future):
         """
-        Store the future result in a variable
+        Store the future result in a variable.
 
         Keyword arguments:
             plan_result: Store future result
@@ -437,6 +464,7 @@ class SimpleMove(Node):
     def execute_traj(self):
         """
         Store the trajectory messages and use action client to send the trajectory messages.
+
         Returns:
             None
         """
@@ -446,6 +474,8 @@ class SimpleMove(Node):
 
     def timer_callback(self):
         """
+        Continuously running timer callback.
+
         Use the state machine to set the state for inverse kinematics and
         excutute trajectory.
         Create and add box into Planning Scene.
@@ -530,6 +560,7 @@ class SimpleMove(Node):
 
 
 def simple_move_entry(args=None):
+    """Run SimpleMove node."""
     rclpy.init(args=args)
     node = SimpleMove()
     rclpy.spin(node)
