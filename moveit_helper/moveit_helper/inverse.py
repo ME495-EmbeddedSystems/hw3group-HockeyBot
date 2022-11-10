@@ -80,7 +80,7 @@ class InverseKinematics(Node):
         return response
 
 
-    def goal_service(self, request, response):
+    def initial_service(self, request, response):
         # self.state = State.GETTING
         self.init_x=request.x
         self.init_y=request.y
