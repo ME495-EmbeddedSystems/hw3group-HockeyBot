@@ -3,22 +3,24 @@ Enables the planning and execution of paths using the move group node. It can pl
 specified pose or just a position or or just an orientation from any start configuration and it can
 also dynamically add a box to the planning scene.
 SERVERS:
-    +/initial_service(moveit_interface/srv/Initial)- Gets the starting configuration (position and
+    + /initial_service(moveit_interface/srv/Initial)- Gets the starting configuration (position and
     orientation) of the end effector, response is None
-    +/goal_service(moveit_interface/srv/Goal)- Gets the goal pose (position and orientation) of the 
-    end effector, response is None
-    +/execute_service(moveit_interface/srv/Execute)- It has a bool request flag that indicates
-    whether a plan should be executed, response is None. 
-    +/add_obj(moveit_interface/srv/Addobj)- It takes in the box id, position and dimensions of a
+    + /goal_service(moveit_interface/srv/Goal)- Gets the goal pose (position and orientation) of
+    the end effector, response is None
+    + /execute_service(moveit_interface/srv/Execute)- It has a bool request flag that indicates
+    whether a plan should be executed, response is None.
+    + /add_obj(moveit_interface/srv/Addobj)- It takes in the box id, position and dimensions of a
     box object to be added to the planning scene, response is None.
 CLIENTS:
-    +compute_ik(moveit_msgs/srv/GetPositionIK)- Send the goal position of the end effector and gets
-    the corresponding joint angles of the manipulator
-    +get_planning_scene(moveit_msgs/srv/GetPlanningScene)-Send the components and gets the planning
-    scene as response
+    + compute_ik(moveit_msgs/srv/GetPositionIK)- Send the goal position of the end effector and
+    gets the corresponding joint angles of the manipulator
+    + get_planning_scene(moveit_msgs/srv/GetPlanningScene)-Send the components and gets the
+    planning scene as response
 ACTION CLIENTS:
-    +move_action(moveit_msgs/action/MoveGroup)-
-    +execute_trajectory(moveit_msgs/action/ExecuteTrajectory)- 
+    + move_action(moveit_msgs/action/MoveGroup) - Send the plan request message and returns the
+    trajectory path.
+    + execute_trajectory(moveit_msgs/action/ExecuteTrajectory) - Send trajectory path message and
+    the action then executes the trajectory.
 PUBLISHERS:
     + /planning_scene (moveit_msgs/msg/PlanningScene) - Publishes the box object to the planning
     scene
@@ -53,7 +55,7 @@ from moveit_msgs.srv import GetPlanningScene
 
 
 class State(Enum):
-    """ 
+    """
     These are the 7 states of the system.It determines what the main timer function and other
     callback functions should be doing on each iteration in the correct order
     """
@@ -67,18 +69,18 @@ class State(Enum):
 
 
 class SimpleMove(Node):
-    """ 
+    """
     This node receives a starting position and an end goal position of the end effector, plans the
     path to the end goal configuration and then executes the path with the help of different
     services. It can also dynamically add a box object to the planning scene. It does not execute
     trajectories which lead to collisions.
-    """ 
+    """
     def __init__(self):
         super().__init__("simple_move")
 
         # Initial guess for joint angles
         # These are the home configuration joint angles
-        self.initial_js = [0.0,-0.785, 0.0, -2.356, 0.0, 1.57, 0.785]
+        self.initial_js = [0.0, -0.785, 0.0, -2.356, 0.0, 1.57, 0.785]
 
         # Service
         self.initial = self.create_service(Initial, "/initial_service", self.initial_service)
@@ -134,8 +136,8 @@ class SimpleMove(Node):
         self.goal = self.create_service(Addobj, "/add_obj", self.obj_service)
         self.robot_state_order = PlanningSceneComponents()
         self.robot_state_order.components = 0
-        self.box_future_client = self.box_client.call_async(GetPlanningScene.Request(components=self.robot_state_order))
-
+        self.box_future_client = self.box_client.call_async(GetPlanningScene.Request(
+            components=self.robot_state_order))
 
     def obj_service(self, request, response):
         """
@@ -143,81 +145,78 @@ class SimpleMove(Node):
         uniquely identify the object and dynamically place it in the planning scene
         Args:
             request (moveit_interface/srv/Addobj): Contains the id of the box object (any int),
-            the x, y, z position and the dim_x, dim_y, dim_z dimensions 
+            the x, y, z position and the dim_x, dim_y, dim_z dimensions
             response: None
         Returns:
             None
         """
         self.Flag_box_dim = 1
         self.id = request.id
-        self.pos_x=request.x
-        self.pos_y=request.y
-        self.pos_z=request.z
-        self.dim_x=request.dim_x
-        self.dim_y=request.dim_y
-        self.dim_z=request.dim_z
+        self.pos_x = request.x
+        self.pos_y = request.y
+        self.pos_z = request.z
+        self.dim_x = request.dim_x
+        self.dim_y = request.dim_y
+        self.dim_z = request.dim_z
 
         return response
-
 
     def update_joint_states(self, data):
         """
         Subscribtion topic: /joint_states
         This subscription callback obtains and stores the joint angles of the robot manipulator
         Args:
-            data (sensor_msgs/msg/JointState): Contains the the joint angles of the robot manipulator
+            data (sensor_msgs/msg/JointState): Contains the the joint angles of the robot
+            manipulator
         Returns:
             None
         """
         self.joint_states = data
 
-
     def initial_service(self, request, response):
         """
         This service obtains and stores the starting position and orientation of the end effector
         Args:
-            request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll, pitch
-        and yaw orientation values 
+            request: (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
+                     pitch and yaw orientation values
             response: None
         Returns:
             None
         """
-        self.init_x=request.x
-        self.init_y=request.y
-        self.init_z=request.z
-        self.init_roll=request.roll
-        self.init_pitch=request.pitch
-        self.init_yaw=request.yaw
+        self.init_x = request.x
+        self.init_y = request.y
+        self.init_z = request.z
+        self.init_roll = request.roll
+        self.init_pitch = request.pitch
+        self.init_yaw = request.yaw
         self.init_ori_x, self.init_ori_y, self.init_ori_z, self.init_ori_w = euler_quaternion(
                                                     self.init_roll, self.init_pitch, self.init_yaw)
 
         self.start_IK_Callback()
         return response
 
-
     def goal_service(self, request, response):
         """
-        This service obtains and stores the desired end position and orientation of the end effector
+        This service obtains and stores the desired end position and orientation of the end
+        effector
         Args:
-            request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll, 
-            pitch and yaw orientation values 
+            request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
+            pitch and yaw orientation values
             response: None
-        Returns: 
+        Returns:
             None
         """
         self.state = State.IK_CAL
-        self.goal_x=request.x
-        self.goal_y=request.y
-        self.goal_z=request.z
-        self.goal_roll=request.roll
-        self.goal_pitch=request.pitch
-        self.goal_yaw=request.yaw
+        self.goal_x = request.x
+        self.goal_y = request.y
+        self.goal_z = request.z
+        self.goal_roll = request.roll
+        self.goal_pitch = request.pitch
+        self.goal_yaw = request.yaw
         self.goal_ori_x, self.goal_ori_y, self.goal_ori_z, self.goal_ori_w = euler_quaternion(
                                                     self.goal_roll, self.goal_pitch, self.goal_yaw)
         return response
 
-
-    
     def execute_service(self, request, response):
         """
         This service updates the state according to the bool flag in the request
@@ -235,26 +234,29 @@ class SimpleMove(Node):
             self.Flag_start_ik = 0
         return response
 
-
     def start_IK_Callback(self):
         """
-        This function send updated request with desired starting configuration and 
+        This function send updated request with desired starting configuration and
         calls the compute_ik service
         Returns:
             None
         """
         self.Flag_start_ik = 1
         # Compute_IK variables
-
-        self.rq.group_name='panda_arm' # TODO Change to franka_manipulator
-        self.rq.robot_state.joint_state.header.stamp=self.get_clock().now().to_msg()
-        self.rq.robot_state.joint_state.header.frame_id='panda_link0'
-        self.rq.robot_state.joint_state.name=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
-        self.rq.robot_state.joint_state.position=self.initial_js
-        self.rq.robot_state.multi_dof_joint_state.header.stamp=self.get_clock().now().to_msg()
-        self.rq.robot_state.multi_dof_joint_state.header.frame_id='panda_link0'
-        self.rq.robot_state.multi_dof_joint_state.joint_names=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
-        self.rq.robot_state.is_diff=False
+        self.rq.group_name = 'panda_arm'
+        self.rq.robot_state.joint_state.header.stamp = self.get_clock().now().to_msg()
+        self.rq.robot_state.joint_state.header.frame_id = 'panda_link0'
+        self.rq.robot_state.joint_state.name = ['panda_joint1', 'panda_joint2', 'panda_joint3',
+                                                'panda_joint4', 'panda_joint5', 'panda_joint6',
+                                                'panda_joint7']
+        self.rq.robot_state.joint_state.position = self.initial_js
+        self.rq.robot_state.multi_dof_joint_state.header.stamp = self.get_clock().now().to_msg()
+        self.rq.robot_state.multi_dof_joint_state.header.frame_id = 'panda_link0'
+        self.rq.robot_state.multi_dof_joint_state.joint_names = ['panda_joint1', 'panda_joint2',
+                                                                 'panda_joint3', 'panda_joint4',
+                                                                 'panda_joint5', 'panda_joint6',
+                                                                 'panda_joint7']
+        self.rq.robot_state.is_diff = False
         self.rq.avoid_collisions = True
         self.rq.ik_link_name = 'panda_link8'
         self.rq.pose_stamped.header.stamp = self.get_clock().now().to_msg()
@@ -266,16 +268,18 @@ class SimpleMove(Node):
         self.rq.pose_stamped.pose.orientation.y = self.init_ori_y
         self.rq.pose_stamped.pose.orientation.z = self.init_ori_z
         self.rq.pose_stamped.pose.orientation.w = self.init_ori_w
-        self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0', 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
+        self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0',
+                                 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4',
+                                 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8',
+                                 'panda_rightfinger']
         self.rq.pose_stamped_vector = []
         self.rq.timeout.sec = 60
-
+        # Call Compute_IK
         self.future_start_IK = self.ik_client.call_async(GetPositionIK.Request(ik_request=self.rq))
-
 
     def Compute_IK_Callback(self):
         """
-        This function send updated request with desired end configuration of the 
+        This function send updated request with desired end configuration of the
         end effector and calls the compute_ik service
         Returns:
             None
@@ -288,15 +292,20 @@ class SimpleMove(Node):
         # Compute_IK variables
         self.joint_constr_list = []
 
-        self.rq.group_name='panda_arm' # TODO Change to franka_manipulator
-        self.rq.robot_state.joint_state.header.stamp=self.get_clock().now().to_msg()
-        self.rq.robot_state.joint_state.header.frame_id='panda_link0'
-        self.rq.robot_state.joint_state.name=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
-        self.rq.robot_state.joint_state.position=self.initial_js
-        self.rq.robot_state.multi_dof_joint_state.header.stamp=self.get_clock().now().to_msg()
-        self.rq.robot_state.multi_dof_joint_state.header.frame_id='panda_link0'
-        self.rq.robot_state.multi_dof_joint_state.joint_names=['panda_joint1', 'panda_joint2', 'panda_joint3', 'panda_joint4', 'panda_joint5', 'panda_joint6','panda_joint7' ]
-        self.rq.robot_state.is_diff=False
+        self.rq.group_name = 'panda_arm'
+        self.rq.robot_state.joint_state.header.stamp = self.get_clock().now().to_msg()
+        self.rq.robot_state.joint_state.header.frame_id = 'panda_link0'
+        self.rq.robot_state.joint_state.name = ['panda_joint1', 'panda_joint2', 'panda_joint3',
+                                                'panda_joint4', 'panda_joint5', 'panda_joint6',
+                                                'panda_joint7']
+        self.rq.robot_state.joint_state.position = self.initial_js
+        self.rq.robot_state.multi_dof_joint_state.header.stamp = self.get_clock().now().to_msg()
+        self.rq.robot_state.multi_dof_joint_state.header.frame_id = 'panda_link0'
+        self.rq.robot_state.multi_dof_joint_state.joint_names = ['panda_joint1', 'panda_joint2',
+                                                                 'panda_joint3', 'panda_joint4',
+                                                                 'panda_joint5', 'panda_joint6',
+                                                                 'panda_joint7']
+        self.rq.robot_state.is_diff = False
         self.rq.avoid_collisions = True
         self.rq.ik_link_name = 'panda_link8'
         self.rq.pose_stamped.header.stamp = self.get_clock().now().to_msg()
@@ -316,11 +325,12 @@ class SimpleMove(Node):
         self.rq.pose_stamped.pose.orientation.z = self.goal_ori_z
         self.rq.pose_stamped.pose.orientation.w = self.goal_ori_w
         self.rq.ik_link_names = ['panda_hand', 'panda_hand_tcp', 'panda_leftfinger', 'panda_link0',
-                    'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4', 'panda_link5',
-                'panda_link6', 'panda_link7', 'panda_link8', 'panda_rightfinger']
+                                 'panda_link1', 'panda_link2', 'panda_link3', 'panda_link4',
+                                 'panda_link5', 'panda_link6', 'panda_link7', 'panda_link8',
+                                 'panda_rightfinger']
         self.rq.pose_stamped_vector = []
         self.rq.timeout.sec = 60
-
+        # Call Compute_IK
         self.future_compute_IK = self.ik_client.call_async(GetPositionIK.Request(
             ik_request=self.rq))
 
@@ -353,7 +363,7 @@ class SimpleMove(Node):
             self.joint_constr_list.append(constraint)
 
     def plan_request(self):
-        """ 
+        """
         Get the request messege form MoveGroup. Set workspace parameters.
         Returns:
             None
@@ -399,7 +409,7 @@ class SimpleMove(Node):
 
     def plan_response_callback(self, future):
         """
-        Test if the result is received. Goal not accept: rejected. 
+        Test if the result is received. Goal not accept: rejected.
         Goal successful accept:accepted
         Returns:
             None
