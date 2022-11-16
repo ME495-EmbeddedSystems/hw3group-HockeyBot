@@ -408,8 +408,8 @@ class SimpleMove(Node):
             constraint = JointConstraint()
             constraint.joint_name = self.ik_result.solution.joint_state.name[i]
             constraint.position = self.ik_result.solution.joint_state.position[i]
-            constraint.tolerance_above = 0.0001
-            constraint.tolerance_below = 0.0001
+            constraint.tolerance_above = 0.01 #0.0001
+            constraint.tolerance_below = 0.01 #0.0001
             constraint.weight = 1.0
             self.joint_constr_list.append(constraint)
 
@@ -442,7 +442,7 @@ class SimpleMove(Node):
         plan_request_msg.request.start_state.multi_dof_joint_state.header.frame_id = 'panda_link0'
         # Additional parameters
         plan_request_msg.request.pipeline_id = 'move_group'
-        plan_request_msg.request.group_name = 'panda_manipulator'
+        plan_request_msg.request.group_name = 'panda_arm'
         plan_request_msg.request.num_planning_attempts = 10
         plan_request_msg.request.allowed_planning_time = 5.0
         plan_request_msg.request.max_velocity_scaling_factor = 0.1
