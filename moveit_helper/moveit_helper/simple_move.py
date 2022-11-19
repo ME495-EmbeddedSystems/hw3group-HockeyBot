@@ -42,10 +42,11 @@ from rclpy.action import ActionClient
 from moveit_msgs.action import MoveGroup
 import moveit_msgs.action
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Vector3
-from moveit_msgs.msg import PositionIKRequest, JointConstraint
+from geometry_msgs.msg import Vector3, Pose
+from moveit_msgs.msg import PositionIKRequest, JointConstraint, CartesianTrajectory,\
+    CartesianTrajectoryPoint, CartesianPoint, GenericTrajectory, RobotState
 from moveit_interface.srv import Initial, Goal, Execute, Addobj
-from moveit_msgs.srv import GetPositionIK
+from moveit_msgs.srv import GetPositionIK, GetCartesianPath
 from .quaternion import euler_quaternion
 from enum import Enum, auto
 from moveit_msgs.action import ExecuteTrajectory
@@ -54,6 +55,7 @@ from tf2_ros.transform_listener import TransformListener
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents
 from moveit_msgs.srv import GetPlanningScene
+
 
 
 class State(Enum):
@@ -102,6 +104,7 @@ class SimpleMove(Node):
 
         # Clients
         self.ik_client = self.create_client(GetPositionIK, "compute_ik")
+        self.cartesian_path_client = self.create_client(GetCartesianPath, "compute_cartesian_path")
 
         # Subscribers
         self.sub = self.create_subscription(
@@ -138,6 +141,9 @@ class SimpleMove(Node):
         # Plan request variables
         self.min_corner = Vector3(x=-1.0, y=-1.0, z=-1.0)
         self.max_corner = Vector3(x=1.0, y=1.0, z=1.0)
+
+        # Compute cartesian path variables
+        self.car_path = RobotState()
 
         # Transform lister
         self.tf_buffer = Buffer()
@@ -283,7 +289,7 @@ class SimpleMove(Node):
         """
         self.Flag_start_ik = 1
         # Compute_IK variables
-        self.rq.group_name = 'panda_arm'
+        self.rq.group_name = 'panda_manipulator'#'panda_arm'
         self.rq.robot_state.joint_state.header.stamp = self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id = 'panda_link0'
         self.rq.robot_state.joint_state.name = ['panda_joint1', 'panda_joint2', 'panda_joint3',
@@ -337,7 +343,7 @@ class SimpleMove(Node):
         # Compute_IK variables
         self.joint_constr_list = []
 
-        self.rq.group_name = 'panda_arm'
+        self.rq.group_name = 'panda_manipulator' #'panda_arm'
         self.rq.robot_state.joint_state.header.stamp = self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id = 'panda_link0'
         self.rq.robot_state.joint_state.name = ['panda_joint1', 'panda_joint2', 'panda_joint3',
@@ -413,9 +419,52 @@ class SimpleMove(Node):
             constraint.weight = 1.0
             self.joint_constr_list.append(constraint)
 
+    def plan_cartesian(self):
+
+        self.car_path.joint_state.header.frame_id = 'panda_link0'
+        self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()
+        # Set start position of Franka
+        if self.Flag_start_ik == 1:
+            self.car_path.joint_state = self.start_joint_states
+        else:
+            self.car_path.joint_state = self.joint_states
+
+        self.group_name = 'panda_manipulator'
+
+        # Waypoints
+        wp1 = Pose()
+        wp1.position.x = self.goal_x
+        wp1.position.y = self.goal_y
+        wp1.position.z = self.goal_z
+        wp1.orientation.x = self.goal_ori_x
+        wp1.orientation.y = self.goal_ori_y
+        wp1.orientation.z = self.goal_ori_z
+        wp1.orientation.w =  self.goal_ori_w
+        self.waypoints = [wp1]
+
+        self.max_step = 10.0
+        self.jump_threshold = 10.0
+        self.prismatic_jump_threshold = 10.0
+        self.revolute_jump_threshold = 10.0
+        self.avoid_collisions = True
+
+        # Call plan cartesian path
+        self.future_plan_cartesian = \
+            self.cartesian_path_client.call_async(GetCartesianPath.Request(
+                start_state = self.car_path,
+                group_name = self.group_name,
+                waypoints = self.waypoints,
+                max_step = self.max_step,
+                jump_threshold = self.jump_threshold,
+                prismatic_jump_threshold = self.prismatic_jump_threshold,
+                revolute_jump_threshold = self.revolute_jump_threshold,
+                avoid_collisions = self.avoid_collisions))
+
+
+
     def plan_request(self):
         """
-        Get the request messege form MoveGroup. Set workspace parameters.
+        Create the request messege for MoveGroup. Set workspace parameters.
 
         Returns
         -------
@@ -424,7 +473,7 @@ class SimpleMove(Node):
         """
         plan_request_msg = moveit_msgs.action.MoveGroup.Goal()
 
-        """ Populate plan request messege """
+        """Populate plan request messege."""
         # Set start position of Franka
         if self.Flag_start_ik == 1:
             plan_request_msg.request.start_state.joint_state = self.start_joint_states
@@ -442,7 +491,7 @@ class SimpleMove(Node):
         plan_request_msg.request.start_state.multi_dof_joint_state.header.frame_id = 'panda_link0'
         # Additional parameters
         plan_request_msg.request.pipeline_id = 'move_group'
-        plan_request_msg.request.group_name = 'panda_arm'
+        plan_request_msg.request.group_name = 'panda_manipulator' # panda_arm
         plan_request_msg.request.num_planning_attempts = 10
         plan_request_msg.request.allowed_planning_time = 5.0
         plan_request_msg.request.max_velocity_scaling_factor = 0.1
@@ -454,6 +503,27 @@ class SimpleMove(Node):
         # Goal joint_states of Franka - From compute_ik
         plan_request_msg.request.goal_constraints = [moveit_msgs.msg.Constraints(
             joint_constraints=self.joint_constr_list)]
+
+        #### CartesianTrajectory ####
+
+
+        # # self.cartesian_point = CartesianPoint()
+
+        # self.cartesianTrajectory_point = CartesianTrajectoryPoint()
+        # self.cartesianTrajectory_point.point.pose.position.x = 0.6
+        # self.cartesianTrajectory_point.point.pose.position.y = 0.0
+        # self.cartesianTrajectory_point.point.pose.position.z = 0.5
+
+
+        # self.cartesianTrajectory = CartesianTrajectory()
+        # self.cartesianTrajectory.points = [self.cartesianTrajectory_point]
+
+        # self.gen_traj = GenericTrajectory()
+        # self.gen_traj.cartesian_trajectory = [self.cartesianTrajectory]
+
+        # self.get_logger().info(f"self.gen_traj - {[self.gen_traj]}")
+        
+        # plan_request_msg.request.reference_trajectories = [self.gen_traj]
 
         # Future object of plan request
         self.future_plan_request = self._action_client_plan_request.send_goal_async(
@@ -563,7 +633,8 @@ class SimpleMove(Node):
             if self.Flag_PLAN == 0:
                 self.Flag_PLAN = 1
                 self.create_jointStates()
-                self.plan_request()
+                # self.plan_request() 
+                self.plan_cartesian()
 
         if self.state == State.EXECUTE:
             self.execute_traj()
