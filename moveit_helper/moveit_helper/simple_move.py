@@ -420,7 +420,14 @@ class SimpleMove(Node):
             self.joint_constr_list.append(constraint)
 
     def plan_cartesian(self):
+        """
+        Create the request messege for the GetCartesianPath service.
 
+        Returns
+        -------
+            None
+
+        """
         self.car_path.joint_state.header.frame_id = 'panda_link0'
         self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()
         # Set start position of Franka
