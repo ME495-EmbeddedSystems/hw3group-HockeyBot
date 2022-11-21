@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Execute.srv"
   "srv/Initial.srv"
   "srv/Addobj.srv"
+  "srv/GripperSrv.srv"
   DEPENDENCIES)
 
 if(BUILD_TESTING)
