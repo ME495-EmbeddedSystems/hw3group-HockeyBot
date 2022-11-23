@@ -582,7 +582,9 @@ class SimpleMove(Node):
 
         """
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
-        execute_traj_msg.trajectory = self.plan_result.planned_trajectory
+        # execute_traj_msg.trajectory = self.plan_result.planned_trajectory # MoveGroup plan result
+        execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
+
         self._action_client_execute_traj.send_goal_async(execute_traj_msg)
 
     def timer_callback(self):
