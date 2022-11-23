@@ -184,10 +184,12 @@ class SimpleMove(Node):
         """
         gripper_msg = GripperCommand.Goal()
         if open is False:
-            gripper_msg.command.position = 0.01
-            gripper_msg.command.max_effort = 60.0
+            # gripper_msg.command.position = 0.01   # closed all the way
+            # gripper measurement is mm/2
+            gripper_msg.command.position = 0.0226
+            gripper_msg.command.max_effort = 10.0
         elif open is True:
-            gripper_msg.command.position = 0.04
+            gripper_msg.command.position = 0.04 # max open
 
         if self.gripper_action_client.server_is_ready():
             self.future_gripper_action_request = self.gripper_action_client.send_goal_async(gripper_msg)
@@ -207,7 +209,7 @@ class SimpleMove(Node):
             self.get_logger().info('Unable to change gripper state')
             return
 
-        self.get_logger().info('Changing gripper state')
+        # self.get_logger().info('Changing gripper state')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.gripper_result_callback)
     
