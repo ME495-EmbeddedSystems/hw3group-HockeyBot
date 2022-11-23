@@ -1,0 +1,11 @@
+AprilTag:                 # node name
+  ros__parameters:	  # setup (defaults)
+    image_transport: raw  # image format: "raw" or "compressed"
+    family: 36h11         # tag family name: 16h5, 25h9, 36h11
+    size: 0.055             # default tag edge size in meter
+    z_up: true            # rotate about x-axis to have Z pointing upwards
+    profile: false
+    tag:
+      ids: [64]            # tag ID
+      frames: [camera_link]  # optional frame name
+      sizes: [0.18]    
