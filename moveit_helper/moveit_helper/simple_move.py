@@ -522,7 +522,19 @@ class SimpleMove(Node):
 
         self.group_name = 'panda_manipulator'
 
+        
+
         # Waypoints
+        # Waypoints
+        wp2 = Pose()
+        wp2.position.x = -0.3
+        wp2.position.y = 0.4
+        wp2.position.z = 0.0
+        wp2.orientation.x = self.goal_ori_x
+        wp2.orientation.y = self.goal_ori_y
+        wp2.orientation.z = self.goal_ori_z
+        wp2.orientation.w =  self.goal_ori_w
+
         wp1 = Pose()
         wp1.position.x = self.goal_x
         wp1.position.y = self.goal_y
@@ -531,7 +543,7 @@ class SimpleMove(Node):
         wp1.orientation.y = self.goal_ori_y
         wp1.orientation.z = self.goal_ori_z
         wp1.orientation.w =  self.goal_ori_w
-        self.waypoints = [wp1]
+        self.waypoints = [wp2,wp1]
 
         self.max_step = 10.0
         self.jump_threshold = 10.0
