@@ -98,6 +98,15 @@ class SimpleMove(Node):
         # These are the home configuration joint angles
         self.initial_js = [0.0, -0.785, 0.0, -2.356, 0.0, 1.57, 0.785]
 
+        # Robot workspace on air hockey table
+        # [min, max]
+        self.x_table = [-0.3, 0.29]
+        self.y_table = [0.405, 0.7]
+        self.z_table = -0.015
+        # Collision plane
+        self.table_collision_dims = [2.0, 2.0, 0.05]
+        self.table_collision_posn = [0.0, 1.3, -0.2]
+
         # Service
         self.initial = self.create_service(Initial, "/initial_service", self.initial_service)
         self.goal = self.create_service(Goal, "/goal_service", self.goal_service)
@@ -341,7 +350,13 @@ class SimpleMove(Node):
             self.state = State.EXECUTE
         else:
             self.state = State.INITIAL
+            # Reset all Flags
             self.Flag_start_ik = 0
+            self.Flag_IK_CAL = 0
+            self.Flag_PLAN = 0
+            self.Flag_Execute = 0
+            # Compute_IK variables
+            self.joint_constr_list = []
         return response
 
     def start_IK_Callback(self):
