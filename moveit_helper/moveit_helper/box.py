@@ -21,7 +21,7 @@ class Box(Node):
         msg.position.z = 0.5
     def timer_callback(self):
         msg.header.stamp = self.get_clock().now().to_msg()
-  
+
         self.pub_box(self.brick)
 
 def main(args=None):                                

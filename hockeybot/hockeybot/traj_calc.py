@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 import matplotlib.pyplot as plt
+from geometry_msgs.msg import PointStamped, Point
 
 
 
@@ -24,6 +25,23 @@ class TrajCalc(Node):
         """
         super().__init__("trajectory_calculations")
 
+        # Publishers
+        self.pub_wp1 = self.create_publisher(PointStamped, '/waypoint1', 10)
+        self.wp1 = PointStamped()
+        self.pub_wp2 = self.create_publisher(PointStamped, '/waypoint2', 10)
+        self.wp2 = PointStamped()
+
+        # Subscribers
+        self.sub_p1 = self.create_subscription(
+            Point, "/puck1_position", self.update_puck_p1, 10)
+        self.p1 = Point()  # Puck frame 1 position
+        self.sub_p2 = self.create_subscription(
+            Point, "/puck2_position", self.update_puck_p2, 10)
+        self.p2 = Point()  # Puck frame 2 position
+
+        # Timers
+        self.create_timer(0.1, self.timer_callback)
+
         # Planar workspace of arm relative to robot base while playing
         self.xmin = -0.3
         self.xmax = 0.29
@@ -37,8 +55,24 @@ class TrajCalc(Node):
         self.Table_ymax = 1.85
 
         # Robot arm waypoints 1 and 2 y-values
+        self.wx1 = 0.0
         self.wy1 = 0.45
+        self.wz1 = 0.0
+        self.wx2 = 0.0
         self.wy2 = 0.7
+        self.wz2 = 0.0
+
+        # Previous values for waypoints x coordinates
+        self.wx1_prev = 20
+        self.wx2_prev = 20
+
+        # Waypoints to be published
+        self.wp1.point.x = self.wx1
+        self.wp1.point.y = self.wy1
+        self.wp1.point.z = self.wz1
+        self.wp2.point.x = self.wx2
+        self.wp2.point.y = self.wy2
+        self.wp2.point.z = self.wz2
 
         # Two puck center positions
         self.p1 = np.array([0.22,1.6])
@@ -56,7 +90,35 @@ class TrajCalc(Node):
         # p1[1] = random.uniform(1.2,1.6)
         # p2[1] = random.uniform(1.2,1.6)
 
+    def update_puck_p1(self, data):
+        """
+        Get puck frame 1 coordinates 
 
+        Subscribtion topic: /puck1_position
+        Args:
+            data ( geometry_msgs/msg/Point: Contains the x,y,z coordinates of the puck at frame 1
+
+        Returns
+        -------
+            None
+
+        """
+        self.p1 = data
+
+    def update_puck_p2(self, data):
+        """
+        Get puck frame 2 coordinates 
+
+        Subscribtion topic: /puck2_position
+        Args:
+            data ( geometry_msgs/msg/Point: Contains the x,y,z coordinates of the puck at frame 2
+
+        Returns
+        -------
+            None
+
+        """
+        self.p2 = data
 
     def traj_puck(self):
         """
@@ -144,6 +206,22 @@ class TrajCalc(Node):
         plt.xlabel("Robot X-axis ")
         plt.show()
 
+    def timer_callback(self):
+
+        if self.wx1 == self.wx1_prev and self.wx2 == self.wx2_prev:
+            # Publish waypoints
+            self.pub_wp1(self.wp1)
+            self.pub_wp2(self.wp2)
+        else:
+            # New header timestamp
+            self.wp1.header.stamp = self.get_clock().now().to_msg()
+            self.wp2.header.stamp = self.get_clock().now().to_msg()
+            # Set x positions for waypoints
+            self.wp1.point.x = self.wx1
+            self.wp2.point.x = self.wx2
+            # Publish waypoints
+            self.pub_wp1(self.wp1)
+            self.pub_wp2(self.wp2)
 
 def traj_calc_entry(args=None):
     """Run TrajCalc node."""
