@@ -503,6 +503,9 @@ class SimpleMove(Node):
             constraint.weight = 1.0
             self.joint_constr_list.append(constraint)
 
+    # def play_waypoints(self,c1,c2):
+
+
     def plan_cartesian(self):
         """
         Create the request messege for the GetCartesianPath service.
@@ -522,19 +525,18 @@ class SimpleMove(Node):
 
         self.group_name = 'panda_manipulator'
 
-        
 
-        # Waypoints
-        # Waypoints
+        # Midway waypoint
         wp2 = Pose()
         wp2.position.x = -0.3
-        wp2.position.y = 0.4
+        wp2.position.y = 0.405
         wp2.position.z = 0.0
         wp2.orientation.x = self.goal_ori_x
         wp2.orientation.y = self.goal_ori_y
         wp2.orientation.z = self.goal_ori_z
         wp2.orientation.w =  self.goal_ori_w
 
+        # End goal wapoint
         wp1 = Pose()
         wp1.position.x = self.goal_x
         wp1.position.y = self.goal_y
@@ -543,6 +545,7 @@ class SimpleMove(Node):
         wp1.orientation.y = self.goal_ori_y
         wp1.orientation.z = self.goal_ori_z
         wp1.orientation.w =  self.goal_ori_w
+
         self.waypoints = [wp2,wp1]
 
         self.max_step = 10.0
@@ -738,7 +741,7 @@ class SimpleMove(Node):
             if self.Flag_PLAN == 0:
                 self.Flag_PLAN = 1
                 self.create_jointStates()
-                # self.plan_request() 
+                # self.plan_request()
                 self.plan_cartesian()
 
         if self.state == State.EXECUTE:
