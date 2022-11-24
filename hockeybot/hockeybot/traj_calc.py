@@ -32,12 +32,12 @@ class TrajCalc(Node):
         self.wp2 = PointStamped()
 
         # Subscribers
-        # self.sub_p1 = self.create_subscription(
-        #     Point, "/puck1_position", self.update_puck_p1, 10)
-        # self.p1 = Point()  # Puck frame 1 position
-        # self.sub_p2 = self.create_subscription(
-        #     Point, "/puck2_position", self.update_puck_p2, 10)
-        # self.p2 = Point()  # Puck frame 2 position
+        self.sub_p1 = self.create_subscription(
+            Point, "/puck1_position", self.update_puck_p1, 10)
+        self.p1 = Point()  # Puck frame 1 position
+        self.sub_p2 = self.create_subscription(
+            Point, "/puck2_position", self.update_puck_p2, 10)
+        self.p2 = Point()  # Puck frame 2 position
 
         # Timers
         self.create_timer(0.1, self.timer_callback)
