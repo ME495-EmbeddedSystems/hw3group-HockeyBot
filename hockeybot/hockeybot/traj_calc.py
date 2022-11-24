@@ -32,12 +32,12 @@ class TrajCalc(Node):
         self.wp2 = PointStamped()
 
         # Subscribers
-        self.sub_p1 = self.create_subscription(
-            Point, "/puck1_position", self.update_puck_p1, 10)
-        self.p1 = Point()  # Puck frame 1 position
-        self.sub_p2 = self.create_subscription(
-            Point, "/puck2_position", self.update_puck_p2, 10)
-        self.p2 = Point()  # Puck frame 2 position
+        # self.sub_p1 = self.create_subscription(
+        #     Point, "/puck1_position", self.update_puck_p1, 10)
+        # self.p1 = Point()  # Puck frame 1 position
+        # self.sub_p2 = self.create_subscription(
+        #     Point, "/puck2_position", self.update_puck_p2, 10)
+        # self.p2 = Point()  # Puck frame 2 position
 
         # Timers
         self.create_timer(0.1, self.timer_callback)
@@ -220,8 +220,8 @@ class TrajCalc(Node):
             self.wp1.point.x = self.wx1
             self.wp2.point.x = self.wx2
             # Publish waypoints
-            self.pub_wp1(self.wp1)
-            self.pub_wp2(self.wp2)
+            self.pub_wp1.publish(self.wp1)
+            self.pub_wp2.publish(self.wp2)
 
 def traj_calc_entry(args=None):
     """Run TrajCalc node."""
