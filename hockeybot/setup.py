@@ -20,6 +20,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'traj_calc=hockeybot.traj_calc:traj_calc_entry'
         ],
     },
 )
