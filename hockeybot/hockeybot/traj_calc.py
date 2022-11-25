@@ -33,10 +33,10 @@ class TrajCalc(Node):
 
         # Subscribers
         self.sub_p1 = self.create_subscription(
-            Point, "/puck1_position", self.update_puck_p1, 10)
+            Point, '/puck1_position', self.update_puck_p1, 10)
         self.p1 = Point()  # Puck frame 1 position
         self.sub_p2 = self.create_subscription(
-            Point, "/puck2_position", self.update_puck_p2, 10)
+            Point, '/puck2_position', self.update_puck_p2, 10)
         self.p2 = Point()  # Puck frame 2 position
 
         # Timers
@@ -75,8 +75,8 @@ class TrajCalc(Node):
         self.wp2.point.z = self.wz2
 
         # Two puck center positions
-        self.p1 = np.array([0.22,1.6])
-        self.p2 = np.array([0.19,1.5])
+        # self.p1 = np.array([0.22,1.6])
+        # self.p2 = np.array([0.19,1.5])
         # self.p1 = np.array([0.2,1.6])
         # self.p2 = np.array([0.2,1.5])
 

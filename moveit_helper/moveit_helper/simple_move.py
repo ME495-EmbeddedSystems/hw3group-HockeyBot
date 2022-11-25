@@ -304,7 +304,7 @@ class SimpleMove(Node):
         self.init_ori_x, self.init_ori_y, self.init_ori_z, self.init_ori_w = euler_quaternion(
                                                     self.init_roll, self.init_pitch, self.init_yaw)
 
-        self.start_IK_Callback()
+        # self.start_IK_Callback() # TODO Uncomment this
         return response
 
     def goal_service(self, request, response):
@@ -528,13 +528,13 @@ class SimpleMove(Node):
 
         # Midway waypoint
         wp2 = Pose()
-        wp2.position.x = -0.3
-        wp2.position.y = 0.405
-        wp2.position.z = 0.0
-        wp2.orientation.x = self.goal_ori_x
-        wp2.orientation.y = self.goal_ori_y
-        wp2.orientation.z = self.goal_ori_z
-        wp2.orientation.w =  self.goal_ori_w
+        wp2.position.x = self.init_x #-0.3
+        wp2.position.y = self.init_y #0.405
+        wp2.position.z = self.init_z #0.0
+        wp2.orientation.x = self.init_ori_x
+        wp2.orientation.y = self.init_ori_y
+        wp2.orientation.z = self.init_ori_z
+        wp2.orientation.w =  self.init_ori_w
 
         # End goal wapoint
         wp1 = Pose()
