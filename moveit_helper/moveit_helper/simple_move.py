@@ -113,7 +113,6 @@ class SimpleMove(Node):
         self.goal = self.create_service(Goal, "/goal_service", self.goal_service)
         self.execute_srv = self.create_service(Execute, "/execute_service", self.execute_service)
 
-
         # Clients
         self.ik_client = self.create_client(GetPositionIK, "compute_ik")
         self.cartesian_path_client = self.create_client(GetCartesianPath, "compute_cartesian_path")
@@ -336,7 +335,7 @@ class SimpleMove(Node):
 
     def waypoint_service(self, request, response):
         """
-        Obtain and store the desired end pose of the end-effector.
+        Obtain and store a waypoint pose of the end-effector.
 
         Args:
             request (moveit_interface/srv/Goal): Contains the x, y, z position and the roll,
@@ -351,7 +350,7 @@ class SimpleMove(Node):
         # self.state = State.Waypoint
         self.waypoint_x = request.x
         self.waypoint_y = request.y
-        self.gwaypoint_z = request.z
+        self.waypoint_z = request.z
         self.waypoint_roll = request.roll
         self.waypoint_pitch = request.pitch
         self.waypoint_yaw = request.yaw
@@ -555,13 +554,13 @@ class SimpleMove(Node):
 
         # Midway waypoint
         wp2 = Pose()
-        wp2.position.x = self.init_x #-0.3
-        wp2.position.y = self.init_y #0.405
-        wp2.position.z = self.init_z #0.0
-        wp2.orientation.x = self.init_ori_x
-        wp2.orientation.y = self.init_ori_y
-        wp2.orientation.z = self.init_ori_z
-        wp2.orientation.w =  self.init_ori_w
+        wp2.position.x = self.waypoint_x
+        wp2.position.y = self.waypoint_y
+        wp2.position.z = self.waypoint_z
+        wp2.orientation.x = self.waypoint_ori_x
+        wp2.orientation.y = self.waypoint_ori_y
+        wp2.orientation.z = self.waypoint_ori_z
+        wp2.orientation.w =  self.waypoint_ori_w
 
         # End goal wapoint
         wp1 = Pose()
