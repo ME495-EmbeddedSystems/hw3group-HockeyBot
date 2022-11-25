@@ -3,6 +3,7 @@ import cv2
 import pyrealsense2 as rs
 
 
+
 pipeline = rs.pipeline()
 config = rs.config()
 pipeline_wrapper = rs.pipeline_wrapper(pipeline)
@@ -29,6 +30,7 @@ profile = pipeline.start(config)
 
 i =0
 j =0
+
 try:
     while True:
         frame = pipeline.wait_for_frames()
