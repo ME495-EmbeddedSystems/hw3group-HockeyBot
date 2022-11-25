@@ -109,8 +109,10 @@ class SimpleMove(Node):
 
         # Service
         self.initial = self.create_service(Initial, "/initial_service", self.initial_service)
+        self.waypoint = self.create_service(Goal, "/waypoint_service", self.waypoint_service)
         self.goal = self.create_service(Goal, "/goal_service", self.goal_service)
         self.execute_srv = self.create_service(Execute, "/execute_service", self.execute_service)
+
 
         # Clients
         self.ik_client = self.create_client(GetPositionIK, "compute_ik")
@@ -312,7 +314,7 @@ class SimpleMove(Node):
         Obtain and store the desired end pose of the end-effector.
 
         Args:
-            request (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
+            request (moveit_interface/srv/Goal): Contains the x, y, z position and the roll,
             pitch and yaw orientation values
             response: None
 
@@ -330,6 +332,31 @@ class SimpleMove(Node):
         self.goal_yaw = request.yaw
         self.goal_ori_x, self.goal_ori_y, self.goal_ori_z, self.goal_ori_w = euler_quaternion(
                                                     self.goal_roll, self.goal_pitch, self.goal_yaw)
+        return response
+
+    def waypoint_service(self, request, response):
+        """
+        Obtain and store the desired end pose of the end-effector.
+
+        Args:
+            request (moveit_interface/srv/Goal): Contains the x, y, z position and the roll,
+            pitch and yaw orientation values
+            response: None
+
+        Returns
+        -------
+            None
+
+        """
+        # self.state = State.Waypoint
+        self.waypoint_x = request.x
+        self.waypoint_y = request.y
+        self.gwaypoint_z = request.z
+        self.waypoint_roll = request.roll
+        self.waypoint_pitch = request.pitch
+        self.waypoint_yaw = request.yaw
+        self.waypoint_ori_x, self.waypoint_ori_y, self.waypoint_ori_z, self.waypoint_ori_w = euler_quaternion(
+                                                    self.waypoint_roll, self.waypoint_pitch, self.waypoint_yaw)
         return response
 
     def execute_service(self, request, response):
