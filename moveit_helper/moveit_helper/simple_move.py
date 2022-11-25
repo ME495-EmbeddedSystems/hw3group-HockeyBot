@@ -592,8 +592,6 @@ class SimpleMove(Node):
                 revolute_jump_threshold = self.revolute_jump_threshold,
                 avoid_collisions = self.avoid_collisions))
 
-
-
     def plan_request(self):
         """
         Create the request messege for MoveGroup. Set workspace parameters.
@@ -769,6 +767,8 @@ class SimpleMove(Node):
                 self.create_jointStates()
                 # self.plan_request()
                 self.plan_cartesian()
+            # if self.future_plan_cartesian.done(): # Automatically execute when planning is done
+            #     self.state = State.EXECUTE
 
         if self.state == State.EXECUTE:
             self.execute_traj()
