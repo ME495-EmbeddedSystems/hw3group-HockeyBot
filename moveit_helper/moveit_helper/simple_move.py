@@ -122,14 +122,15 @@ class SimpleMove(Node):
             JointState, "/joint_states", self.update_joint_states, 10)
         self.joint_states = JointState()  # Current joint_states
 
+        # Timer callback
         self.timer = self.create_timer(0.1, self.timer_callback)
 
+        # Action Clients
         self._action_client_plan_request = ActionClient(
             self,
             MoveGroup,
             "move_action"
             )
-
         self._action_client_execute_traj = ActionClient(
             self,
             ExecuteTrajectory,
