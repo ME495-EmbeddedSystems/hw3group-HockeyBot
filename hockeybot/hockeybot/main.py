@@ -3,8 +3,9 @@ from rclpy.node import Node
 import numpy as np
 import matplotlib.pyplot as plt
 from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
+from std_msgs.msg import Bool
 from enum import Enum, auto
-from moveit_interface.srv import Initial, Waypoint, Goal, Execute, Addobj, GripperSrv
+from moveit_interface.srv import Initial, Goal
 
 class State(Enum):
     """
@@ -40,7 +41,8 @@ class Main(Node):
         # True initial variables - these only get set once
         self.frequency = 100 # Hz
         self.puck_interval = 1  # 1 means getting consecutive waypoints, 2 means every other, etc.
-        self.home_posn = Pose(x=0.0, y=0.41, z=-0.015)
+        # self.home_posn = Pose(x=0.0, y=0.41, z=-0.015)
+        self.home_posn = "x=0.0, y=0.41, z=-0.015"
         
         # Re-initializable variables - these get reset every cycle
         self.state = State.INIT_CV
@@ -56,14 +58,15 @@ class Main(Node):
         self.wp2_prev = PointStamped()
         self.wp1_flag = 0
         self.wp2_flag = 0
+        self.return_flag = 0
 
         # Subscribers
         self.sub_wp1 = self.create_subscription(PointStamped, '/waypoint1', self.wp1_callback, 10)
         self.sub_wp2 = self.create_subscription(PointStamped, '/waypoint2', self.wp2_callback, 10)
         self.sub_puck_pose = self.create_subscription(Point, '/puck_pose', 
                                                         self.puck_pose_filter, 10)
-        self.sub_sm_plan = self.create_subscription(int, '/sm_plan', self.sm_plan_callback, 10)
-        self.sub_sm_execute = self.create_subscription(int, '/sm_execute', 
+        self.sub_sm_plan = self.create_subscription(Bool, '/sm_plan', self.sm_plan_callback, 10)
+        self.sub_sm_execute = self.create_subscription(Bool, '/sm_execute', 
                                                         self.sm_execute_callback, 10)
 
         # Publishers
@@ -121,15 +124,16 @@ class Main(Node):
             self.wp2_traj = data
             self.wp2_flag = 1
 
-    def sm_plan_callback(self, data):
+    def sm_plan_callback(self, msg):
         """Checks if SimpleMove has finished planning the trajectory to hit the puck."""
 
-        if data == 1:
+        if msg.data == False:
             self.sm_plan_done = True
 
-    def sm_execute_callback(self, data):
+    def sm_execute_callback(self, msg):
         """Checks if SimpleMove has finished executing a trajectory."""
-        if data == 1:
+
+        if msg.data == False:
             self.sm_execute_done = True
 
     def timer_callback(self):
@@ -180,16 +184,27 @@ class Main(Node):
                 
         if self.state == State.AWAIT_PLAN:
             if self.waypoint_future.done() and self.goal_future.done():
-                self.sm_plan_callback()
                 if self.sm_plan_done == True:
                     self.state = State.RETURN_HOME
 
         if self.state == State.RETURN_HOME:
-            # Call services here
-            self.initial_future = self.initial_client.call_async()
-            if self.initial_future.done():
-                self.waypoint_future = self.waypoint_client.call_async()
-                self.goal_future = self.goal_client.call_async()
+            # Do future path plan from goal position back to home
+
+            # Set starting point to goal position
+            self.initial_future = self.initial_client.call_async(f"x: {self.wp1_traj.x}, \
+                                                                   y: {self.wp1_traj.y}, \
+                                                                   z: {self.wp1_traj.z}")
+            if self.initial_future.done() and self.return_flag == 0:
+                # Set waypoint to halfway between initial and home
+                # Set goal to home
+                wpx = (self.wp1_traj.x + 0.0)/2
+                wpy = (self.wp1_traj.y + 0.41)/2
+                wpz = self.wp1_traj.z
+                self.waypoint_future = self.waypoint_client.call_async(f"x: {wpx}, \
+                                                                         y: {wpy}, \
+                                                                         z: {wpz}")
+                self.goal_future = self.goal_client.call_async(self.home_posn)
+                self.return_flag = 1    # We only want to do these calls once
 
             if self.waypoint_future.done() and self.goal_future.done():
                 # Reset initial variables
@@ -202,3 +217,8 @@ class Main(Node):
                 self.puck_posns = PoseArray()
                 self.sm_plan_done = False
                 self.sm_execute_done = False
+                self.wp1_prev = PointStamped()
+                self.wp2_prev = PointStamped()
+                self.wp1_flag = 0
+                self.wp2_flag = 0
+                self.return_flag = 0
