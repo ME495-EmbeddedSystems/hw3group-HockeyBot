@@ -56,6 +56,7 @@ from tf2_ros.transform_listener import TransformListener
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents
 from moveit_msgs.srv import GetPlanningScene
+from std_msgs.msg import Bool
 
 
 
@@ -101,13 +102,13 @@ class SimpleMove(Node):
         # Robot workspace on air hockey table
         # [min, max]
         self.x_table = [-0.3, 0.29]
-        self.y_table = [0.405, 0.7]
+        self.y_table = [0.41, 0.7]
         self.z_table = -0.015
         # Collision plane
         self.table_collision_dims = [2.0, 2.0, 0.05]
         self.table_collision_posn = [0.0, 1.3, -0.2]
 
-        # Service
+        # Services
         self.initial = self.create_service(Initial, "/initial_service", self.initial_service)
         self.waypoint = self.create_service(Goal, "/waypoint_service", self.waypoint_service)
         self.goal = self.create_service(Goal, "/goal_service", self.goal_service)
@@ -116,6 +117,10 @@ class SimpleMove(Node):
         # Clients
         self.ik_client = self.create_client(GetPositionIK, "compute_ik")
         self.cartesian_path_client = self.create_client(GetCartesianPath, "compute_cartesian_path")
+
+        # Publishers
+        self.pub_sm_plan = self.create_publisher(Bool, "/sm_plan", 10)
+        self.pub_sm_execute = self.create_publisher(Bool, "/sm_execute", 10)
 
         # Subscribers
         self.sub = self.create_subscription(
@@ -145,6 +150,10 @@ class SimpleMove(Node):
         self.Flag_Execute = 0
         self.Flag_box_dim = 0
         self.Flag_box_create = 0
+        self.sm_plan_msg = Bool()
+        self.sm_plan_msg.data = False
+        self.sm_execute_msg = Bool()
+        self.sm_execute_msg.data = False
 
         # Compute_IK variables
         self.joint_constr_list = []
@@ -384,6 +393,9 @@ class SimpleMove(Node):
             self.Flag_Execute = 0
             # Compute_IK variables
             self.joint_constr_list = []
+            # Publisher messages
+            self.sm_plan_msg.data = False
+            self.sm_execute_msg.data = False
         return response
 
     def start_IK_Callback(self):
@@ -749,6 +761,10 @@ class SimpleMove(Node):
         except BaseException:
             self.get_logger().info('Panda frames does not exist')
 
+        # Continuously publish whether or not node has planned or executed
+        self.pub_sm_plan.publish(self.sm_plan_msg)
+        self.pub_sm_execute.publish(self.sm_execute_msg)
+
         if self.state == State.IK_CAL:
             if self.Flag_IK_CAL == 0:
                 self.Compute_IK_Callback()
@@ -767,13 +783,17 @@ class SimpleMove(Node):
                 self.Flag_PLAN = 1
                 self.create_jointStates()
                 # self.plan_request()
+                self.sm_plan_msg.data = True
                 self.plan_cartesian()
             # if self.future_plan_cartesian.done(): # Automatically execute when planning is done
+            #     self.sm_plan_msg.data = False
             #     self.state = State.EXECUTE
 
         if self.state == State.EXECUTE:
+            self.sm_execute_msg.data = True
             self.execute_traj()
             self.state = State.INITIAL
+            self.sm_execute_msg.data = False
             # Reset all Flags
             self.Flag_start_ik = 0
             self.Flag_IK_CAL = 0
@@ -781,6 +801,9 @@ class SimpleMove(Node):
             self.Flag_Execute = 0
             # Compute_IK variables
             self.joint_constr_list = []
+            # Publisher messages
+            self.sm_plan_msg.data = False
+            self.sm_execute_msg.data = False
 
         if self.Flag_box_dim == 1:
             if self.box_future_client.done():
