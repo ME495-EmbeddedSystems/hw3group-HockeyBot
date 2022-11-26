@@ -50,11 +50,12 @@ class TrajCalc(Node):
         self.ymin = 0.44
         self.ymax = 0.71
 
-        # Airhockey table 4 corners
-        self.Table_xmin = -0.35
-        self.Table_xmax = 0.35
-        self.Table_ymin = 0.30
-        self.Table_ymax = 1.85
+        # Airhockey table 4 corners [meters] TODO: Minus this with puck radius for
+        # collision detection
+        self.Table_xmin = -0.32
+        self.Table_xmax = 0.32
+        self.Table_ymin = 0.3683
+        self.Table_ymax = 1.7526
 
         # Robot arm waypoints 1 and 2 y-values
         self.wx1 = 0.0
@@ -107,8 +108,8 @@ class TrajCalc(Node):
 
         """
         self.puck_array = data
-        self.p1 = self.puck_array.Pose[0].Point
-        self.p2 = self.puck_array.Pose[1].Point
+        self.p1 = self.puck_array.poses[0].position
+        self.p2 = self.puck_array.poses[1].position
 
     def traj_puck(self):
         """
