@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 import matplotlib.pyplot as plt
-from geometry_msgs.msg import PointStamped, Point
+from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
 
 
 
@@ -16,6 +16,9 @@ class TrajCalc(Node):
     services. It can also dynamically add a box object to the planning scene. It does not execute
     trajectories which lead to collisions.
     """
+
+
+# check for x,y of p1,p2 to be 0!!!!
 
     def __init__(self):
         """
@@ -32,11 +35,10 @@ class TrajCalc(Node):
         self.wp2 = PointStamped()
 
         # Subscribers
-        self.sub_p1 = self.create_subscription(
-            Point, '/puck1_position', self.update_puck_p1, 10)
+        self.sub_p = self.create_subscription(
+            PoseArray, '/puck_position', self.update_puck_p, 10)
+        self.puck_array = PoseArray() # Contains puck 1 and 2 coordinates
         self.p1 = Point()  # Puck frame 1 position
-        self.sub_p2 = self.create_subscription(
-            Point, '/puck2_position', self.update_puck_p2, 10)
         self.p2 = Point()  # Puck frame 2 position
 
         # Timers
@@ -90,35 +92,23 @@ class TrajCalc(Node):
         # p1[1] = random.uniform(1.2,1.6)
         # p2[1] = random.uniform(1.2,1.6)
 
-    def update_puck_p1(self, data):
+    def update_puck_p(self, data):
         """
-        Get puck frame 1 coordinates 
+        Get puck frame 1 and 2 coordinates 
 
-        Subscribtion topic: /puck1_position
+        Subscribtion topic: /puck_position
         Args:
-            data ( geometry_msgs/msg/Point: Contains the x,y,z coordinates of the puck at frame 1
+            data ( geometry_msgs/msg/PoseArray: Contains the x,y,z coordinates of the puck at frame
+                1 and 2
 
         Returns
         -------
             None
 
         """
-        self.p1 = data
-
-    def update_puck_p2(self, data):
-        """
-        Get puck frame 2 coordinates 
-
-        Subscribtion topic: /puck2_position
-        Args:
-            data ( geometry_msgs/msg/Point: Contains the x,y,z coordinates of the puck at frame 2
-
-        Returns
-        -------
-            None
-
-        """
-        self.p2 = data
+        self.puck_array = data
+        self.p1 = self.puck_array.Pose[0].Point
+        self.p2 = self.puck_array.Pose[1].Point
 
     def traj_puck(self):
         """
@@ -128,12 +118,12 @@ class TrajCalc(Node):
             + c - y axis intersection
             + m - Trajectory slope
         """
-        if self.c1[1] == self.c2[1]:
+        if self.p1.x == self.p2.y:
             self.m = 0
         else:
-            self.m = (self.c1[1]-self.c2[1])/(self.c1[0]-self.c2[0])
+            self.m = (self.p1.y-self.p2.y)/(self.p1.x-self.p2.x)
 
-        self.c = self.c2[1]-self.m*self.c2[0]
+        self.c = self.p2.y-self.m*self.p2.x
 
     def play_waypoints(self):
         """
@@ -147,9 +137,9 @@ class TrajCalc(Node):
 
     def trajectory(self):
         # p1[0] = p2[0] situation where x1 = x2 then m = infinity (Slope)
-        if self.p1[0] == self.p2[0]:
+        if self.p1.x == self.p2.x:
             self.Slope_Zero = 1
-            self.wx1 = self.p1[0]
+            self.wx1 = self.p1.x
             self.wx2 = self.wx1
             self.m = 0
             self.c = np.inf
@@ -164,26 +154,27 @@ class TrajCalc(Node):
                     # not_straight_traj = 1
             else:
                 print(f"self.wx1 or self.wx2 outside workspace!!")
-
             self.draw_2D_sim()
 
         print(f"\n m = {self.m}, c = {self.c}, wx1 = {self.wx1}, wx2 = {self.wx2}")
 
     def draw_2D_sim(self):
-        """Draw a 2D representation of the airhockey table and the trajectory."""
+        """Draw a 2D interactive representation of the airhockey table and the trajectory."""
+        # Interactive plot
+        plt.ion()
         # Trajectory - Y-axis intercect
         plt.plot([0],[0.405], 'o', color = 'pink', label = 'Robot home location')
         # Two puck points from CV
-        plt.plot([self.p1[0],self.p2[0]],[self.p1[1],self.p2[1]], 'ro', color = 'red', label = 'CV puck centres')
+        plt.plot([self.p1.x,self.p2.x],[self.p1.y,self.p2.y], 'ro', color = 'red', label = 'CV puck centres')
         # Intersect at boundary W2 & W1
         plt.plot([self.wx1,self.wx2],[self.wy1,self.wy2], 'ro', color = 'green', label = 'Robot move waypoints')
         # Trajectory - Y-axis intercect
         plt.plot([0],[self.c], 'x', color = 'red', label = 'Traj intercect with y-axis')
         # Puck trajectory line
         if self.Slope_Zero == 0:
-            plt.axline((self.p1[0], self.p1[1]), slope=self.m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
+            plt.axline((self.p1.x, self.p1.y), slope=self.m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
         else:
-            plt.plot([self.p1[0],self.wx1],[self.p1[1],self.wy1], color = 'blue', linestyle=(0, (5, 5)), label = 'Puck trajectory line')
+            plt.plot([self.p1.x,self.wx1],[self.p1.y,self.wy1], color = 'blue', linestyle=(0, (5, 5)), label = 'Puck trajectory line')
         # Table boundaries
         plt.plot([self.Table_xmin,self.Table_xmin],[self.Table_ymin,self.Table_ymax], color="black", label = 'Table boundary')
         plt.plot([self.Table_xmax,self.Table_xmax],[self.Table_ymin,self.Table_ymax], color="black")
@@ -204,22 +195,31 @@ class TrajCalc(Node):
         # plt.legend(loc="upper right")
         plt.ylabel("Robot Y-axis ")
         plt.xlabel("Robot X-axis ")
-        plt.show()
+        # plt.show()
+        # Pause for 0.5 second
+        plt.pause(0.5)
+        # Clear the plot to not show previous plot
+        plt.clf()
 
     def timer_callback(self):
 
-        if self.wx1 == self.wx1_prev and self.wx2 == self.wx2_prev:
-            # Publish waypoints
-            self.pub_wp1(self.wp1)
-            self.pub_wp2(self.wp2)
+        if self.p1.y != 0 and self.p2.y != 0:
+            if self.wx1 == self.wx1_prev and self.wx2 == self.wx2_prev:
+                # Publish waypoints
+                self.pub_wp1.publish(self.wp1)
+                self.pub_wp2.publish(self.wp2)
+            else:
+                self.trajectory()
+                # New header timestamp
+                self.wp1.header.stamp = self.get_clock().now().to_msg()
+                self.wp2.header.stamp = self.get_clock().now().to_msg()
+                # Set x positions for waypoints
+                self.wp1.point.x = self.wx1
+                self.wp2.point.x = self.wx2
+                # Publish waypoints
+                self.pub_wp1.publish(self.wp1)
+                self.pub_wp2.publish(self.wp2)
         else:
-            # New header timestamp
-            self.wp1.header.stamp = self.get_clock().now().to_msg()
-            self.wp2.header.stamp = self.get_clock().now().to_msg()
-            # Set x positions for waypoints
-            self.wp1.point.x = self.wx1
-            self.wp2.point.x = self.wx2
-            # Publish waypoints
             self.pub_wp1.publish(self.wp1)
             self.pub_wp2.publish(self.wp2)
 
