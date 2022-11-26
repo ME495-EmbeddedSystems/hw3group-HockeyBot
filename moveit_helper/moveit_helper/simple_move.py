@@ -341,6 +341,7 @@ class SimpleMove(Node):
         self.goal_yaw = request.yaw
         self.goal_ori_x, self.goal_ori_y, self.goal_ori_z, self.goal_ori_w = euler_quaternion(
                                                     self.goal_roll, self.goal_pitch, self.goal_yaw)
+        self.get_logger().info('Goal service called')
         return response
 
     def waypoint_service(self, request, response):
@@ -366,6 +367,8 @@ class SimpleMove(Node):
         self.waypoint_yaw = request.yaw
         self.waypoint_ori_x, self.waypoint_ori_y, self.waypoint_ori_z, self.waypoint_ori_w = euler_quaternion(
                                                     self.waypoint_roll, self.waypoint_pitch, self.waypoint_yaw)
+
+        self.get_logger().info('Waypoint service called')
         return response
 
     def execute_service(self, request, response):
@@ -605,6 +608,8 @@ class SimpleMove(Node):
                 revolute_jump_threshold = self.revolute_jump_threshold,
                 avoid_collisions = self.avoid_collisions))
 
+        self.get_logger().info('Doen Calling Cartesian')
+
     def plan_request(self):
         """
         Create the request messege for MoveGroup. Set workspace parameters.
@@ -720,6 +725,7 @@ class SimpleMove(Node):
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
         # execute_traj_msg.trajectory = self.plan_result.planned_trajectory # MoveGroup plan result
         execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
+        self.get_logger().info('EXECUTE ________ service called')
 
         self._action_client_execute_traj.send_goal_async(execute_traj_msg)
 
@@ -785,9 +791,9 @@ class SimpleMove(Node):
                 # self.plan_request()
                 self.sm_plan_msg.data = True
                 self.plan_cartesian()
-            # if self.future_plan_cartesian.done(): # Automatically execute when planning is done
-            #     self.sm_plan_msg.data = False
-            #     self.state = State.EXECUTE
+            elif self.future_plan_cartesian.done(): # Automatically execute when planning is done
+                self.sm_plan_msg.data = False
+                self.state = State.EXECUTE
 
         if self.state == State.EXECUTE:
             self.sm_execute_msg.data = True

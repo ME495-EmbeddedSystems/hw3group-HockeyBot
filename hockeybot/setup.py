@@ -20,8 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'traj_calc=hockeybot.traj_calc:traj_calc_entry'
-            'cam_node = hockeybot.cam_node: frames_entry'
+            'traj_calc=hockeybot.traj_calc:traj_calc_entry',
+            'cam_node = hockeybot.cam_node:frames_entry',
+            'main=hockeybot.main:main_entry'
         ],
     },
 )

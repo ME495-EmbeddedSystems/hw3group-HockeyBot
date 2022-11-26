@@ -21,7 +21,7 @@ class State(Enum):
     AWAIT_PLAN = auto(),
     RETURN_HOME = auto()
 
-class Main(Node):
+class main(Node):
     """
     Main node for bridging CV with trajectory calculations to be passed into API to move the robot.
 
@@ -36,20 +36,29 @@ class Main(Node):
 
         Also initializes class variables for ----.
         """
-        super().__init("main_node")
+        super().__init__("main")
 
         # True initial variables - these only get set once
         self.frequency = 100 # Hz
         self.puck_interval = 1  # 1 means getting consecutive waypoints, 2 means every other, etc.
         # self.home_posn = Pose(x=0.0, y=0.41, z=-0.015)
-        self.home_posn = "x=0.0, y=0.41, z=-0.015"
-        
+        self.home_posn = Goal.Request()
+        self.home_posn.x = 0.0
+        self.home_posn.y = 0.41
+        self.home_posn.z = -0.015
+        self.home_posn.roll = 3.1416
+        self.home_posn.pitch = 0.0
+        self.home_posn.yaw = 1.5707
+
+
         # Re-initializable variables - these get reset every cycle
         self.state = State.INIT_CV
         self.initial_puck = True
         self.puck_pose_count = 0
-        self.p1_msg = Pose(x=0.0, y=0.0, z=0.0)
-        self.p2_msg = Pose(x=0.0, y=0.0, z=0.0)
+        self.p1_msg = Pose()
+        self.p2_msg = Pose()
+        self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+        self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
         self.pucks_tmp = []
         self.puck_posns = PoseArray()
         self.sm_plan_done = False
@@ -59,6 +68,8 @@ class Main(Node):
         self.wp1_flag = 0
         self.wp2_flag = 0
         self.return_flag = 0
+        self.initial_flag = 0
+        self.one = 0 # TODO take this out
 
         # Subscribers
         self.sub_wp1 = self.create_subscription(PointStamped, '/waypoint1', self.wp1_callback, 10)
@@ -148,77 +159,115 @@ class Main(Node):
         None
         """
 
-        # Continuously publish puck positions
-        self.puck_posns.poses = [self.p1_msg, self.p2_msg]
-        self.pub_puck_posn.publish(self.puck_posns)
-
-        if self.state == State.INIT_CV:
-            self.puck_pose_filter()
-            if self.puck_pose_count > self.puck_interval:
-                # This means both puck positions were selected
-                self.state = State.TRAJ
-        
-        if self.state == State.TRAJ:
-            # Update the puck positions
-            self.p1_msg = self.pucks_tmp[0]
-            self.p2_msg = self.pucks_tmp[1]
+        if self.one == 0:
+            # Continuously publish puck positions
             self.puck_posns.poses = [self.p1_msg, self.p2_msg]
-            self.pub_puck_posn.publish(self.pub_puck_posn)
-            self.state = State.START_PLAN
+            self.pub_puck_posn.publish(self.puck_posns)
 
-        if self.state == State.START_PLAN:
-            # Store trajectory calculations from TrajCalc
-            self.wp1_callback()
-            self.wp2_callback()
+            if self.state == State.INIT_CV:
+                # self.puck_pose_filter()
+                if self.puck_pose_count > self.puck_interval:
+                    # This means both puck positions were selected
+                    self.state = State.TRAJ
+            
+            if self.state == State.TRAJ:
+                # Update the puck positions
+                self.p1_msg.position = self.pucks_tmp[0]
+                self.p2_msg.position = self.pucks_tmp[1]
+                self.puck_posns.poses = [self.p1_msg, self.p2_msg]
+                self.pub_puck_posn.publish(self.puck_posns)
+                self.state = State.START_PLAN
 
-            # If TrajCalc has finished, call Waypoint and Goal services to meet the puck
-            if self.wp1_flag == 1 and self.wp2_flag == 1:
-                self.waypoint_future = self.waypoint_client.call_async(f"x: {self.wp2_traj.x}, \
-                                                                         y: {self.wp2_traj.y}, \
-                                                                         z: {self.wp2_traj.z}")
-                self.goal_future = self.goal_client.call_async(f"x: {self.wp1_traj.x}, \
-                                                                 y: {self.wp1_traj.y}, \
-                                                                 z: {self.wp1_traj.z}")
+            if self.state == State.START_PLAN:
+                # Store trajectory calculations from TrajCalc
 
-                self.state = State.AWAIT_PLAN
-                
-        if self.state == State.AWAIT_PLAN:
-            if self.waypoint_future.done() and self.goal_future.done():
-                if self.sm_plan_done == True:
-                    self.state = State.RETURN_HOME
+                # If TrajCalc has finished, call Waypoint and Goal services to meet the puck
+                if self.wp1_flag == 1 and self.wp2_flag == 1:
 
-        if self.state == State.RETURN_HOME:
-            # Do future path plan from goal position back to home
+                    self.wp2_request = Goal.Request()
+                    self.wp2_request.x = self.wp2_traj.point.x
+                    self.wp2_request.y = self.wp2_traj.point.y
+                    self.wp2_request.z = self.home_posn.z
+                    self.wp2_request.roll = 3.1416
+                    self.wp2_request.pitch = 0.0
+                    self.wp2_request.yaw = 1.5707
 
-            # Set starting point to goal position
-            self.initial_future = self.initial_client.call_async(f"x: {self.wp1_traj.x}, \
-                                                                   y: {self.wp1_traj.y}, \
-                                                                   z: {self.wp1_traj.z}")
-            if self.initial_future.done() and self.return_flag == 0:
-                # Set waypoint to halfway between initial and home
-                # Set goal to home
-                wpx = (self.wp1_traj.x + 0.0)/2
-                wpy = (self.wp1_traj.y + 0.41)/2
-                wpz = self.wp1_traj.z
-                self.waypoint_future = self.waypoint_client.call_async(f"x: {wpx}, \
-                                                                         y: {wpy}, \
-                                                                         z: {wpz}")
-                self.goal_future = self.goal_client.call_async(self.home_posn)
-                self.return_flag = 1    # We only want to do these calls once
+                    self.wp1_request = Goal.Request()
+                    self.wp1_request.x = self.wp1_traj.point.x
+                    self.wp1_request.y = self.wp1_traj.point.y
+                    self.wp1_request.z = self.home_posn.z
+                    self.wp1_request.roll = 3.1416
+                    self.wp1_request.pitch = 0.0
+                    self.wp1_request.yaw = 1.5707
 
-            if self.waypoint_future.done() and self.goal_future.done():
-                # Reset initial variables
-                self.state = State.INIT_CV
-                self.initial_puck = True
-                self.puck_pose_count = 0
-                self.p1_msg = Pose(x=0.0, y=0.0, z=0.0)
-                self.p2_msg = Pose(x=0.0, y=0.0, z=0.0)
-                self.pucks_tmp = []
-                self.puck_posns = PoseArray()
-                self.sm_plan_done = False
-                self.sm_execute_done = False
-                self.wp1_prev = PointStamped()
-                self.wp2_prev = PointStamped()
-                self.wp1_flag = 0
-                self.wp2_flag = 0
-                self.return_flag = 0
+                    self.waypoint_future = self.waypoint_client.call_async(self.wp2_request)
+                    self.goal_future = self.goal_client.call_async(self.wp1_request)
+                    self.one = 1 # TODO: Take this out
+                    self.state = State.AWAIT_PLAN
+                    
+            if self.state == State.AWAIT_PLAN:
+                self.get_logger().info(f'Called waypoint and goal')
+                if self.waypoint_future.done() and self.goal_future.done():
+                    self.get_logger().info(f'ROBOT SHOULD MOVE -  waypoint and goal DONE')
+                    if self.sm_plan_done == True:
+                        self.get_logger().info(f'______________________________________')
+                        self.state = State.RETURN_HOME
+
+            if self.state == State.RETURN_HOME:
+                # Do future path plan from goal position back to home
+
+                # Set starting point to goal position
+                self.wp1_request = Initial.Request()
+                self.wp1_request.x = self.wp1_traj.point.x
+                self.wp1_request.y = self.wp1_traj.point.y
+                self.wp1_request.z = self.home_posn.z
+                self.get_logger().info(f'Stuck in RETURN_HOME *****************************')
+                if self.initial_flag == 0:
+                    self.initial_future = self.initial_client.call_async(self.wp1_request)
+                    self.initial_flag = 1
+                    self.get_logger().info(f'Initial callback ==============================')
+                if self.initial_future.done() and self.return_flag == 0:
+                    self.get_logger().info(f'Return home initial plan DONE !!!!!!!!!!!!!!!s')
+                    # Set waypoint to halfway between initial and home
+                    # Set goal to home
+                    wpx = (self.wp1_traj.point.x + 0.0)/2
+                    wpy = (self.wp1_traj.point.y + 0.41)/2
+                    wpz = self.home_posn.z
+
+                    self.wp_request = Goal.Request()
+                    self.wp_request.x = wpx
+                    self.wp_request.y = wpy
+                    self.wp_request.z = wpz
+                    self.waypoint_future2 = self.waypoint_client.call_async(self.wp_request)
+                    self.goal_future2 = self.goal_client.call_async(self.home_posn)
+                    self.return_flag = 1    # We only want to do these calls once
+
+                if self.return_flag == 1:
+                    self.get_logger().info(f'_________________________-Waiting to RESET')
+                    if self.waypoint_future2.done() and self.goal_future2.done():
+                        self.get_logger().info(f'_________________________ DONE RESET___________________')
+                        # Reset initial variables
+                        self.state = State.INIT_CV
+                        self.initial_puck = True
+                        self.puck_pose_count = 0
+                        self.p1_msg = Pose()
+                        self.p2_msg = Pose()
+                        self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                        self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                        self.pucks_tmp = []
+                        self.puck_posns = PoseArray()
+                        self.sm_plan_done = False
+                        self.sm_execute_done = False
+                        self.wp1_prev = PointStamped()
+                        self.wp2_prev = PointStamped()
+                        self.wp1_flag = 0
+                        self.wp2_flag = 0
+                        self.return_flag = 0
+                        self.initial_flag = 0
+
+def main_entry(args=None):
+    """Run Main node."""
+    rclpy.init(args=args)
+    node = main()
+    rclpy.spin(node)
+    rclpy.shutdown()
