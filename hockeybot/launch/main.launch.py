@@ -20,8 +20,14 @@ def generate_launch_description():
         executable='traj_calc',
         name='traj_node',
     )
+    simple_move_node = Node(
+        package='moveit_helper',
+        executable='simple_move',
+        name='simple_mode',
+    )
     return LaunchDescription([
         main,
         Camera,
-        Trajectory
+        Trajectory,
+        simple_move_node
     ])
