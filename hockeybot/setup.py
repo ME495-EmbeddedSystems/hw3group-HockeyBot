@@ -26,7 +26,8 @@ setup(
         'console_scripts': [
             'traj_calc=hockeybot.traj_calc:traj_calc_entry',
             'cam_node = hockeybot.cam_node:frames_entry',
-            'main=hockeybot.main:main_entry'
+            'main=hockeybot.main:main_entry',
+            'simple_move=moveit_helper.simple_move:simple_move_entry'
         ],
     },
 )
