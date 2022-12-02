@@ -1,3 +1,4 @@
+# TODO
 import rclpy
 from rclpy.node import Node
 import numpy as np
@@ -9,6 +10,7 @@ from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
 
 class TrajCalc(Node):
     """
+    TODO
     Trajectory planning and optional execution.
 
     This node receives a starting position and an end goal position of the end effector, plans the
@@ -22,6 +24,7 @@ class TrajCalc(Node):
 
     def __init__(self):
         """
+        TODO
         Initialize services, clients, and subscribers.
 
         Also initializes class variables for creating a box and initial robot joint states.
