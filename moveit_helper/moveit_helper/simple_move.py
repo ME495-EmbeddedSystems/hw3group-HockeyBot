@@ -658,6 +658,7 @@ class SimpleMove(Node):
         #### CartesianTrajectory ####
 
 
+
         # # self.cartesian_point = CartesianPoint()
 
         # self.cartesianTrajectory_point = CartesianTrajectoryPoint()
