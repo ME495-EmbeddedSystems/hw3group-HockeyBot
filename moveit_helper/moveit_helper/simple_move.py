@@ -724,6 +724,7 @@ class SimpleMove(Node):
         """
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
         # execute_traj_msg.trajectory = self.plan_result.planned_trajectory # MoveGroup plan result
+        self.get_logger().info(f'self.future_plan_cartesian.result().solution = {self.future_plan_cartesian.result().solution}')
         execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
         self.get_logger().info('EXECUTE ________ service called')
 
