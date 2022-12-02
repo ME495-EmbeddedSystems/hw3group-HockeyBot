@@ -560,6 +560,9 @@ class SimpleMove(Node):
             None
 
         """
+        self.cartesian_velocity_scaling_factor = 1.2 # Increase velocities and acceleration
+        self.cartesian_time_scaling_factor = 0.8 # Decrease time
+
         self.car_path.joint_state.header.frame_id = 'panda_link0'
         self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()
         # Set start position of Franka
@@ -726,7 +729,45 @@ class SimpleMove(Node):
         """
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
         # execute_traj_msg.trajectory = self.plan_result.planned_trajectory # MoveGroup plan result
-        self.get_logger().info(f'self.future_plan_cartesian.result().solution = {self.future_plan_cartesian.result().solution}')
+        # self.get_logger().info(f'self.future_plan_cartesian.result().solution = {self.future_plan_cartesian.result().solution}')
+        # self.future_plan_cartesian.result().solution.joint_trajectory
+        # self.get_logger().info(f'self.future_plan_cartesian.result().solution.joint_trajectory.points = {self.future_plan_cartesian.result().solution.joint_trajectory.points}')
+        # self.get_logger().info(f'len(--.points) = {len(self.future_plan_cartesian.result().solution.joint_trajectory.points)}')
+        # self.get_logger().info(f'time = {self.future_plan_cartesian.result().solution.joint_trajectory.points[1].time_from_start.nanosec}')
+
+
+
+        for i in range(len(self.future_plan_cartesian.result().solution.joint_trajectory.points)):
+            # Time
+            self.get_logger().info(f'time Before Sec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec}')
+            self.get_logger().info(f'time Before NanoSec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec}')
+
+            # Add seconds and nanoseconds together
+            StoNS = self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec * 1000000000
+            Total_nanoSec = self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec + StoNS
+            self.get_logger().info(f'StoNS = {StoNS}')
+            self.get_logger().info(f'Total_nanoSec = {Total_nanoSec}')
+
+            New_Total_nanoSec = Total_nanoSec / self.cartesian_velocity_scaling_factor
+            New_sec = New_Total_nanoSec // 1000000000
+            New_nanoSec = New_Total_nanoSec % 1000000000
+
+            # self.get_logger().info(f'New_Total_nanoSec = Total_nanoSec / factor = {New_Total_nanoSec}')
+            # self.get_logger().info(f'New_sec // = {New_sec}')
+            # self.get_logger().info(f'New_nanoSec % = {New_nanoSec}')
+
+            self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec = int(New_sec)
+            self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec = int(New_nanoSec)
+
+            # self.get_logger().info(f'time After sec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec}')
+            # self.get_logger().info(f'time After nanosec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec} \n \n ')
+            # Velocity
+            for j in range(len(self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities)):
+                # self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities[j]= \
+                #     self.future_plan_cartesian.result().solution.joint_trajectory.points[j].velocities[j] * 2
+                self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities[j] *= self.cartesian_velocity_scaling_factor
+                self.future_plan_cartesian.result().solution.joint_trajectory.points[i].accelerations[j] *= self.cartesian_velocity_scaling_factor
+
         execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
         self.get_logger().info('EXECUTE ________ service called')
 
