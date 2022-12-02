@@ -63,10 +63,17 @@ if sim == 0:
 
         c, m = traj_puck(p1,p2)
 
+
+
+
+
+
+
+
         """ Do wall collision."""
         collision = True
         while collision == True:
-            collision = False
+            collision = False # Delete later
 
             y_xmin = m*Table_xmin + c
             y_xmax = m*Table_xmax + c
@@ -74,11 +81,33 @@ if sim == 0:
 
 
             if y_xmin < Table_ymax and y_xmin > Table_ymin and y_xmin < y_xmax:
+                m2 = -m # Reflect impact angle
+                # Impact coordinates
+                Ix = Table_xmin
+                Iy = y_xmin
+
                 print(" Wall collision left")
                 # collision = True # TODO: Add back in so that collisions will keep on be corrected
-            if y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
+            elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
+                m = -m # Reflect impact angle
+                # Impact coordinates
+                Ix = Table_xmax
+                Iy = y_xmax
+
+
                 print(" Wall collision right")
                 # collision = True # TODO: Add back in so that collisions will keep on be corrected
+            else: # No collision
+                collision = False
+
+
+
+
+
+
+
+
+
 
 
         wx1, wx2 = play_waypoints()
@@ -118,6 +147,11 @@ if sim == 0:
         plt.plot([0],[c], 'x', color = 'red', label = 'Traj intercect with y-axis')
         # Puck trajectory line
         plt.axline((p1[0], p1[1]), slope=m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
+
+
+        # New after impact trajectory line
+        plt.axline((Ix, Iy), slope=m2, color="red", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
+
 
         # Table boundaries
         plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], color="black", label = 'Table boundary')
@@ -214,7 +248,6 @@ elif sim == 1:
         plt.plot([0],[c], 'x', color = 'red', label = 'Traj intercect with y-axis')
         # Puck trajectory line
         plt.axline((p1[0], p1[1]), slope=m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
-
         # Table boundaries
         plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], color="black", label = 'Table boundary')
         plt.plot([Table_xmax,Table_xmax],[Table_ymin,Table_ymax], color="black")
