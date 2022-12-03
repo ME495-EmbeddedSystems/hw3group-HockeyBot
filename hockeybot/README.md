@@ -113,7 +113,8 @@ This project requires the following hardware components:
 * The hardware must be set up by connecting the RealSense camera via USB cable.
 
 ## **Contents**
-1. The `hockeybot` package contains the following nodes:
+The `hockeybot` package contains:
+1. nodes:
 * `main`:  This node receives data from the CV node to be passed into the trajectory
     calculations node (Traj_Calc). It also receives the calculations back from Traj_Calc for
     additional processing to ultimately be passed into the SimpleMove API.
