@@ -63,6 +63,8 @@ m_list = np.array([])
 ImpX = np.array([0]) # Impact point X
 ImpY = np.array([0]) # Impact point Y
 # Added 0 to start just to make same length as m_list
+# Flag for collision in the woekspace
+Flag_wx2_in_ws = 0
 
 
 """ Select trajectory type:
@@ -80,6 +82,11 @@ if sim == 0:
         p1[1] = random.uniform(1.2,1.6)
         p2[1] = random.uniform(1.2,1.6)
 
+        # Test cases
+        p1 = np.array([-0.18848623, 1.32055732])
+        p2 = np.array([0.0948983, 1.43185305])
+        print(f"\n p1 = {p1}, p2 = {p2} \n")
+
         # p1[0] = p2[0] # TODO handle situation where x1 = x2 then m = infinity (Slope)
 
         c, m = traj_puck(p1,p2)
@@ -87,11 +94,11 @@ if sim == 0:
         c_list = np.append(c_list, c)
         mf = m
         cf = c
-        print(f"c = {c}, m = {m}")
-        print(f"\n 1 clist = {c_list}, 1 m_list = {m_list} \n")
-        x1, x2 = play_waypoints(cf,mf)
-        wx1 = np.append(wx1, x1)
-        wx2 = np.append(wx2, x2)
+        # print(f"c = {c}, m = {m}")
+        # print(f"\n 1 clist = {c_list}, 1 m_list = {m_list} \n")
+        # x1, x2 = play_waypoints(cf,mf)
+        # wx1 = np.append(wx1, x1)
+        # wx2 = np.append(wx2, x2)
 
 
 
@@ -106,6 +113,11 @@ if sim == 0:
 
             y_xmin = mf*Table_xmin + cf
             y_xmax = mf*Table_xmax + cf
+
+            x1, x2 = play_waypoints(cf,mf)
+            wx1 = np.append(wx1, x1)
+            wx2 = np.append(wx2, x2)
+
             # print(f"y_xmin = {y_xmin}, y_xmax = {y_xmax}")
 
             # print(f"\n clist = {c_list}, m_list = {m_list} \n")
@@ -125,6 +137,10 @@ if sim == 0:
                 cf = c_list[impact_count]
                 mf = m_list[impact_count]
 
+                # Check for collisions in the ws
+                if y_xmin < ymax and y_xmin > ymin and y_xmin < y_xmax:
+                    print("Left collision in ws")
+
                 print(" Wall collision left")
                 collision = True # TODO: Add back in so that collisions will keep on be corrected
             elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
@@ -141,15 +157,14 @@ if sim == 0:
                 cf = c_list[impact_count]
                 mf = m_list[impact_count]
 
+                if y_xmax < ymax and y_xmax > ymin and y_xmax < y_xmin:
+                    print("Rigth collision in ws")
+
                 print(" Wall collision right")
                 collision = True # TODO: Add back in so that collisions will keep on be corrected
 
             else: # No collision
                 collision = False
-
-            x1, x2 = play_waypoints(cf,mf)
-            wx1 = np.append(wx1, x1)
-            wx2 = np.append(wx2, x2)
 
         print(f"wx1 = {wx1}, wx2 = {wx2}")
         print(f"clist = {c_list}, m_list = {m_list}")
@@ -197,14 +212,18 @@ if sim == 0:
             print(f"wx1 or wx2 outside workspace!!")
 
         """ Plot best wx intersection """
-        for i in range(len(wx1)):
-            if wx1[i] < xmax and wx1[i] > xmin:
-                print(f" wx1[{i}] = {wx1[i]} ")
-                for j in range(len(wx2)):
-                    print(f" wx2[{j}] = {wx2[j]} ")
-                    if wx2[j] < xmax and wx2[j] > xmin:
+        for i in range(len(wx2)):
+            if wx2[i] < xmax and wx2[i] > xmin:
+                print(f" wx2[{i}] = {wx2[i]} ")
+                for j in range(len(wx1)):
+                    print(f" wx1[{j}] = {wx1[j]} ")
+                    if wx1[j] < xmax and wx1[j] > xmin:
+                        Flag_wx2_in_ws = 1
                         # Intersect at boundary W2 & W1
-                        plt.plot([wx1[i],wx2[j]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                        plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                if Flag_wx2_in_ws == 0:
+                    # Check for side of workspace intersect and change wx and wy
+                    print("FIX ME")
 
 
 
