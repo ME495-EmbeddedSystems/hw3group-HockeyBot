@@ -83,7 +83,6 @@ cd nuws
 Librealsense2, with Python bindings
 interbotix ROS packages for using the PincherX 100 Robot arm
 An updated ros2 launch with some not-yet-released bugfixes
-```
 5. Install dependencies
 `rosdep install --from-paths src -r -y`
 
@@ -103,7 +102,7 @@ sudo cp src/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/99-inte
 9. Source the environment
 `source /opt/ros/humble/setup.bash`
 
-10.  Git clone `git@github.com:ME495-EmbeddedSystems/hw3group-HockeyBot.git` into the /src directory of the customer workspace. 	This file will install the ros dependencies required to run this project.
+10. Git clone `git@github.com:ME495-EmbeddedSystems/hw3group-HockeyBot.git` into the /src directory of the customer workspace. 	This file will install the ros dependencies required to run this project.
 
 ## **Hardware Requirements**
 This project requires the following hardware components:
