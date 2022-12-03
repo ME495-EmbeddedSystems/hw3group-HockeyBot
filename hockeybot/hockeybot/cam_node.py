@@ -105,13 +105,15 @@ class CamNode(Node):
             cv2.imshow("output", ir_image)
             # print ('Position: ')
             
-            if self.i == 15: 
+            # frames per batch
+            self.fpb = 3
+            if self.i == self.fpb: 
                 self.i = 0
-                self.pos.x = - self.y/15 
-                self.pos.y = - self.x/15 + 1.16205
+                self.pos.x = - self.y/self.fpb
+                self.pos.y = - self.x/self.fpb + 1.16205
                 self.currentpos.publish(self.pos)
                 print('center', self.cx, self.cy)
-                print(self.x/15, self.y/15)
+                print(self.x/self.fpb, self.y/self.fpb)
                 self.x = 0
                 self.y = 0
             elif circles is not None:

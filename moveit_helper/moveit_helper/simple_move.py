@@ -121,6 +121,7 @@ class SimpleMove(Node):
         # Publishers
         self.pub_sm_plan = self.create_publisher(Bool, "/sm_plan", 10)
         self.pub_sm_execute = self.create_publisher(Bool, "/sm_execute", 10)
+        self.pub_ee_posn = self.create_publisher(Pose, "/ee_posn", 10)
 
         # Subscribers
         self.sub = self.create_subscription(
@@ -150,10 +151,12 @@ class SimpleMove(Node):
         self.Flag_Execute = 0
         self.Flag_box_dim = 0
         self.Flag_box_create = 0
+        self.Flag_ee = 0
         self.sm_plan_msg = Bool()
         self.sm_plan_msg.data = False
         self.sm_execute_msg = Bool()
         self.sm_execute_msg.data = False
+        self.ee_posn_msg = Pose()
 
         # Compute_IK variables
         self.joint_constr_list = []
@@ -567,18 +570,7 @@ class SimpleMove(Node):
 
         self.group_name = 'panda_manipulator'
 
-
-        # Midway waypoint
-        wp2 = Pose()
-        wp2.position.x = self.waypoint_x
-        wp2.position.y = self.waypoint_y
-        wp2.position.z = self.waypoint_z
-        wp2.orientation.x = self.waypoint_ori_x
-        wp2.orientation.y = self.waypoint_ori_y
-        wp2.orientation.z = self.waypoint_ori_z
-        wp2.orientation.w =  self.waypoint_ori_w
-
-        # End goal wapoint
+        # Midway wapoint
         wp1 = Pose()
         wp1.position.x = self.goal_x
         wp1.position.y = self.goal_y
@@ -587,6 +579,16 @@ class SimpleMove(Node):
         wp1.orientation.y = self.goal_ori_y
         wp1.orientation.z = self.goal_ori_z
         wp1.orientation.w =  self.goal_ori_w
+
+        # End goal waypoint
+        wp2 = Pose()
+        wp2.position.x = self.waypoint_x
+        wp2.position.y = self.waypoint_y
+        wp2.position.z = self.waypoint_z
+        wp2.orientation.x = self.waypoint_ori_x
+        wp2.orientation.y = self.waypoint_ori_y
+        wp2.orientation.z = self.waypoint_ori_z
+        wp2.orientation.w =  self.waypoint_ori_w
 
         self.waypoints = [wp2,wp1]
 
@@ -758,14 +760,22 @@ class SimpleMove(Node):
         try:
             t = self.tf_buffer.lookup_transform(
                 'panda_link0',
-                'panda_hand',
+                'panda_hand_tcp',
                 rclpy.time.Time())
             # Set end effector x,y,z position
             self.eeX = t.transform.translation.x
             self.eeY = t.transform.translation.y
             self.eeZ = t.transform.translation.z
+            self.Flag_ee = 1
         except BaseException:
             self.get_logger().info('Panda frames does not exist')
+
+        if self.Flag_ee == 1:
+            # Continuously publish end effector position
+            self.ee_posn_msg.position.x = self.eeX
+            self.ee_posn_msg.position.y = self.eeY
+            self.ee_posn_msg.position.z = self.eeZ
+            self.pub_ee_posn.publish(self.ee_posn_msg)
 
         # Continuously publish whether or not node has planned or executed
         self.pub_sm_plan.publish(self.sm_plan_msg)
