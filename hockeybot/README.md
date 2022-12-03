@@ -24,10 +24,9 @@ mkdir -p nuws/src
 cd nuws
 ```
 4. Install the follow packages:
-- package:
- 1. Librealsense2, with Python bindings
- 2. interbotix ROS packages for using the PincherX 100 Robot arm
- 3. An updated ros2 launch with some not-yet-released bugfixes
+* Librealsense2, with Python bindings
+* interbotix ROS packages for using the PincherX 100 Robot arm
+* An updated ros2 launch with some not-yet-released bugfixes
 
 by clone the repositories `vcs import --recursive --input https://raw.githubusercontent.com/m-elwin/numsr_patches/main/numsr_patches.repos src`
 Librealsense2, with Python bindings
