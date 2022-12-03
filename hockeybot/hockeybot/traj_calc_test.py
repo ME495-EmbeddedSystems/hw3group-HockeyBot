@@ -27,20 +27,28 @@ def play_waypoints(c,m):
 
 # Workspace of arm
 xmin = -0.3
-xmax = 0.29
-ymin = 0.44
-ymax = 0.71
+xmax = 0.3
+ymin = 0.42 # Changed from 0.44 to 0.42 TODO
+ymax = 0.70
 
-# Airhockey table 4 corners [meters] TODO: Minus this with puck radius for
-# collision detection
-Table_xmin = -0.32
-Table_xmax = 0.32
-Table_ymin = 0.3683
-Table_ymax = 1.7526
+# Puck Radius
+Puck_radius = 0.063/2
+
+# Airhockey table 4 corners [meters] - Minus this with puck radius for
+# collision detection - Centre of Puck movement space
+Table_xmin = -(0.345 - Puck_radius)
+Table_xmax = 0.345 - Puck_radius
+Table_ymin = 0.3683 + Puck_radius
+Table_ymax = 1.7526 - Puck_radius
+# Real table inside
+Real_Table_xmin = -0.345
+Real_Table_xmax = 0.345
+Real_Table_ymin = 0.3683
+Real_Table_ymax = 1.7526
 
 # Boundary & waypoint w1&2 y values
-wy1 = 0.45
-wy2 = 0.7
+wy1 = ymin
+wy2 = ymax
 """NEW"""
 wx1 = np.array([])
 wx2 = np.array([])
@@ -65,6 +73,7 @@ ImpY = np.array([0]) # Impact point Y
 # Added 0 to start just to make same length as m_list
 # Flag for collision in the workspace
 Flag_collision_WS = 0
+y_ws_impact = 0
 
 
 """ Select trajectory type:
@@ -83,8 +92,10 @@ if sim == 0:
         p2[1] = random.uniform(1.2,1.6)
 
         # Test cases
-        p1 = np.array([-0.18848623, 1.32055732])
-        p2 = np.array([0.0948983, 1.43185305])
+        # p1 = np.array([-0.18848623, 1.32055732])
+        # p2 = np.array([0.0948983, 1.43185305])
+        p1 = np.array([-0.110167, 1.2817489])
+        p2 = np.array([0.08224015, 1.39055462])
         print(f"\n p1 = {p1}, p2 = {p2} \n")
 
         # p1[0] = p2[0] # TODO handle situation where x1 = x2 then m = infinity (Slope)
@@ -130,6 +141,17 @@ if sim == 0:
 
                 # Check for collisions in the ws
                 if y_xmin < ymax and y_xmin > ymin and y_xmin < y_xmax:
+                    # ImpX[impact_count]
+                    # ImpY[impact_count]
+                    # Calculate new y in workspace
+                    y_ws_impact = xmin*m_list[impact_count] + c_list[impact_count]
+                    print(f"y_ws left = {y_ws_impact}")
+
+                    # y_xmin
+
+                    # break
+                    collision = False
+
                     print("Left collision in ws")
                     Flag_collision_WS = 1
                 else:
@@ -151,6 +173,18 @@ if sim == 0:
             elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
 
                 if y_xmax < ymax and y_xmax > ymin and y_xmax < y_xmin:
+
+                    # ImpX[impact_count]
+                    # ImpY[impact_count]
+                    # Calculate new y in workspace
+                    y_ws_impact = xmax*m_list[impact_count] + c_list[impact_count]
+                    print(f"y_ws right = {y_ws_impact}")
+
+                    # y_xmin
+
+                    # break
+                    collision = False
+
                     print("Rigth collision in ws")
                     Flag_collision_WS = 1
                 else:
@@ -191,11 +225,13 @@ if sim == 0:
 
 
 
+
         if wx1[impact_count] > xmin and wx1[impact_count] < xmax:
             if wx2[impact_count] > xmin and wx2[impact_count] < xmax:
                 print(f"wx1 & wx2 inside workspace!!")
                 not_straight_traj = 1
         else:
+            # TODO send home blocking config
             print(f"wx1 or wx2 outside workspace!!")
 
         # Airhockey table visualization
@@ -224,11 +260,16 @@ if sim == 0:
         for i in range(len(wx2)):
             if wx2[i] < xmax and wx2[i] > xmin:
                 print(f" wx2[{i}] = {wx2[i]} ")
-                for j in range(len(wx1)):
-                    print(f" wx1[{j}] = {wx1[j]} ")
-                    if wx1[j] < xmax and wx1[j] > xmin:
-                        # Intersect at boundary W2 & W1
-                        plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                if y_ws_impact == 0:
+                    print("JSNCIYUSDBCUYBDCIOBSDOL")
+                    for j in range(len(wx1)):
+                        print(f" wx1[{j}] = {wx1[j]} ")
+                        if wx1[j] < xmax and wx1[j] > xmin:
+                            # Intersect at boundary W2 & W1
+                            plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                else:
+                    print("HALLOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+                    plt.plot([xmin,wx2[i]],[y_ws_impact,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
 
 
         # Trajectory - Y-axis intercect
@@ -247,10 +288,14 @@ if sim == 0:
                 plt.plot([0],[c_list[imp]], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
 
         # Table boundaries
-        plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], color="black", label = 'Table boundary')
-        plt.plot([Table_xmax,Table_xmax],[Table_ymin,Table_ymax], color="black")
-        plt.plot([Table_xmin,Table_xmax],[Table_ymin,Table_ymin], color="black")
-        plt.plot([Table_xmin,Table_xmax],[Table_ymax,Table_ymax], color="black")
+        plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], '--', color="grey", label = 'Table boundary for puck centre - Collision')
+        plt.plot([Table_xmax,Table_xmax],[Table_ymin,Table_ymax], '--', color="grey")
+        plt.plot([Table_xmin,Table_xmax],[Table_ymin,Table_ymin], '--', color="grey")
+        plt.plot([Table_xmin,Table_xmax],[Table_ymax,Table_ymax], '--', color="grey")
+        plt.plot([Real_Table_xmin,Real_Table_xmin],[Real_Table_ymin,Real_Table_ymax], color="black", label = 'Actual Table boundary')
+        plt.plot([Real_Table_xmax,Real_Table_xmax],[Real_Table_ymin,Real_Table_ymax], color="black")
+        plt.plot([Real_Table_xmin,Real_Table_xmax],[Real_Table_ymin,Real_Table_ymin], color="black")
+        plt.plot([Real_Table_xmin,Real_Table_xmax],[Real_Table_ymax,Real_Table_ymax], color="black")
         # Robot workspace
         plt.plot([xmin,xmin],[ymin,ymax], color="orange", label = 'Robot workspace')
         plt.plot([xmax,xmax],[ymin,ymax], color="orange")
