@@ -110,6 +110,9 @@ if sim == 0:
         # p2 = np.array([0.11748907, 1.21698886])
         # p1 = np.array([-0.15500103, 1.43286437])
         # p2 = np.array([-0.22181392, 1.54141879])
+        # p1 = np.array([-0.17935307, 1.43477426])
+        # p2 = np.array([0.04461315, 1.43812353])
+
         print(f"\n p1 = {p1}, p2 = {p2} \n")
 
         # p1[0] = p2[0] # TODO handle situation where x1 = x2 then m = infinity (Slope)
@@ -133,8 +136,8 @@ if sim == 0:
         collision = True
         while collision == True:
 
-            if impact_count == 30:
-                break
+            # if impact_count == 30:
+            #     break
 
             y_xmin = mf*Table_xmin + cf
             y_xmax = mf*Table_xmax + cf
@@ -143,7 +146,7 @@ if sim == 0:
             wx1 = np.append(wx1, x1)
             wx2 = np.append(wx2, x2)
 
-            if Flag_collision_WS == 1:
+            if Flag_collision_WS == 1 & impact_count == 30:
                 break # Immediately stops while loop
 
             # print(f"y_xmin = {y_xmin}, y_xmax = {y_xmax}")
@@ -248,13 +251,6 @@ if sim == 0:
             # TODO send home blocking config
             print(f"wx1 or wx2 outside workspace!!")
 
-        # Airhockey table visualization
-        # plt.ion() # Interactive plot
-        # Trajectory - Y-axis intercect
-        plt.plot([0],[0.405], 'o', color = 'pink', label = 'Robot home location')
-        # Two puck points from CV
-        plt.plot([p1[0],p2[0]],[p1[1],p2[1]], 'ro', color = 'red', label = 'CV puck centres')
-
         # # TODO NB GOOD FOR DEBUGGIN
         # """ Plot all wx intersectiona """
         # # Intersect at boundary W2 & W1
@@ -320,24 +316,47 @@ if sim == 0:
 
         print(f"\n w1 = {wx1_CORRECT, wy1_CORRECT}, w2 = {wx2_CORRECT, wy2_CORRECT} \n")
 
+        # Airhockey table visualization
+        # plt.ion() # Interactive plot
+        # Trajectory - Y-axis intercect
+        plt.plot([0],[0.405], 'o', color = 'pink', label = 'Robot home location')
+        # Two puck points from CV
+        plt.plot([p1[0],p2[0]],[p1[1],p2[1]], 'ro', color = 'red', label = 'CV puck centres') #markersize=8, label = 'CV puck centres')
+
         # Plot Robot Waypoints
-        plt.plot([wx1_CORRECT,wx2_CORRECT],[wy1_CORRECT,wy2_CORRECT], 'ro', color = 'green', label = 'Robot move waypoints')
+        plt.plot([wx1_CORRECT,wx2_CORRECT],[wy1_CORRECT,wy2_CORRECT], 'ro', color = 'green', label = 'Robot move waypoints') #markersize=8, label = 'Robot move waypoints')
 
 
         # Trajectory - Y-axis intercect
         plt.plot([0],[c], 'x', color = 'red', label = 'Traj intercect with y-axis')
-        # Puck trajectory line
-        plt.axline((p1[0], p1[1]), slope=m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
+        # Puck trajectory line # TODO dotted line
+        # plt.axline((p1[0], p1[1]), slope=m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
 
         """New Plot after impact"""
         if len(c_list) != 0:
             for imp in range(1,len(c_list)):
                 # Impact point 1
-                plt.plot([ImpX[imp]],[ImpY[imp]], 'ro', color = 'blue', label = 'Impact point')
-                # New after impact trajectory line
-                plt.axline((ImpX[imp],ImpY[imp]), slope=m_list[imp], color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
+                plt.plot([ImpX[imp],ImpX[imp]],[ImpY[imp],ImpY[imp]], 'ro', color = 'blue', label = 'Impact point')
+                # New after impact SOLID trajectory line only in airhockey task space
+                plt.plot([ImpX[imp],ImpX[imp]],[ImpY[imp],ImpY[imp]], color = 'blue', label = 'New puck trajectory line')
+                # # New after impact trajectory line # TODO dotted line
+                # plt.axline((ImpX[imp],ImpY[imp]), slope=m_list[imp], color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
                 # Trajectory - Y-axis intercect
                 plt.plot([0],[c_list[imp]], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
+        """New Plot of traj line in airhockey table only"""
+        if len(ImpX) >= 2:
+            # Puck cv point to first impact
+            plt.plot([p1[0],ImpX[1]],[p1[1],ImpY[1]], color = 'blue', label = 'New puck trajectory line')
+            plt.plot([p2[0],ImpX[1]],[p2[1],ImpY[1]], color = 'blue', label = 'New puck trajectory line')
+            for imp in range(2,len(ImpX)):
+                # New after impact SOLID trajectory line only in airhockey task space
+                plt.plot([ImpX[imp-1],ImpX[imp]],[ImpY[imp-1],ImpY[imp]], color = 'blue', label = 'New puck trajectory line')
+            # Last impact to robot waypoints
+            plt.plot([ImpX[-1],wx1_CORRECT],[ImpY[-1],wy1_CORRECT], color = 'blue', label = 'New puck trajectory line')
+            plt.plot([ImpX[-1],wx2_CORRECT],[ImpY[-1],wy2_CORRECT], color = 'blue', label = 'New puck trajectory line')
+        else: # No impacts
+            plt.plot([p1[0],wx1_CORRECT],[p1[1],wy1_CORRECT], color = 'blue', label = 'New puck trajectory line')
+            plt.plot([p2[0],wx2_CORRECT],[p2[1],wy2_CORRECT], color = 'blue', label = 'New puck trajectory line')
 
         # Table boundaries
         plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], '--', color="grey", label = 'Table boundary for puck centre - Collision')

@@ -68,6 +68,25 @@ class TrajCalc(Node):
         self.Real_Table_ymin = 0.3683
         self.Real_Table_ymax = 1.7526
 
+        """ New Var """
+        self.start = 0 # TODO Delete when using CV
+        # Amount of impacts
+        self.impact_count = 0
+        # y-axis intercept
+        self.c_list = np.array([])
+        # Slope
+        self.m_list = np.array([])
+        # After first impact
+        self.ImpX = np.array([0]) # Impact point X
+        self.ImpY = np.array([0]) # Impact point Y
+        # Added 0 to start just to make same length as m_list
+        # Flag for collision in the workspace
+        self.Flag_collision_WS = 0
+        self.Flag_BLOCK = 0
+        self.y_ws_impact_Right = 0
+        self.y_ws_impact_Left = 0
+        self.collision = True
+
         # Robot arm waypoints 1 and 2 y-values
         # self.wx1 = 0.0
         self.wx1 = np.array([])
@@ -89,14 +108,14 @@ class TrajCalc(Node):
         self.wx2_prev = 20
 
         # Waypoints to be published
-        self.wp1.point.x = self.wx1
+        self.wp1.point.x = 0.0
         self.wp1.point.y = self.wy1
         self.wp1.point.z = self.wz1
-        self.wp2.point.x = self.wx2
+        self.wp2.point.x = 0.0
         self.wp2.point.y = self.wy2
         self.wp2.point.z = self.wz2
 
-        # Two puck center positions
+        # # Two puck center positions
         # self.p1 = np.array([0.22,1.6])
         # self.p2 = np.array([0.19,1.5])
         # self.p1 = np.array([0.2,1.6])
@@ -113,24 +132,6 @@ class TrajCalc(Node):
         # p2[1] = random.uniform(1.2,1.6)
 
 
-        """ New Var """
-        # Amount of impacts
-        self.impact_count = 0
-        # y-axis intercept
-        self.c_list = np.array([])
-        # Slope
-        self.m_list = np.array([])
-        # After first impact
-        self.ImpX = np.array([0]) # Impact point X
-        self.ImpY = np.array([0]) # Impact point Y
-        # Added 0 to start just to make same length as m_list
-        # Flag for collision in the workspace
-        self.Flag_collision_WS = 0
-        self.Flag_BLOCK = 0
-        self.y_ws_impact_Right = 0
-        self.y_ws_impact_Left = 0
-        self.collision = True
-
     def update_puck_p(self, data):
         """
         Get puck frame 1 and 2 coordinates 
@@ -145,9 +146,21 @@ class TrajCalc(Node):
             None
 
         """
-        self.puck_array = data-+
+        self.puck_array = data
         self.p1 = self.puck_array.poses[0].position
         self.p2 = self.puck_array.poses[1].position
+        # Two puck center positions # TODO Delete when using CV
+        if self.start == 0:
+            self.start = 1
+            self.p1.x = 0
+            self.p2.x = 0
+            self.p1.y = 0
+            self.p2.y = 0
+        else:
+            self.p1.x = 0.22
+            self.p2.x = 0.19
+            self.p1.y = 1.6
+            self.p2.y = 1.5
 
     def traj_puck(self):
         """
@@ -442,8 +455,8 @@ class TrajCalc(Node):
                 self.wp1.header.stamp = self.get_clock().now().to_msg()
                 self.wp2.header.stamp = self.get_clock().now().to_msg()
                 # Set x positions for waypoints
-                self.wp1.point.x = self.wx1
-                self.wp2.point.x = self.wx2
+                self.wp1.point.x = self.wx1[self.impact_count]
+                self.wp2.point.x = self.wx2[self.impact_count]
                 # Publish waypoints
                 self.pub_wp1.publish(self.wp1)
                 self.pub_wp2.publish(self.wp2)
