@@ -11,6 +11,7 @@ the puck is on the air hockey table and get the velocity of the puck, predict wh
 tell the Franka to meet the puck there.
 
 ## **Prerequisites**
+## **User Guide**
 1. Make sure ROS packages are most recent and up-to-date
 ```
 sudo apt update
@@ -68,6 +69,10 @@ This project requires the following hardware components:
 ## **Contents**
 The `hockeybot` package contains:
 1. nodes:
+
+```
+2.  Git clone `git@github.com:ME495-EmbeddedSystems/hw3group-HockeyBot.git` into the /src directory of the customer workspace. 	This file will install the ros dependencies required to run this project.
+3. The `hockeybot` package contains the following nodes:
 * `main`:  This node receives data from the CV node to be passed into the trajectory
     calculations node (Traj_Calc). It also receives the calculations back from Traj_Calc for
     additional processing to ultimately be passed into the SimpleMove API.
@@ -96,4 +101,5 @@ The process loop of the robot is as follows:
 4. To execute the plan, use `ros2 service call /execute_service moveit_interface/srv/Execute "exec_bool: True"`.
     a. If you wish to cancel your plan without executing, pass exec_bool: `False` instead of `True`.
 5. To add a box in the planning scene, use `ros2 service call /add_obj moveit_interface/srv/Addobj "{id: 1, x: 0.3, y: 0.6, z: 0.5, dim_x: 0.2, dim_y: 0.2, dim_z: 0.2}"`.
+* `traj_calc`:
 
