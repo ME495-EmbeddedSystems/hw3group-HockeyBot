@@ -63,8 +63,8 @@ m_list = np.array([])
 ImpX = np.array([0]) # Impact point X
 ImpY = np.array([0]) # Impact point Y
 # Added 0 to start just to make same length as m_list
-# Flag for collision in the woekspace
-Flag_wx2_in_ws = 0
+# Flag for collision in the workspace
+Flag_collision_WS = 0
 
 
 """ Select trajectory type:
@@ -118,53 +118,62 @@ if sim == 0:
             wx1 = np.append(wx1, x1)
             wx2 = np.append(wx2, x2)
 
+            if Flag_collision_WS == 1:
+                break # Immediately stops while loop
+
             # print(f"y_xmin = {y_xmin}, y_xmax = {y_xmax}")
 
             # print(f"\n clist = {c_list}, m_list = {m_list} \n")
 
 
             if y_xmin < Table_ymax and y_xmin > Table_ymin and y_xmin < y_xmax:
-                impact_count += 1
-
-                m_list = np.append(m_list,-m_list[impact_count-1]) # Reflect impact angle
-                # print(f"\n clist = {c_list}, m_list = {m_list} \n")
-                # Impact coordinates
-                ImpX = np.append(ImpX, Table_xmin)
-                ImpY = np.append(ImpY, y_xmin)
-                # Call trajectory calculation for new trajectory y-axis intercept
-                c_list = np.append(c_list, after_impact_traj_puck([ImpX[impact_count], ImpY[impact_count]],m_list[impact_count]))
-                # Set current c,m equal to final cf and mf
-                cf = c_list[impact_count]
-                mf = m_list[impact_count]
 
                 # Check for collisions in the ws
                 if y_xmin < ymax and y_xmin > ymin and y_xmin < y_xmax:
                     print("Left collision in ws")
+                    Flag_collision_WS = 1
+                else:
+                    impact_count += 1
 
-                print(" Wall collision left")
-                collision = True # TODO: Add back in so that collisions will keep on be corrected
+                    m_list = np.append(m_list,-m_list[impact_count-1]) # Reflect impact angle
+                    # print(f"\n clist = {c_list}, m_list = {m_list} \n")
+                    # Impact coordinates
+                    ImpX = np.append(ImpX, Table_xmin)
+                    ImpY = np.append(ImpY, y_xmin)
+                    # Call trajectory calculation for new trajectory y-axis intercept
+                    c_list = np.append(c_list, after_impact_traj_puck([ImpX[impact_count], ImpY[impact_count]],m_list[impact_count]))
+                    # Set current c,m equal to final cf and mf
+                    cf = c_list[impact_count]
+                    mf = m_list[impact_count]
+
+                    print(" Wall collision left")
+                    collision = True # TODO: Add back in so that collisions will keep on be corrected
             elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
-                impact_count += 1
-
-                m_list = np.append(m_list,-m_list[impact_count-1]) # Reflect impact angle
-                # print(f"\n clist = {c_list}, m_list = {m_list} \n")
-                 # Impact coordinates
-                ImpX = np.append(ImpX, Table_xmax)
-                ImpY = np.append(ImpY, y_xmax)
-                # Call trajectory calculation for new trajectory y-axis intercept
-                c_list = np.append(c_list, after_impact_traj_puck([ImpX[impact_count], ImpY[impact_count]],m_list[impact_count]))
-                # Set current c,m equal to final cf and mf
-                cf = c_list[impact_count]
-                mf = m_list[impact_count]
 
                 if y_xmax < ymax and y_xmax > ymin and y_xmax < y_xmin:
                     print("Rigth collision in ws")
+                    Flag_collision_WS = 1
+                else:
+                    impact_count += 1
 
-                print(" Wall collision right")
-                collision = True # TODO: Add back in so that collisions will keep on be corrected
+                    m_list = np.append(m_list,-m_list[impact_count-1]) # Reflect impact angle
+                    # print(f"\n clist = {c_list}, m_list = {m_list} \n")
+                    # Impact coordinates
+                    ImpX = np.append(ImpX, Table_xmax)
+                    ImpY = np.append(ImpY, y_xmax)
+                    # Call trajectory calculation for new trajectory y-axis intercept
+                    c_list = np.append(c_list, after_impact_traj_puck([ImpX[impact_count], ImpY[impact_count]],m_list[impact_count]))
+                    # Set current c,m equal to final cf and mf
+                    cf = c_list[impact_count]
+                    mf = m_list[impact_count]
+
+
+                    print(" Wall collision right")
+                    collision = True # TODO: Add back in so that collisions will keep on be corrected
 
             else: # No collision
                 collision = False
+
 
         print(f"wx1 = {wx1}, wx2 = {wx2}")
         print(f"clist = {c_list}, m_list = {m_list}")
@@ -218,13 +227,8 @@ if sim == 0:
                 for j in range(len(wx1)):
                     print(f" wx1[{j}] = {wx1[j]} ")
                     if wx1[j] < xmax and wx1[j] > xmin:
-                        Flag_wx2_in_ws = 1
                         # Intersect at boundary W2 & W1
                         plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
-                if Flag_wx2_in_ws == 0:
-                    # Check for side of workspace intersect and change wx and wy
-                    print("FIX ME")
-
 
 
         # Trajectory - Y-axis intercect
