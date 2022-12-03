@@ -77,6 +77,7 @@ ImpY = np.array([0]) # Impact point Y
 # Added 0 to start just to make same length as m_list
 # Flag for collision in the workspace
 Flag_collision_WS = 0
+Flag_BLOCK = 0
 y_ws_impact_Right = 0
 y_ws_impact_Left = 0
 
@@ -104,6 +105,11 @@ if sim == 0:
         # p2 = np.array([0.22423767, 1.25521714])
         # p1 = np.array([0.24935121, 1.40058753])
         # p2 = np.array([-0.13393464, 1.44759295])
+        # TODO have not accounted for these case
+        # p1 = np.array([-0.00924104, 1.20492857])
+        # p2 = np.array([0.11748907, 1.21698886])
+        # p1 = np.array([-0.15500103, 1.43286437])
+        # p2 = np.array([-0.22181392, 1.54141879])
         print(f"\n p1 = {p1}, p2 = {p2} \n")
 
         # p1[0] = p2[0] # TODO handle situation where x1 = x2 then m = infinity (Slope)
@@ -267,27 +273,55 @@ if sim == 0:
 
         # """ Plot best wx intersection """
         for i in range(len(wx2)):
+            Flag_BLOCK = 0
             if wx2[i] < xmax and wx2[i] > xmin:
+                Flag_BLOCK = 1
                 # print(f" wx2[{i}] = {wx2[i]} ")
                 if y_ws_impact_Right == 0 and y_ws_impact_Left == 0:
                     for j in range(len(wx1)):
                         # print(f" wx1[{j}] = {wx1[j]} ")
                         if wx1[j] < xmax and wx1[j] > xmin:
                             # Intersect at boundary W2 & W1
-                            plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
-                            print(f" w1 = {wx1[i],wy1}, w2 = {wx2[j],wy2} ")
-
+                            # Value to be published
+                            wx1_CORRECT = wx1[j]
+                            wy1_CORRECT = wy1
+                            wx2_CORRECT = wx2[i]
+                            wy2_CORRECT = wy2
+                            # plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                            # print(f" w1 = {wx1[i],wy1}, w2 = {wx2[i],wy2} ")
                 else:
                     if y_ws_impact_Right != 0:
                         # print("RIIIIGHT")
-                        plt.plot([xmax,wx2[i]],[y_ws_impact_Right,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
-                        print(f" w1 = {xmax,y_ws_impact_Right}, w2 = {wx2[i],wy2} ")
+                        # Value to be published
+                        wx1_CORRECT = xmax
+                        wy1_CORRECT = y_ws_impact_Right
+                        wx2_CORRECT = wx2[i]
+                        wy2_CORRECT = wy2
+                        # plt.plot([xmax,wx2[i]],[y_ws_impact_Right,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                        # print(f" w1 = {xmax,y_ws_impact_Right}, w2 = {wx2[i],wy2} ")
                     elif y_ws_impact_Left != 0:
                         # print("LEEEEEFTT")
-                        plt.plot([xmin,wx2[i]],[y_ws_impact_Left,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
-                        print(f" w1 = {xmin,y_ws_impact_Left}, w2 = {wx2[i],wy2} ")
-            else: # Block/Stay in front of goal
-                print(f"JUST BLOCK")
+                        # Value to be published
+                        wx1_CORRECT = xmin
+                        wy1_CORRECT = y_ws_impact_Left
+                        wx2_CORRECT = wx2[i]
+                        wy2_CORRECT = wy2
+                        # plt.plot([xmin,wx2[i]],[y_ws_impact_Left,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                        # print(f" w1 = {xmin,y_ws_impact_Left}, w2 = {wx2[i],wy2} ")
+        if Flag_BLOCK == 0: # Block/Stay in front of goal
+            # Value to be published
+            # TODO Home config or something
+            # TODO Reset flag
+            wx1_CORRECT = 0.0
+            wy1_CORRECT = 0.42
+            wx2_CORRECT = 0.0
+            wy2_CORRECT = 0.42
+            print(f"JUST BLOCK")
+
+        print(f"\n w1 = {wx1_CORRECT, wy1_CORRECT}, w2 = {wx2_CORRECT, wy2_CORRECT} \n")
+
+        # Plot Robot Waypoints
+        plt.plot([wx1_CORRECT,wx2_CORRECT],[wy1_CORRECT,wy2_CORRECT], 'ro', color = 'green', label = 'Robot move waypoints')
 
 
         # Trajectory - Y-axis intercect
