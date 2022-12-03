@@ -66,6 +66,8 @@ class main(Node):
         self.sm_execute_done = False
         self.wp1_prev = PointStamped()
         self.wp2_prev = PointStamped()
+        self.wp1_prev.point.y = 0.45
+        self.wp2_prev.point.y = 0.7
         self.wp1_flag = 0
         self.wp2_flag = 0
         self.return_flag = 0
@@ -147,6 +149,8 @@ class main(Node):
         if self.wp1_prev != data:
             self.wp1_traj = data
             self.wp1_flag = 1
+            self.wp1_prev = data
+            self.get_logger().info(f'wp1 traj {self.wp1_traj}')
 
     def wp2_callback(self, data):
         """
@@ -157,6 +161,8 @@ class main(Node):
         if self.wp2_prev != data:
             self.wp2_traj = data
             self.wp2_flag = 1
+            self.wp2_prev = data
+            self.get_logger().info(f'wp2 traj {self.wp2_traj}')
 
     def sm_plan_callback(self, msg):
         """Checks if SimpleMove has finished planning the trajectory to hit the puck."""
@@ -216,13 +222,8 @@ class main(Node):
                 # If TrajCalc has finished, call Waypoint and Goal services to meet the puck
                 if self.wp1_flag == 1 and self.wp2_flag == 1:
 
-                    self.wp2_request = Goal.Request()
-                    self.wp2_request.x = self.wp2_traj.point.x
-                    self.wp2_request.y = self.wp2_traj.point.y
-                    self.wp2_request.z = self.home_posn.z
-                    self.wp2_request.roll = 3.1416
-                    self.wp2_request.pitch = 0.0
-                    self.wp2_request.yaw = 1.5707
+                    self.get_logger().info(f'wp1 traj outside callback {self.wp1_traj}')
+                    self.get_logger().info(f'wp2 traj outside callback {self.wp2_traj}')
 
                     self.wp1_request = Goal.Request()
                     self.wp1_request.x = self.wp1_traj.point.x
@@ -232,8 +233,19 @@ class main(Node):
                     self.wp1_request.pitch = 0.0
                     self.wp1_request.yaw = 1.5707
 
-                    self.waypoint_future = self.waypoint_client.call_async(self.wp2_request)
-                    self.goal_future = self.goal_client.call_async(self.wp1_request)
+                    self.wp2_request = Goal.Request()
+                    self.wp2_request.x = self.wp2_traj.point.x
+                    self.wp2_request.y = self.wp2_traj.point.y
+                    self.wp2_request.z = self.home_posn.z
+                    self.wp2_request.roll = 3.1416
+                    self.wp2_request.pitch = 0.0
+                    self.wp2_request.yaw = 1.5707
+
+                    self.get_logger().info(f'wp1 request {self.wp1_request}')
+                    self.get_logger().info(f'wp2 request {self.wp2_request}')
+
+                    self.waypoint_future = self.waypoint_client.call_async(self.wp1_request)
+                    self.goal_future = self.goal_client.call_async(self.wp2_request)
                     self.one = 1 # TODO: Take this out
                     self.state = State.AWAIT_PLAN
                     
@@ -249,28 +261,28 @@ class main(Node):
                 # Do future path plan from goal position back to home
 
                 # Set starting point to goal position
-                self.wp1_request = Initial.Request()
-                self.wp1_request.x = self.wp1_traj.point.x
-                self.wp1_request.y = self.wp1_traj.point.y
-                self.wp1_request.z = self.home_posn.z
+                self.init_request = Initial.Request()
+                self.init_request.x = self.wp1_traj.point.x
+                self.init_request.y = self.wp1_traj.point.y
+                self.init_request.z = self.home_posn.z
                 self.get_logger().info(f'Stuck in RETURN_HOME *****************************')
                 if self.initial_flag == 0:
-                    self.initial_future = self.initial_client.call_async(self.wp1_request)
+                    self.initial_future = self.initial_client.call_async(self.init_request)
                     self.initial_flag = 1
                     self.get_logger().info(f'Initial callback ==============================')
                 if self.initial_future.done() and self.return_flag == 0:
                     self.get_logger().info(f'Return home initial plan DONE !!!!!!!!!!!!!!!s')
                     # Set waypoint to halfway between initial and home
                     # Set goal to home
-                    wpx = (self.wp1_traj.point.x + 0.0)/2
-                    wpy = (self.wp1_traj.point.y + 0.41)/2
+                    wpx = (self.init_request.x + self.home_posn.x)/2
+                    wpy = (self.init_request.y + self.home_posn.y)/2
                     wpz = self.home_posn.z
 
-                    self.wp_request = Goal.Request()
-                    self.wp_request.x = wpx
-                    self.wp_request.y = wpy
-                    self.wp_request.z = wpz
-                    self.waypoint_future2 = self.waypoint_client.call_async(self.wp_request)
+                    self.wp_return_request = Goal.Request()
+                    self.wp_return_request.x = wpx
+                    self.wp_return_request.y = wpy
+                    self.wp_return_request.z = wpz
+                    self.waypoint_future2 = self.waypoint_client.call_async(self.wp_return_request)
                     self.goal_future2 = self.goal_client.call_async(self.home_posn)
                     self.return_flag = 1    # We only want to do these calls once
 
