@@ -154,6 +154,14 @@ if sim == 0:
         print(f"wx1 = {wx1}, wx2 = {wx2}")
         print(f"clist = {c_list}, m_list = {m_list}")
 
+        for i in range(len(wx1)):
+            if wx1[i] < xmax and wx1[i] > xmin:
+                for j in range(len(wx2)):
+                    if wx2[j] < xmax and wx2[j] > xmin:
+                        wx1_CORRECT = wx1[i]
+                        wx2_CORRECT = wx2[i]
+                        print(f" wx1[{i}] = {wx1[i]} ")
+                        print(f" wx2[{j}] = {wx2[j]} ")
 
 
 
