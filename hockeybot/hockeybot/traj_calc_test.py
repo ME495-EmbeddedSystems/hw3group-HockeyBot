@@ -14,6 +14,11 @@ def traj_puck(c1,c2):
     c = c2[1]-m*c2[0] # y intersection
     return c, m
 
+def after_impact_traj_puck(c1,m):
+    """ Traj calc after impact."""
+    c = c1[1]-m*c1[0] # y intersection
+    return c
+
 def play_waypoints():
     wx2 = (wy2-c)/m
     wx1 = (wy1-c)/m
@@ -43,8 +48,12 @@ wy2 = 0.7
 
 p1 = np.array([0.0,0.0])
 p2 = np.array([0.0,0.0])
+# After first impact
 Imp1 = np.array([0.0,0.0]) # Impact point
-Imp2 = np.array([0.0,0.0]) # Reflected impact point
+# After second impact
+Imp2 = np.array([0.0,0.0]) # Impact point
+# After third impact
+Imp3 = np.array([0.0,0.0]) # Impact point
 
 """ Select trajectory type:
     + sim:
@@ -86,8 +95,11 @@ if sim == 0:
                 Imp1[1] = y_xmin
 
                 # Generating another point by reflecting one of the previous trajectory points
-                Iy2 = p1[1] - 2*(p1[1] - Imp1[1])
-                Ix2 = p1[0]
+                # Imp2[0] = p1[0]
+                # Imp2[1] = p1[1] - 2*(p1[1] - Imp1[1])
+
+                # Call trajectory calculation for new trajectory y-axis intercept
+                c2 = after_impact_traj_puck(Imp1,m1)
 
 
                 print(" Wall collision left")
@@ -99,8 +111,11 @@ if sim == 0:
                 Imp1[1] = y_xmax
 
                 # Generating another point by reflecting one of the previous trajectory points
-                Iy2 = p1[1] - 2*(p1[1] - Imp1[1])
-                Ix2 = p1[0]
+                # Imp2[0] = p1[0]
+                # Imp2[1] = p1[1] - 2*(p1[1] - Imp1[1])
+
+                # Call trajectory calculation for new trajectory y-axis intercept
+                c2 = after_impact_traj_puck(Imp1,m1)
 
                 print(" Wall collision right")
                 # collision = True # TODO: Add back in so that collisions will keep on be corrected
@@ -156,8 +171,10 @@ if sim == 0:
         plt.plot([Imp1[0]],[Imp1[1]], 'ro', color = 'blue', label = 'Impact point')
         # New after impact trajectory line
         plt.axline((Imp1[0],Imp1[1]), slope=m1, color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
-        # New reflection generated point
-        plt.plot([Ix2],[Iy2], 'ro', color = 'blue', label = 'New reflection generated point')
+        # Trajectory - Y-axis intercect
+        plt.plot([0],[c2], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
+        # # New reflection generated point
+        # plt.plot([Imp2[0]],[Imp2[1]], 'ro', color = 'blue', label = 'New reflection generated point')
 
         # Table boundaries
         plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], color="black", label = 'Table boundary')
