@@ -43,6 +43,8 @@ wy2 = 0.7
 
 p1 = np.array([0.0,0.0])
 p2 = np.array([0.0,0.0])
+Imp1 = np.array([0.0,0.0]) # Impact point
+Imp2 = np.array([0.0,0.0]) # Reflected impact point
 
 """ Select trajectory type:
     + sim:
@@ -67,13 +69,10 @@ if sim == 0:
 
 
 
-
-
-
         """ Do wall collision."""
         collision = True
         while collision == True:
-            collision = False # Delete later
+            collision = False # TODO Delete later
 
             y_xmin = m*Table_xmin + c
             y_xmax = m*Table_xmax + c
@@ -81,28 +80,32 @@ if sim == 0:
 
 
             if y_xmin < Table_ymax and y_xmin > Table_ymin and y_xmin < y_xmax:
-                m2 = -m # Reflect impact angle
+                m1 = -m # Reflect impact angle
                 # Impact coordinates
-                Ix = Table_xmin
-                Iy = y_xmin
+                Imp1[0] = Table_xmin
+                Imp1[1] = y_xmin
+
+                # Generating another point by reflecting one of the previous trajectory points
+                Iy2 = p1[1] - 2*(p1[1] - Imp1[1])
+                Ix2 = p1[0]
+
 
                 print(" Wall collision left")
                 # collision = True # TODO: Add back in so that collisions will keep on be corrected
             elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
-                m = -m # Reflect impact angle
+                m1 = -m # Reflect impact angle
                 # Impact coordinates
-                Ix = Table_xmax
-                Iy = y_xmax
+                Imp1[0] = Table_xmax
+                Imp1[1] = y_xmax
 
+                # Generating another point by reflecting one of the previous trajectory points
+                Iy2 = p1[1] - 2*(p1[1] - Imp1[1])
+                Ix2 = p1[0]
 
                 print(" Wall collision right")
                 # collision = True # TODO: Add back in so that collisions will keep on be corrected
             else: # No collision
                 collision = False
-
-
-
-
 
 
 
@@ -149,9 +152,12 @@ if sim == 0:
         plt.axline((p1[0], p1[1]), slope=m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
 
 
+        # Impact point 1
+        plt.plot([Imp1[0]],[Imp1[1]], 'ro', color = 'blue', label = 'Impact point')
         # New after impact trajectory line
-        plt.axline((Ix, Iy), slope=m2, color="red", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
-
+        plt.axline((Imp1[0],Imp1[1]), slope=m1, color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
+        # New reflection generated point
+        plt.plot([Ix2],[Iy2], 'ro', color = 'blue', label = 'New reflection generated point')
 
         # Table boundaries
         plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], color="black", label = 'Table boundary')
