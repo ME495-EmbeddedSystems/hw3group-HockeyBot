@@ -154,6 +154,7 @@ if sim == 0:
         print(f"wx1 = {wx1}, wx2 = {wx2}")
         print(f"clist = {c_list}, m_list = {m_list}")
 
+        # Select best waypoint x values to publish
         for i in range(len(wx1)):
             if wx1[i] < xmax and wx1[i] > xmin:
                 for j in range(len(wx2)):

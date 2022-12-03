@@ -560,7 +560,7 @@ class SimpleMove(Node):
             None
 
         """
-        self.cartesian_velocity_scaling_factor = 1.2 # Increase velocities and acceleration
+        self.cartesian_velocity_scaling_factor = 0.5 # Can go up to 1.6 # Increase velocities and acceleration
         self.cartesian_time_scaling_factor = 0.8 # Decrease time
 
         self.car_path.joint_state.header.frame_id = 'panda_link0'
@@ -768,6 +768,8 @@ class SimpleMove(Node):
                 #     self.future_plan_cartesian.result().solution.joint_trajectory.points[j].velocities[j] * 2
                 self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities[j] *= self.cartesian_velocity_scaling_factor
                 self.future_plan_cartesian.result().solution.joint_trajectory.points[i].accelerations[j] *= self.cartesian_velocity_scaling_factor
+
+        self.get_logger().info(f"self.future_plan_cartesian.result().solution - {self.future_plan_cartesian.result().solution}")
 
         execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
         self.get_logger().info('EXECUTE ________ service called')
