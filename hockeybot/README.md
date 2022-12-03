@@ -1,4 +1,4 @@
-# Final_Project_Package: HockeyBot
+# Final Project Package: HockeyBot
 ## Authors: 
 - **Ava Zahedi**
 - **Hanyin Yuan**
@@ -15,7 +15,6 @@ tell the Franka to meet the puck there.
 ```
 sudo apt update
 sudo apt upgrade
-
 ```
 2.  Install moveit: `sudo apt install ros-humble-moveit`
 
@@ -23,7 +22,6 @@ sudo apt upgrade
 ```
 mkdir -p nuws/src
 cd nuws
-
 ```
 4. Install the follow packages by clone the repositories `vcs import --recursive --input https://raw.githubusercontent.com/m-elwin/numsr_patches/main/numsr_patches.repos src`
 ```
@@ -55,8 +53,10 @@ sudo cp src/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/99-inte
 ## **Hardware Requirements**
 This project requires the following hardware components:
 * RealSense Camera: realsense-ros can be installed with `apt install ros-humble-realsense2-camera`
-* Franka Emika Panda Robot
+* Franka Emika Panda Robot ([Panda Robot](https://nu-msr.github.io/ros_notes/ros2/franka.html))
 * Air-hocket Table (include puck, puddle)
+* To connect to the robot, plug in the ethernet from the robots workstation PC into the ethernet port on the users computer.
+* The hardware must be set up by connecting the RealSense camera via USB cable.
 
 ## **Contents**
 1. The `hockeybot` package contains the following nodes:
