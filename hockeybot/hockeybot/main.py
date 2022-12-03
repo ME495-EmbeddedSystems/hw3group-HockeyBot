@@ -15,6 +15,7 @@ class State(Enum):
     on each iteration in the correct order.
     """
 
+    SETUP = auto(),
     INIT_CV = auto(),
     TRAJ = auto(),
     START_PLAN = auto(),
@@ -49,10 +50,10 @@ class main(Node):
         self.home_posn.roll = 3.1416
         self.home_posn.pitch = 0.0
         self.home_posn.yaw = 1.5707
-
+        self.state = State.SETUP
 
         # Re-initializable variables - these get reset every cycle
-        self.state = State.INIT_CV
+        # self.state = State.INIT_CV
         self.initial_puck = True
         self.puck_pose_count = 0
         self.p1_msg = Pose()
@@ -69,6 +70,7 @@ class main(Node):
         self.wp2_flag = 0
         self.return_flag = 0
         self.initial_flag = 0
+        self.start_home_flag = 0
         self.one = 0 # TODO take this out
 
         # Subscribers
@@ -90,6 +92,26 @@ class main(Node):
 
         self.timer = self.create_timer(1/self.frequency, self.timer_callback)
 
+    def starting_posn(self):
+        """Move robot from original startup position to home configuration for playing."""
+
+        self.get_logger().info('inside starting_posn call')
+
+        wpx = 0.0
+        wpy = 0.41
+        wpz = 0.3
+
+        self.start_rq = Goal.Request()
+        self.start_rq.x = wpx
+        self.start_rq.y = wpy
+        self.start_rq.z = wpz
+        self.start_rq.roll = 3.1416
+        self.start_rq.pitch = 0.0
+        self.start_rq.yaw = 1.5707
+        self.start_wp_future = self.waypoint_client.call_async(self.start_rq)
+        self.start_goal_future = self.goal_client.call_async(self.home_posn)
+
+        self.get_logger().info('start asyncs called')
 
     def puck_pose_filter(self, data):
         """
@@ -107,13 +129,14 @@ class main(Node):
         None
         """
 
-        if self.initial_puck is True:
-            self.initial_puck_pose = data
-            self.initial_puck = False
-        elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
-            if self.puck_pose_count == 0 or self.puck_pose_count == self.puck_interval:
-                self.pucks_tmp.append(data)
-            self.puck_pose_count += 1
+        if data.y >= 1.0:
+            if self.initial_puck is True:
+                self.initial_puck_pose = data
+                self.initial_puck = False
+            elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
+                if self.puck_pose_count == 0 or self.puck_pose_count == self.puck_interval:
+                    self.pucks_tmp.append(data)
+                self.puck_pose_count += 1
 
     def wp1_callback(self, data):
         """
@@ -163,6 +186,15 @@ class main(Node):
             # Continuously publish puck positions
             self.puck_posns.poses = [self.p1_msg, self.p2_msg]
             self.pub_puck_posn.publish(self.puck_posns)
+
+            if self.state == State.SETUP:
+                if self.start_home_flag == 0:
+                    self.starting_posn()
+                    self.start_home_flag = 1
+                # self.get_logger().info('waiting for start calls to finish')
+                if self.start_wp_future.done() and self.start_goal_future.done():
+                    self.get_logger().info('----------- start calls finished-------------')
+                    self.state = State.INIT_CV
 
             if self.state == State.INIT_CV:
                 # self.puck_pose_filter()
@@ -264,6 +296,8 @@ class main(Node):
                         self.wp2_flag = 0
                         self.return_flag = 0
                         self.initial_flag = 0
+                        self.start_home_flag = 0
+                        self.one = 0
 
 def main_entry(args=None):
     """Run Main node."""
