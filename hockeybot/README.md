@@ -1,5 +1,5 @@
-# Final Project Package: HockeyBot
-## Authors: 
+# Final_Project_Package: HockeyBot
+Authors: 
 - **Ava Zahedi**
 - **Hanyin Yuan**
 - **Marthinius Nel**
