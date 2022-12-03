@@ -53,6 +53,10 @@ sudo cp src/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/99-inte
 
 10. Git clone `git@github.com:ME495-EmbeddedSystems/hw3group-HockeyBot.git` into the /src directory of the customer workspace. 	This file will install the ros dependencies required to run this project.
 
+11. Additionally, users will need to install [Ubuntu install](https://docs.opencv.org/4.5.4/d2/de6/tutorial_py_setup_in_ubuntu.html) by using `sudo apt-get install python3-opencv`
+All code for this package was developed and test in Python 3
+
+
 ## **Hardware Requirements**
 This project requires the following hardware components:
 * RealSense Camera: realsense-ros can be installed with `apt install ros-humble-realsense2-camera`
@@ -76,6 +80,13 @@ configuration.
 2. launch: 
 * `main.launch.py`: master launch file for the robot - this runs all the nodes required to update the planning scene as well as move the robot 
 * `realsense2.launch.py`: launch file for realsense2 camera node
+
+## **User Guide**
+1. Follow the steps on website([Turn on Franka](https://nu-msr.github.io/ros_notes/ros2/franka.html))
+
+
+## Concepts and Overall System Architecture
+The process loop of the robot is as follows:
 
 ## **Instructions: Manually launch the services for robot.**
 1. To launch the franka along with the simple_move node `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true`.
