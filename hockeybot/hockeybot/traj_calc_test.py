@@ -52,6 +52,10 @@ wy2 = ymax
 """NEW"""
 wx1 = np.array([])
 wx2 = np.array([])
+wx1_CORRECT = 0
+wy1_CORRECT = ymin
+wx2_CORRECT = 0
+wy2_CORRECT = ymax
 
 # Two puck center positions
 # p1 = np.array([0.22,1.6])
@@ -73,8 +77,8 @@ ImpY = np.array([0]) # Impact point Y
 # Added 0 to start just to make same length as m_list
 # Flag for collision in the workspace
 Flag_collision_WS = 0
-y_ws_impact = 0
-
+y_ws_impact_Right = 0
+y_ws_impact_Left = 0
 
 """ Select trajectory type:
     + sim:
@@ -94,8 +98,12 @@ if sim == 0:
         # Test cases
         # p1 = np.array([-0.18848623, 1.32055732])
         # p2 = np.array([0.0948983, 1.43185305])
-        p1 = np.array([-0.110167, 1.2817489])
-        p2 = np.array([0.08224015, 1.39055462])
+        # p1 = np.array([-0.110167, 1.2817489])
+        # p2 = np.array([0.08224015, 1.39055462])
+        # p1 = np.array([-0.11210456, 1.44002429])
+        # p2 = np.array([0.22423767, 1.25521714])
+        # p1 = np.array([0.24935121, 1.40058753])
+        # p2 = np.array([-0.13393464, 1.44759295])
         print(f"\n p1 = {p1}, p2 = {p2} \n")
 
         # p1[0] = p2[0] # TODO handle situation where x1 = x2 then m = infinity (Slope)
@@ -144,15 +152,15 @@ if sim == 0:
                     # ImpX[impact_count]
                     # ImpY[impact_count]
                     # Calculate new y in workspace
-                    y_ws_impact = xmin*m_list[impact_count] + c_list[impact_count]
-                    print(f"y_ws left = {y_ws_impact}")
+                    y_ws_impact_Left = xmin*m_list[impact_count] + c_list[impact_count]
+                    # print(f"y_ws left = {y_ws_impact_Left}")
 
                     # y_xmin
 
                     # break
                     collision = False
 
-                    print("Left collision in ws")
+                    # print("Left collision in ws")
                     Flag_collision_WS = 1
                 else:
                     impact_count += 1
@@ -168,7 +176,7 @@ if sim == 0:
                     cf = c_list[impact_count]
                     mf = m_list[impact_count]
 
-                    print(" Wall collision left")
+                    # print(" Wall collision left")
                     collision = True # TODO: Add back in so that collisions will keep on be corrected
             elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
 
@@ -177,8 +185,8 @@ if sim == 0:
                     # ImpX[impact_count]
                     # ImpY[impact_count]
                     # Calculate new y in workspace
-                    y_ws_impact = xmax*m_list[impact_count] + c_list[impact_count]
-                    print(f"y_ws right = {y_ws_impact}")
+                    y_ws_impact_Right = xmax*m_list[impact_count] + c_list[impact_count]
+                    # print(f"y_ws right = {y_ws_impact_Right}")
 
                     # y_xmin
 
@@ -202,7 +210,7 @@ if sim == 0:
                     mf = m_list[impact_count]
 
 
-                    print(" Wall collision right")
+                    # print(" Wall collision right")
                     collision = True # TODO: Add back in so that collisions will keep on be corrected
 
             else: # No collision
@@ -210,7 +218,7 @@ if sim == 0:
 
 
         print(f"wx1 = {wx1}, wx2 = {wx2}")
-        print(f"clist = {c_list}, m_list = {m_list}")
+        # print(f"clist = {c_list}, m_list = {m_list}")
 
         # Select best waypoint x values to publish
         for i in range(len(wx1)):
@@ -219,8 +227,8 @@ if sim == 0:
                     if wx2[j] < xmax and wx2[j] > xmin:
                         wx1_CORRECT = wx1[i]
                         wx2_CORRECT = wx2[i]
-                        print(f" wx1[{i}] = {wx1[i]} ")
-                        print(f" wx2[{j}] = {wx2[j]} ")
+                        # print(f" wx1[{i}] = {wx1[i]} ")
+                        # print(f" wx2[{j}] = {wx2[j]} ")
 
 
 
@@ -251,25 +259,35 @@ if sim == 0:
 
         if wx1[impact_count] > xmin and wx1[impact_count] < xmax:
             if wx2[impact_count] > xmin and wx2[impact_count] < xmax:
-                print(f"wx1 & wx2 inside workspace!!")
+                # print(f"wx1 & wx2 inside workspace!!")
                 not_straight_traj = 1
         else:
-            print(f"wx1 or wx2 outside workspace!!")
+            # print(f"wx1 or wx2 outside workspace!!")
+            pass
 
-        """ Plot best wx intersection """
+        # """ Plot best wx intersection """
         for i in range(len(wx2)):
             if wx2[i] < xmax and wx2[i] > xmin:
-                print(f" wx2[{i}] = {wx2[i]} ")
-                if y_ws_impact == 0:
-                    print("JSNCIYUSDBCUYBDCIOBSDOL")
+                # print(f" wx2[{i}] = {wx2[i]} ")
+                if y_ws_impact_Right == 0 and y_ws_impact_Left == 0:
                     for j in range(len(wx1)):
-                        print(f" wx1[{j}] = {wx1[j]} ")
+                        # print(f" wx1[{j}] = {wx1[j]} ")
                         if wx1[j] < xmax and wx1[j] > xmin:
                             # Intersect at boundary W2 & W1
                             plt.plot([wx1[j],wx2[i]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                            print(f" w1 = {wx1[i],wy1}, w2 = {wx2[j],wy2} ")
+
                 else:
-                    print("HALLOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-                    plt.plot([xmin,wx2[i]],[y_ws_impact,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                    if y_ws_impact_Right != 0:
+                        # print("RIIIIGHT")
+                        plt.plot([xmax,wx2[i]],[y_ws_impact_Right,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                        print(f" w1 = {xmax,y_ws_impact_Right}, w2 = {wx2[i],wy2} ")
+                    elif y_ws_impact_Left != 0:
+                        # print("LEEEEEFTT")
+                        plt.plot([xmin,wx2[i]],[y_ws_impact_Left,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+                        print(f" w1 = {xmin,y_ws_impact_Left}, w2 = {wx2[i],wy2} ")
+            else: # Block/Stay in front of goal
+                print(f"JUST BLOCK")
 
 
         # Trajectory - Y-axis intercect
