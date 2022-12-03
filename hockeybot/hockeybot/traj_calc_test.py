@@ -38,9 +38,12 @@ Table_xmax = 0.32
 Table_ymin = 0.3683
 Table_ymax = 1.7526
 
-# Boundary w1&2 y values
+# Boundary & waypoint w1&2 y values
 wy1 = 0.45
 wy2 = 0.7
+"""NEW"""
+wx1 = np.array([])
+wx2 = np.array([])
 
 # Two puck center positions
 # p1 = np.array([0.22,1.6])
@@ -86,6 +89,9 @@ if sim == 0:
         cf = c
         print(f"c = {c}, m = {m}")
         print(f"\n 1 clist = {c_list}, 1 m_list = {m_list} \n")
+        x1, x2 = play_waypoints(cf,mf)
+        wx1 = np.append(wx1, x1)
+        wx2 = np.append(wx2, x2)
 
 
 
@@ -100,16 +106,16 @@ if sim == 0:
 
             y_xmin = mf*Table_xmin + cf
             y_xmax = mf*Table_xmax + cf
-            print(f"y_xmin = {y_xmin}, y_xmax = {y_xmax}")
+            # print(f"y_xmin = {y_xmin}, y_xmax = {y_xmax}")
 
-            print(f"\n clist = {c_list}, m_list = {m_list} \n")
+            # print(f"\n clist = {c_list}, m_list = {m_list} \n")
 
 
             if y_xmin < Table_ymax and y_xmin > Table_ymin and y_xmin < y_xmax:
                 impact_count += 1
 
                 m_list = np.append(m_list,-m_list[impact_count-1]) # Reflect impact angle
-                print(f"\n clist = {c_list}, m_list = {m_list} \n")
+                # print(f"\n clist = {c_list}, m_list = {m_list} \n")
                 # Impact coordinates
                 ImpX = np.append(ImpX, Table_xmin)
                 ImpY = np.append(ImpY, y_xmin)
@@ -119,45 +125,13 @@ if sim == 0:
                 cf = c_list[impact_count]
                 mf = m_list[impact_count]
 
-                # if impact_count == 1:
-                #     m1 = -m # Reflect impact angle
-                #     # Impact coordinates
-                #     Imp1[0] = Table_xmin
-                #     Imp1[1] = y_xmin
-                #     # Call trajectory calculation for new trajectory y-axis intercept
-                #     c1 = after_impact_traj_puck(Imp1,m1)
-                #     # Set current c,m equal to final cf and mf
-                #     cf = c1
-                #     mf = m1
-                # elif impact_count == 2:
-                #     m2 = -m1 # Reflect impact angle
-                #     # Impact coordinates
-                #     Imp2[0] = Table_xmin
-                #     Imp2[1] = y_xmin
-                #     # Call trajectory calculation for new trajectory y-axis intercept
-                #     c2 = after_impact_traj_puck(Imp2,m2)
-                #     # Set current c,m equal to final cf and mf
-                #     cf = c2
-                #     mf = m2
-                # elif impact_count == 3:
-                #     m3 = -m2 # Reflect impact angle
-                #     # Impact coordinates
-                #     Imp3[0] = Table_xmin
-                #     Imp3[1] = y_xmin
-                #     # Call trajectory calculation for new trajectory y-axis intercept
-                #     c3 = after_impact_traj_puck(Imp3,m3)
-                #     # Set current c,m equal to final cf and mf
-                #     cf = c3
-                #     mf = m3
-
-
                 print(" Wall collision left")
                 collision = True # TODO: Add back in so that collisions will keep on be corrected
             elif y_xmax < Table_ymax and y_xmax > Table_ymin and y_xmax < y_xmin:
                 impact_count += 1
 
                 m_list = np.append(m_list,-m_list[impact_count-1]) # Reflect impact angle
-                print(f"\n clist = {c_list}, m_list = {m_list} \n")
+                # print(f"\n clist = {c_list}, m_list = {m_list} \n")
                  # Impact coordinates
                 ImpX = np.append(ImpX, Table_xmax)
                 ImpY = np.append(ImpY, y_xmax)
@@ -167,68 +141,29 @@ if sim == 0:
                 cf = c_list[impact_count]
                 mf = m_list[impact_count]
 
-                # if impact_count == 1:
-                #     m1 = -m # Reflect impact angle
-                #     # Impact coordinates
-                #     Imp1[0] = Table_xmax
-                #     Imp1[1] = y_xmax
-                #     # Call trajectory calculation for new trajectory y-axis intercept
-                #     c1 = after_impact_traj_puck(Imp1,m1)
-                #     # Set current c,m equal to final cf and mf
-                #     cf = c1
-                #     mf = m1
-                # elif impact_count == 2:
-                #     m2 = -m1 # Reflect impact angle
-                #     # Impact coordinates
-                #     Imp2[0] = Table_xmin
-                #     Imp2[1] = y_xmin
-                #     # Call trajectory calculation for new trajectory y-axis intercept
-                #     c2 = after_impact_traj_puck(Imp2,m2)
-                #     # Set current c,m equal to final cf and mf
-                #     cf = c2
-                #     mf = m2
-                # elif impact_count == 3:
-                #     m3 = -m2 # Reflect impact angle
-                #     # Impact coordinates
-                #     Imp3[0] = Table_xmin
-                #     Imp3[1] = y_xmin
-                #     # Call trajectory calculation for new trajectory y-axis intercept
-                #     c3 = after_impact_traj_puck(Imp3,m3)
-                #     # Set current c,m equal to final cf and mf
-                #     cf = c3
-                #     mf = m3
-
                 print(" Wall collision right")
                 collision = True # TODO: Add back in so that collisions will keep on be corrected
 
             else: # No collision
                 collision = False
 
-        print(f"clist = {c_list}, m_list = {m_list}")
-        wx1, wx2 = play_waypoints(cf,mf)
+            x1, x2 = play_waypoints(cf,mf)
+            wx1 = np.append(wx1, x1)
+            wx2 = np.append(wx2, x2)
 
-        if wx1 > xmin and wx1 < xmax:
-            if wx2 > xmin and wx2 < xmax:
+        print(f"wx1 = {wx1}, wx2 = {wx2}")
+        print(f"clist = {c_list}, m_list = {m_list}")
+
+
+
+
+
+        if wx1[impact_count] > xmin and wx1[impact_count] < xmax:
+            if wx2[impact_count] > xmin and wx2[impact_count] < xmax:
                 print(f"wx1 & wx2 inside workspace!!")
                 not_straight_traj = 1
         else:
             print(f"wx1 or wx2 outside workspace!!")
-
-        # if wx1 > xmin and wx1 < xmax:
-        #     print(f"wx1 inside workspace!!")
-        #     not_straight_traj
-        # else:
-        #     print(f"wx1 outside workspace!!")
-
-        # if wx2 > xmin and wx2 < xmax:
-        #     print(f"wx2 inside workspace!!")
-        #     not_straight_traj
-        # else:
-        #     print(f"wx2 outside workspace!!")
-
-        # print(f"\n m = {m}, c = {c}, wx1 = {wx1}, wx2 = {wx2}")
-
-
 
         # Airhockey table visualization
         # plt.ion() # Interactive plot
@@ -236,37 +171,40 @@ if sim == 0:
         plt.plot([0],[0.405], 'o', color = 'pink', label = 'Robot home location')
         # Two puck points from CV
         plt.plot([p1[0],p2[0]],[p1[1],p2[1]], 'ro', color = 'red', label = 'CV puck centres')
-        # Intersect at boundary W2 & W1
-        plt.plot([wx1,wx2],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+
+        # # TODO NB GOOD FOR DEBUGGIN
+        # """ Plot all wx intersectiona """
+        # # Intersect at boundary W2 & W1
+        # plt.plot([wx1,wx2],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+        # """ Plot last wx intersectiona """
+        # # Intersect at boundary W2 & W1
+        # plt.plot([wx1[-1],wx2[-1]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+
+        if wx1[impact_count] > xmin and wx1[impact_count] < xmax:
+            if wx2[impact_count] > xmin and wx2[impact_count] < xmax:
+                print(f"wx1 & wx2 inside workspace!!")
+                not_straight_traj = 1
+        else:
+            print(f"wx1 or wx2 outside workspace!!")
+
+        """ Plot best wx intersection """
+        for i in range(len(wx1)):
+            if wx1[i] < xmax and wx1[i] > xmin:
+                print(f" wx1[{i}] = {wx1[i]} ")
+                for j in range(len(wx2)):
+                    print(f" wx2[{j}] = {wx2[j]} ")
+                    if wx2[j] < xmax and wx2[j] > xmin:
+                        # Intersect at boundary W2 & W1
+                        plt.plot([wx1[i],wx2[j]],[wy1,wy2], 'ro', color = 'green', label = 'Robot move waypoints')
+
+
+
         # Trajectory - Y-axis intercect
         plt.plot([0],[c], 'x', color = 'red', label = 'Traj intercect with y-axis')
         # Puck trajectory line
         plt.axline((p1[0], p1[1]), slope=m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
 
-
-        # if impact_count >= 1:
-        #     # Impact point 1
-        #     plt.plot([Imp1[0]],[Imp1[1]], 'ro', color = 'blue', label = 'Impact point')
-        #     # New after impact trajectory line
-        #     plt.axline((Imp1[0],Imp1[1]), slope=m1, color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
-        #     # Trajectory - Y-axis intercect
-        #     plt.plot([0],[c1], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
-        #     if impact_count >= 2:
-        #         print("SECOND HIT")
-        #         # Impact point 2
-        #         plt.plot([Imp2[0]],[Imp2[1]], 'ro', color = 'blue', label = 'Impact point')
-        #         # New after impact trajectory line
-        #         plt.axline((Imp2[0],Imp2[1]), slope=m2, color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
-        #         # Trajectory - Y-axis intercect
-        #         plt.plot([0],[c2], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
-        #         if impact_count >= 3:
-        #             print("THIRD HIT")
-        #             # Impact point 2
-        #             plt.plot([Imp3[0]],[Imp3[1]], 'ro', color = 'blue', label = 'Impact point')
-        #             # New after impact trajectory line
-        #             plt.axline((Imp3[0],Imp3[1]), slope=m3, color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
-        #             # Trajectory - Y-axis intercect
-        #             plt.plot([0],[c3], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
+        """New Plot after impact"""
         if len(c_list) != 0:
             for imp in range(1,len(c_list)):
                 # Impact point 1
@@ -275,8 +213,6 @@ if sim == 0:
                 plt.axline((ImpX[imp],ImpY[imp]), slope=m_list[imp], color="red", linestyle=(0, (5, 5)), label = 'New puck trajectory line')
                 # Trajectory - Y-axis intercect
                 plt.plot([0],[c_list[imp]], 'x', color = 'red', label = 'Traj1 intercect with y-axis')
-
-
 
         # Table boundaries
         plt.plot([Table_xmin,Table_xmin],[Table_ymin,Table_ymax], color="black", label = 'Table boundary')
