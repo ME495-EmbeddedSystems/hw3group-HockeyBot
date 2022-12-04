@@ -11,6 +11,7 @@ class CamNode(Node):
         super().__init__('cam_node')
         self.currentpos = self.create_publisher(Point, '/puck_pose', 10)
         self.pos = Point()
+        self.folder = []
         self.pipeline = rs.pipeline()
         self.config = rs.config()
         self.pipeline_wrapper = rs.pipeline_wrapper(self.pipeline)
@@ -96,7 +97,7 @@ class CamNode(Node):
                 # corresponding to the center of the circle
                 cv2.circle(ir_image, (x, y), r, (0, 255, 0), 4)
                 cv2.rectangle(ir_image, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-                
+                self.folder.append((-depth_point[1], - depth_point[0] + 1.16205))
                 self.x += depth_point[0]
                 self.y += depth_point[1]
             # cv2.rectangle(ir_image, (self.cx - 5, self.cy - 5), (self.cx + 5, self.cy + 5), (0, 128, 255), -1)
@@ -119,6 +120,8 @@ class CamNode(Node):
             elif circles is not None:
                 self.i += 1
 
+        # np.savetxt("cam_node.csv", self.folder, delimiter=",")
+        # print('****CSV SAVED******')
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q') or key == 27:
             cv2.destroyAllWindows()

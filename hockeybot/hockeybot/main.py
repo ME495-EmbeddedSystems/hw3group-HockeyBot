@@ -42,8 +42,7 @@ class main(Node):
 
         # True initial variables - these only get set once
         self.frequency = 100 # Hz
-        self.puck_interval = 3  # 1 means getting consecutive waypoints, 2 means every other, etc.
-        # self.home_posn = Pose(x=0.0, y=0.41, z=-0.015)
+        self.puck_interval = 5  # 1 means getting consecutive waypoints, 2 means every other, etc.
         self.home_posn = Goal.Request()
         self.home_posn.x = 0.0
         self.home_posn.y = 0.41
@@ -142,15 +141,15 @@ class main(Node):
         None
         """
 
-        if data.y >= 1.0:
-            if self.initial_puck is True:
-                self.initial_puck_pose = data
-                self.initial_puck = False
-            elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
-                if self.puck_pose_count == 0 or self.puck_pose_count == self.puck_interval:
-                    self.pucks_tmp.append(data)
-                    self.get_logger().info(f'puck pose data {data}')
-                self.puck_pose_count += 1
+        # if data.y >= 1.0:
+        #     if self.initial_puck is True:
+        #         self.initial_puck_pose = data
+        #         self.initial_puck = False
+        #     elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
+        #         if self.puck_pose_count == 0 or self.puck_pose_count == self.puck_interval:
+        #             self.pucks_tmp.append(data)
+        #             self.get_logger().info(f'puck pose data {data}')
+        #         self.puck_pose_count += 1
 
         # if data.y >= 1.0:
         #     if self.initial_puck is True:
@@ -159,11 +158,26 @@ class main(Node):
         #     elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
         #         if self.puck_pose_count == 0:
         #             self.pucks_tmp.append(data)
-        #             self.get_logger().info(f'puck pose data {data}')
-        #         elif data.y < (self.pucks_tmp[0].y - 0.05):
+        #             self.get_logger().info(f'first puck pose {data}')
+        #         elif data.y < (self.pucks_tmp[0].y - 0.03):
+        #             self.get_logger().info(f'first puck pose {self.pucks_tmp[0]}')
         #             self.pucks_tmp.append(data)
-        #             self.get_logger().info(f'puck pose data {data}')
+        #             self.get_logger().info(f'second puck pose {data}')
         #         self.puck_pose_count += 1
+
+        if self.state == State.INIT_CV:
+            if data.y >= 1.0:
+                if self.puck_pose_count == 0:
+                    self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
+                    self.pucks_tmp.append(data)
+                    self.puck_pose_count = 1
+                elif data.y < (self.pucks_tmp[0].y - 0.05):
+                    self.get_logger().info(f'first puck pose {self.pucks_tmp[0]}')
+                    self.pucks_tmp.append(data)
+                    self.get_logger().info(f'second puck pose {data}')
+                    self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
+                    self.puck_pose_count = 2
+                # self.puck_pose_count += 1
 
     def wp1_callback(self, data):
         """
@@ -227,10 +241,12 @@ class main(Node):
                 self.state = State.INIT_CV
 
         if self.state == State.INIT_CV:
-            # self.get_logger().info(f'iteration {self.iter_count}')
+            self.get_logger().info(f'iteration {self.iter_count}')
             # self.get_logger().info(f'iter {self.iter_count} puck_pose_count {self.puck_pose_count}')
-            if self.puck_pose_count > self.puck_interval:
+            # if self.puck_pose_count > self.puck_interval:
             # if len(self.pucks_tmp) == 2:
+            if self.puck_pose_count == 2:
+                self.get_logger().info('pucks tmp has 2 posns')
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
                 self.state = State.TRAJ
@@ -240,6 +256,7 @@ class main(Node):
             self.p1_msg.position = self.pucks_tmp[0]
             self.p2_msg.position = self.pucks_tmp[1]
             self.puck_posns.poses = [self.p1_msg, self.p2_msg]
+            self.get_logger().info(f'puck posns sent to marno {self.puck_posns.poses}')
             self.pub_puck_posn.publish(self.puck_posns)
             self.state = State.START_PLAN
 
@@ -266,11 +283,12 @@ class main(Node):
                     self.wp2_request.pitch = 0.0
                     self.wp2_request.yaw = 1.5707
 
-                    # self.get_logger().info(f'wp1 request {self.wp1_request}')
-                    # self.get_logger().info(f'wp2 request {self.wp2_request}')
+                    self.get_logger().info(f'wp1 request {self.wp1_request}')
+                    self.get_logger().info(f'wp2 request {self.wp2_request}')
 
                     self.waypoint_future = self.waypoint_client.call_async(self.wp1_request)
                     self.goal_future = self.goal_client.call_async(self.wp2_request)
+                    # self.get_logger().info(f'Called waypoint and goal')
                     # time.sleep(20)
                     self.one = 1
                     # self.state = State.AWAIT_PLAN
@@ -281,18 +299,12 @@ class main(Node):
 
                 
         if self.state == State.AWAIT_PLAN:
-            # self.get_logger().info(f'Called waypoint and goal')
-            # self.get_logger().info(f'inside AWAIT_PLAN')
             if self.waypoint_future.done() and self.goal_future.done():
-                # self.get_logger().info(f'ROBOT SHOULD MOVE -  waypoint and goal DONE')
                 if self.sm_plan_done == True:
-                    # self.get_logger().info(f'______________________________________')
                     self.state = State.RETURN_HOME
 
         if self.state == State.RETURN_HOME:
             # Do future path plan from goal position back to home
-            # self.get_logger().info(f'Stuck in RETURN_HOME *****************************')
-            # self.get_logger().info(f'inside RETURN_HOME')
             if self.initial_flag == 0:
                 # Set starting point to goal position
                 self.init_request = Initial.Request()
@@ -301,9 +313,7 @@ class main(Node):
                 self.init_request.z = self.home_posn.z
                 self.initial_future = self.initial_client.call_async(self.init_request)
                 self.initial_flag = 1
-                # self.get_logger().info(f'Initial callback ==============================')
             if self.initial_future.done() and self.return_flag == 0:
-                # self.get_logger().info(f'Return home initial plan DONE !!!!!!!!!!!!!!!s')
                 self.get_logger().info(f'preparing return')
                 # Set waypoint to halfway between initial and home
                 # Set goal to home
@@ -331,7 +341,6 @@ class main(Node):
                 if self.waypoint_future2.done() and self.goal_future2.done():
                     if abs(self.ee_posn.position.x - self.home_posn.x) < 0.01 and \
                         abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
-                        self.get_logger().info(f'_________________________ DONE RESET___________________')
                         # Reset initial variables
                         self.state = State.INIT_CV
                         self.initial_puck = True
@@ -356,6 +365,8 @@ class main(Node):
                         self.cv_to_traj_flag = 0
                         self.one = 0
                         self.iter_count += 1
+                        
+                        self.get_logger().info(f'_________________________ DONE RESET___________________')
 
 def main_entry(args=None):
     """Run Main node."""
