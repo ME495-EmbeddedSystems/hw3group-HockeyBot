@@ -76,9 +76,10 @@ class CamNode(Node):
                 self.count +=1
         elif self.count == 50:
             self.GetCenter(ir_image, depth_frame, depth_intrin)
-            # print(self.cx/50, self.cy/50)
-            self.cx = 0 - self.cx/50
-            self.cy =  self.cy/50 #1.0541 -
+            
+            self.cx = self.cx/50 + 1.015
+            self.cy = self.cy/50 #1.0541 -
+            print('Center: ', self.cx, self.cy )
             # print(self.cx, self.cy)
             self.count +=1
         else:
@@ -106,14 +107,14 @@ class CamNode(Node):
             # print ('Position: ')
             
             # frames per batch
-            self.fpb = 3
-            if self.i == self.fpb: 
+            self.fpb = 2 # 3
+            if self.i == self.fpb-1: 
                 self.i = 0
                 self.pos.x = - self.y/self.fpb
-                self.pos.y = - self.x/self.fpb + 1.16205
+                self.pos.y = - self.x/self.fpb + self.cx
                 self.currentpos.publish(self.pos)
-                print('center', self.cx, self.cy)
-                print(self.x/self.fpb, self.y/self.fpb)
+                # print('center', self.cx, self.cy)
+                # print('These are the point values', self.x/self.fpb, self.y/self.fpb)
                 self.x = 0
                 self.y = 0
             elif circles is not None:

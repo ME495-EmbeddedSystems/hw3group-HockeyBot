@@ -149,18 +149,18 @@ class TrajCalc(Node):
         self.puck_array = data
         self.p1 = self.puck_array.poses[0].position
         self.p2 = self.puck_array.poses[1].position
-        # Two puck center positions # TODO Delete when using CV
-        if self.start == 0:
-            self.start = 1
-            self.p1.x = 0
-            self.p2.x = 0
-            self.p1.y = 0
-            self.p2.y = 0
-        else:
-            self.p1.x = 0.22
-            self.p2.x = 0.19
-            self.p1.y = 1.6
-            self.p2.y = 1.5
+        # # Two puck center positions # TODO Delete when using CV
+        # if self.start == 0:
+        #     self.start = 1
+        #     self.p1.x = 0
+        #     self.p2.x = 0
+        #     self.p1.y = 0
+        #     self.p2.y = 0
+        # else:
+        #     self.p1.x = 0.22
+        #     self.p2.x = 0.19
+        #     self.p1.y = 1.6
+        #     self.p2.y = 1.5
 
     def traj_puck(self):
         """
@@ -177,7 +177,7 @@ class TrajCalc(Node):
 
         self.c = self.p2.y-self.m*self.p2.x
 
-    def after_impact_traj_puck(c1,m):
+    def after_impact_traj_puck(self,c1,m):
         """ Traj y-intersect calc after impact."""
         c = c1[1]-m*c1[0]
         return c
@@ -189,8 +189,8 @@ class TrajCalc(Node):
         Returns:
             + wx1, wx2 - x coordinates fot robots two waypoints
         """
-        self.wx2 = np.append(self.wx2, (self.wy2-self.c[self.impact_count])/self.m[self.impact_count])
-        self.wx1 = np.append(self.wx1, (self.wy1-self.c[self.impact_count])/self.m[self.impact_count])
+        self.wx2 = np.append(self.wx2, (self.wy2-self.c_list[self.impact_count])/self.m_list[self.impact_count])
+        self.wx1 = np.append(self.wx1, (self.wy1-self.c_list[self.impact_count])/self.m_list[self.impact_count])
 
     def trajectory(self):
         # p1[0] = p2[0] situation where x1 = x2 then m = infinity (Slope)
@@ -203,8 +203,8 @@ class TrajCalc(Node):
             self.draw_2D_sim()
         else:
             self.traj_puck()
-            m_list = np.append(m_list, self.m)
-            c_list = np.append(c_list, self.c)
+            self.m_list = np.append(self.m_list, self.m)
+            self.c_list = np.append(self.c_list, self.c)
             self.mf = self.m
             self.cf = self.c
 
@@ -215,7 +215,7 @@ class TrajCalc(Node):
 
                 self.play_waypoints()
 
-                if Flag_collision_WS == 1 or self.impact_count > 5:
+                if self.Flag_collision_WS == 1 or self.impact_count > 5:
                     break # Immediately stops while loop
 
                 # print(f"y_xmin = {y_xmin}, y_xmax = {y_xmax}")
@@ -250,7 +250,7 @@ class TrajCalc(Node):
                         self.ImpX = np.append(self.ImpX, self.Table_xmin)
                         self.ImpY = np.append(self.ImpY, y_xmin)
                         # Call trajectory calculation for new trajectory y-axis intercept
-                        c_list = np.append(self.c_list, self.after_impact_traj_puck([self.ImpX[self.impact_count],\
+                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck([self.ImpX[self.impact_count],\
                             self.ImpY[self.impact_count]],self.m_list[self.impact_count]))
                         # Set current c,m equal to final cf and mf
                         self.cf = self.c_list[self.impact_count]
@@ -264,7 +264,7 @@ class TrajCalc(Node):
                         # ImpX[impact_count]
                         # ImpY[impact_count]
                         # Calculate new y in workspace
-                        self.y_ws_impact_Right = self.xmax*m_list[self.impact_count] \
+                        self.y_ws_impact_Right = self.xmax*self.m_list[self.impact_count] \
                             + self.c_list[self.impact_count]
                         # print(f"y_ws right = {y_ws_impact_Right}")
 
@@ -274,7 +274,7 @@ class TrajCalc(Node):
                         self.collision = False
 
                         print("Rigth collision in ws")
-                        Flag_collision_WS = 1
+                        self.Flag_collision_WS = 1
                     else:
                         self.impact_count += 1
 
@@ -284,8 +284,7 @@ class TrajCalc(Node):
                         self.ImpX = np.append(self.ImpX, self.Table_xmax)
                         self.ImpY = np.append(self.ImpY, y_xmax)
                         # Call trajectory calculation for new trajectory y-axis intercept
-                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck([self.ImpX[self.impact_count],\
-                            self.ImpY[self.impact_count]],self.m_list[self.impact_count]))
+                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck([self.ImpX[self.impact_count], self.ImpY[self.impact_count]],self.m_list[self.impact_count]))
                         # Set current c,m equal to final cf and mf
                         self.cf = self.c_list[self.impact_count]
                         self.mf = self.m_list[self.impact_count]
@@ -445,7 +444,8 @@ class TrajCalc(Node):
     def timer_callback(self):
 
         if self.p1.y != 0 and self.p2.y != 0:
-            if self.wx1 == self.wx1_prev and self.wx2 == self.wx2_prev:
+            # if self.wx1[self.impact_count] == self.wx1_prev and self.wx2[self.impact_count] == self.wx2_prev:
+            if self.p1.x == self.wx1_prev and self.p2.x == self.wx2_prev:
                 # Publish waypoints
                 self.pub_wp1.publish(self.wp1)
                 self.pub_wp2.publish(self.wp2)
@@ -455,11 +455,25 @@ class TrajCalc(Node):
                 self.wp1.header.stamp = self.get_clock().now().to_msg()
                 self.wp2.header.stamp = self.get_clock().now().to_msg()
                 # Set x positions for waypoints
-                self.wp1.point.x = self.wx1[self.impact_count]
-                self.wp2.point.x = self.wx2[self.impact_count]
+                # self.wp1.point.x = self.wx1[self.impact_count]
+                # self.wp2.point.x = self.wx2[self.impact_count]
+                # self.wx1_CORRECT 
+                # self.wy1_CORRECT 
+                # self.wx2_CORRECT 
+                # self.wy2_CORRECT
+                self.wp1.point.x = self.wx1_CORRECT
+                self.wp2.point.x = self.wx2_CORRECT
+                self.get_logger().info(f"Waypoint1x -  {self.wp1.point.x}")
+                self.get_logger().info(f"Waypoint2x -  {self.wp2.point.x}")
+
                 # Publish waypoints
                 self.pub_wp1.publish(self.wp1)
                 self.pub_wp2.publish(self.wp2)
+                # Set previous values
+                # self.wx1_prev = self.wx1[self.impact_count]
+                # self.wx2_prev = self.wx2[self.impact_count]
+                self.wx1_prev = self.p1.x
+                self.wx2_prev = self.p2.x
 
                 """ New Var """
                 # Amount of impacts
