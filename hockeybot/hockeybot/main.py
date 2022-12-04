@@ -141,16 +141,15 @@ class main(Node):
         None
         """
 
-        # Previous one used
-        if data.y >= 1.0:
-            if self.initial_puck is True:
-                self.initial_puck_pose = data
-                self.initial_puck = False
-            elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
-                if self.puck_pose_count == 0 or self.puck_pose_count == self.puck_interval:
-                    self.pucks_tmp.append(data)
-                    self.get_logger().info(f'puck pose data {data}')
-                self.puck_pose_count += 1
+        # if data.y >= 1.0:
+        #     if self.initial_puck is True:
+        #         self.initial_puck_pose = data
+        #         self.initial_puck = False
+        #     elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
+        #         if self.puck_pose_count == 0 or self.puck_pose_count == self.puck_interval:
+        #             self.pucks_tmp.append(data)
+        #             self.get_logger().info(f'puck pose data {data}')
+        #         self.puck_pose_count += 1
 
         # if data.y >= 1.0:
         #     if self.initial_puck is True:
@@ -166,19 +165,19 @@ class main(Node):
         #             self.get_logger().info(f'second puck pose {data}')
         #         self.puck_pose_count += 1
 
-        # if self.state == State.INIT_CV:
-        #     if data.y >= 1.0:
-        #         if self.puck_pose_count == 0:
-        #             # self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
-        #             self.pucks_tmp.append(data)
-        #             self.puck_pose_count = 1
-        #         elif data.y < (self.pucks_tmp[0].y - 0.05):
-        #             # self.get_logger().info(f'first puck pose {self.pucks_tmp[0]}')
-        #             self.pucks_tmp.append(data)
-        #             # self.get_logger().info(f'second puck pose {data}')
-        #             # self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
-        #             self.puck_pose_count = 2
-        #         # self.puck_pose_count += 1
+        if self.state == State.INIT_CV:
+            if data.y >= 1.0:
+                if self.puck_pose_count == 0:
+                    self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
+                    self.pucks_tmp.append(data)
+                    self.puck_pose_count = 1
+                elif data.y < (self.pucks_tmp[0].y - 0.05):
+                    self.get_logger().info(f'first puck pose {self.pucks_tmp[0]}')
+                    self.pucks_tmp.append(data)
+                    self.get_logger().info(f'second puck pose {data}')
+                    self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
+                    self.puck_pose_count = 2
+                # self.puck_pose_count += 1
 
     def wp1_callback(self, data):
         """
