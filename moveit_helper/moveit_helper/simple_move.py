@@ -613,7 +613,7 @@ class SimpleMove(Node):
                 revolute_jump_threshold = self.revolute_jump_threshold,
                 avoid_collisions = self.avoid_collisions))
 
-        self.get_logger().info('Doen Calling Cartesian')
+        self.get_logger().info('Done Calling Cartesian')
 
     def plan_request(self):
         """
