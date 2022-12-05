@@ -113,6 +113,8 @@ class main(Node):
         wpy0 = 0.41
         wpz0 = 0.3
 
+        ### Might need to make two sets of waypoints to ensure we don't hit joint limits w repeated play ###
+
         self.start_rq = Goal.Request()
         self.start_rq.x = wpx0
         self.start_rq.y = wpy0
@@ -141,6 +143,7 @@ class main(Node):
         None
         """
 
+        # # Previous one used
         # if data.y >= 1.0:
         #     if self.initial_puck is True:
         #         self.initial_puck_pose = data
@@ -151,33 +154,20 @@ class main(Node):
         #             self.get_logger().info(f'puck pose data {data}')
         #         self.puck_pose_count += 1
 
-        # if data.y >= 1.0:
-        #     if self.initial_puck is True:
-        #         self.initial_puck_pose = data
-        #         self.initial_puck = False
-        #     elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
-        #         if self.puck_pose_count == 0:
-        #             self.pucks_tmp.append(data)
-        #             self.get_logger().info(f'first puck pose {data}')
-        #         elif data.y < (self.pucks_tmp[0].y - 0.03):
-        #             self.get_logger().info(f'first puck pose {self.pucks_tmp[0]}')
-        #             self.pucks_tmp.append(data)
-        #             self.get_logger().info(f'second puck pose {data}')
-        #         self.puck_pose_count += 1
-
+        # Distance-based
         if self.state == State.INIT_CV:
+            # self.get_logger().info(f'data.y {data.y}')
             if data.y >= 1.0:
-                if self.puck_pose_count == 0:
-                    self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
-                    self.pucks_tmp.append(data)
-                    self.puck_pose_count = 1
-                elif data.y < (self.pucks_tmp[0].y - 0.05):
-                    self.get_logger().info(f'first puck pose {self.pucks_tmp[0]}')
-                    self.pucks_tmp.append(data)
-                    self.get_logger().info(f'second puck pose {data}')
-                    self.get_logger().info(f'pucks_tmp {self.pucks_tmp}')
-                    self.puck_pose_count = 2
-                # self.puck_pose_count += 1
+                self.get_logger().info(f'data.y {data.y}')
+                if self.initial_puck == True:
+                    self.initial_puck_pose = data
+                    self.initial_puck = False
+                elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
+                    if self.puck_pose_count == 0:
+                        self.pucks_tmp.append(data)
+                        self.puck_pose_count = 1
+                    elif data.y < (self.pucks_tmp[0].y - 0.10):     # distance between puck posns # 0.03
+                        self.pucks_tmp.append(data)
 
     def wp1_callback(self, data):
         """
@@ -241,11 +231,10 @@ class main(Node):
                 self.state = State.INIT_CV
 
         if self.state == State.INIT_CV:
-            self.get_logger().info(f'iteration {self.iter_count}')
+            # self.get_logger().info(f'iteration {self.iter_count}')
             # self.get_logger().info(f'iter {self.iter_count} puck_pose_count {self.puck_pose_count}')
             # if self.puck_pose_count > self.puck_interval:
-            # if len(self.pucks_tmp) == 2:
-            if self.puck_pose_count == 2:
+            if len(self.pucks_tmp) == 2:
                 self.get_logger().info('pucks tmp has 2 posns')
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
