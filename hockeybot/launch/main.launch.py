@@ -44,13 +44,13 @@ def generate_launch_description():
         [os.path.join(get_package_share_directory('franka_moveit_config')),
         '/launch/moveit.launch.py']),
         launch_arguments={'robot_ip': []}.items(),
-        condition = LaunchConfigurationEquals('launch_rviz', 'true') #3
+        condition = LaunchConfigurationEquals('launch_rviz', 'true') #launch moveit.launch.py
         ),
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
         [os.path.join(get_package_share_directory('franka_moveit_config')),
         '/launch/rviz.launch.py']),
         launch_arguments={'robot_ip': []}.items(),
-        condition = LaunchConfigurationEquals('launch_rviz', 'false') #3
+        condition = LaunchConfigurationEquals('launch_rviz', 'false') #launch rviz.launch.py
         )
     ])
