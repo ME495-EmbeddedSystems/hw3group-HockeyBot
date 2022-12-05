@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
 from std_msgs.msg import Bool
 from enum import Enum, auto
-from moveit_interface.srv import Initial, Goal
+from moveit_interface.srv import Initial, Goal, GripperSrv
 import time
 
 class State(Enum):
@@ -45,8 +45,9 @@ class main(Node):
         self.puck_interval = 5  # 1 means getting consecutive waypoints, 2 means every other, etc.
         self.home_posn = Goal.Request()
         self.home_posn.x = 0.0
-        self.home_posn.y = 0.41
-        self.home_posn.z = -0.015
+        # self.home_posn.z = -0.015
+        self.home_posn.y = 0.405    # paddle is right up against the wall - for repeatability 
+        self.home_posn.z = -0.008   # includes offset to account for robot heigh variability
         self.home_posn.roll = 3.1416
         self.home_posn.pitch = 0.0
         self.home_posn.yaw = 1.5707
@@ -95,6 +96,15 @@ class main(Node):
         self.initial_client = self.create_client(Initial, "/initial_service")
         self.waypoint_client = self.create_client(Goal, "/waypoint_service")
         self.goal_client = self.create_client(Goal, "/goal_service")
+        self.gripper_client = self.create_client(GripperSrv, "/gripper_service")
+
+        # Always have the robot start with its grippers open
+        time.sleep(2)
+        self.gripper_open = GripperSrv.Request()
+        self.gripper_open.open = True
+        self.gripper_client.call_async(self.gripper_open)
+        self.get_logger().info('gripper should open')
+        time.sleep(5)
 
         self.timer = self.create_timer(1/self.frequency, self.timer_callback)
 
@@ -110,7 +120,7 @@ class main(Node):
         self.get_logger().info('inside starting_posn call')
 
         wpx0 = 0.0
-        wpy0 = 0.41
+        wpy0 = 0.405
         wpz0 = 0.3
 
         ### Might need to make two sets of waypoints to ensure we don't hit joint limits w repeated play ###
@@ -122,10 +132,36 @@ class main(Node):
         self.start_rq.roll = 3.1416
         self.start_rq.pitch = 0.0
         self.start_rq.yaw = 1.5707
+        self.start_goal = Goal.Request()
+        self.start_goal.x = wpx0
+        self.start_goal.y = wpy0
+        # self.start_goal.z = -0.015
+        self.start_goal.z = -0.02
+        self.start_goal.roll = 3.1416
+        self.start_goal.pitch = 0.0
+        self.start_goal.yaw = 1.5707
         self.start_wp_future = self.waypoint_client.call_async(self.start_rq)
+        self.start_goal_future = self.goal_client.call_async(self.start_goal)
+
+        time.sleep(5)
+        self.gripper_open.open = False
+        self.gripper_future = self.gripper_client.call_async(self.gripper_open)
+        time.sleep(2)
+
+        adapter_offsetwp = Goal.Request()
+        adapter_offsetwp.x = wpx0
+        adapter_offsetwp.y = wpy0
+        adapter_offsetwp.z = 0.01
+        adapter_offsetwp.roll = 3.1416
+        adapter_offsetwp.pitch = 0.0
+        adapter_offsetwp.yaw = 1.5707
+
+        self.start_wp_future = self.waypoint_client.call_async(adapter_offsetwp)
         self.start_goal_future = self.goal_client.call_async(self.home_posn)
 
         self.get_logger().info('start asyncs called')
+
+        time.sleep(3)
 
     def puck_pose_filter(self, data):
         """
