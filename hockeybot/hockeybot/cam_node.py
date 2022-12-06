@@ -42,7 +42,7 @@ class CamNode(Node):
         self.y = 0
         self.cx = 0.0
         self.cy = 0.0
-        self.hist = 1
+        self.reset = 0
         self.checkx = np.array([])
         self.checky = np.array([])
 
@@ -112,51 +112,66 @@ class CamNode(Node):
             cv2.namedWindow('output', cv2.WINDOW_AUTOSIZE)
             cv2.imshow("output", ir_image)
             # print ('Position: ')
-            if np.shape(self.checkx)[0] == 4:
-                print(self.checkx)
-                if (self.checkx[2]) > (self.checkx[3]):
-                    print('Fucking up incoming!!!!!!')
-                    self.checkx[3] = self.checkx[2]
-                if (self.checkx[0]) <= (self.checkx[1]) and (self.checkx[1]) <= (self.checkx[2]) and \
-                    (self.checkx[2]) <= (self.checkx[3]):
-                    print('DIRECTION IS RIGHT')
-                    m, b= np.polyfit(self.checkx, self.checky, 1)
-                    d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
-                    if d < 0.005:
-                        print('VALUE WITHIN RANGE')
-                        self.x += self.checkx[0]
-                        self.y += self.checky[0]
-                        self.csv = np.vstack((self.csv, [self.checkx[0], self.checky[0]]))
-                    else:
-                        print('VALUE NOT WITHIN RANGE')
-                        self.x += self.checkx[1]
-                        self.y += self.checky[1]
-                        self.csv = np.vstack((self.csv, [self.checkx[1], self.checky[1]]))
-                
-                # else:
-                #     self.checkx = np.delete(self.checkx, 0)
-                #     self.checkx = np.delete(self.checkx, 0)
-                #     self.checkx = np.delete(self.checkx, 0)
-                #     self.checky = np.delete(self.checky, 0)
-                #     self.checky = np.delete(self.checky, 0)
-                #     self.checky = np.delete(self.checky, 0)
-                # frames per batch
-                    self.fpb = 1 # 3
-                    if self.i == self.fpb-1: 
-                        self.i = 0
-                        self.pos.x = - self.y/self.fpb
-                        self.pos.y = - self.x/self.fpb + self.cx
-                        self.currentpos.publish(self.pos)
-                        
-                        print('PUBLISHING')
-                        # print('center', self.cx, self.cy)
-                        # print('These are the point values', self.x/self.fpb, self.y/self.fpb)
-                        self.x = 0
-                        self.y = 0
-                    elif circles is not None:
-                        self.i += 1
-                self.checkx = np.delete(self.checkx, 0)
-                self.checky = np.delete(self.checky, 0)
+            if circles is not None:
+                print(f'circle detected {self.checkx}')
+                if self.checkx[0] <= 0.005:
+                    print('negative val')
+                    if np.shape(self.checkx)[0] == 4:
+                        print('more than 4')
+                        if self.checkx[3] >= 0.005:
+                            print('Needs to reset')
+                            self.reset = 1
+                        elif (self.checkx[2]) > (self.checkx[3]):
+                            print('Fucking up incoming!!!!!!')
+                            self.checkx[3] = self.checkx[2]
+                        if (self.checkx[0]) <= (self.checkx[1]) and (self.checkx[1]) <= (self.checkx[2]) and \
+                            (self.checkx[2]) <= (self.checkx[3]):
+                            print('DIRECTION IS RIGHT')
+                            m, b= np.polyfit(self.checkx, self.checky, 1)
+                            d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
+                            if d < 0.005:
+                                print('VALUE WITHIN RANGE')
+                                self.x += self.checkx[0]
+                                self.y += self.checky[0]
+                                self.csv = np.vstack((self.csv, [self.checkx[0], self.checky[0]]))
+                            else:
+                                print('VALUE NOT WITHIN RANGE')
+                                self.x += self.checkx[1]
+                                self.y += self.checky[1]
+                                self.csv = np.vstack((self.csv, [self.checkx[1], self.checky[1]]))
+
+                        # else:
+                        #     self.checkx = np.delete(self.checkx, 0)
+                        #     self.checkx = np.delete(self.checkx, 0)
+                        #     self.checkx = np.delete(self.checkx, 0)
+                        #     self.checky = np.delete(self.checky, 0)
+                        #     self.checky = np.delete(self.checky, 0)
+                        #     self.checky = np.delete(self.checky, 0)
+                        # frames per batch
+                            self.fpb = 1 # 3
+                            if self.i == self.fpb-1: 
+                                self.i = 0
+                                self.pos.x = - self.y/self.fpb
+                                self.pos.y = - self.x/self.fpb + self.cx
+                                self.currentpos.publish(self.pos)
+                                
+                                print('PUBLISHING')
+                                # print('center', self.cx, self.cy)
+                                # print('These are the point values', self.x/self.fpb, self.y/self.fpb)
+                                self.x = 0
+                                self.y = 0
+                            elif circles is not None:
+                                self.i += 1
+                        if self.reset ==1:
+                            self.reset = 0
+                            self.checkx = np.array([])
+                            self.checky = np.array([])
+                        else:
+                            self.checkx = np.delete(self.checkx, 0)
+                            self.checky = np.delete(self.checky, 0)
+                else:
+                    self.checkx = np.delete(self.checkx, 0)
+                    self.checky = np.delete(self.checky, 0)
             np.savetxt("PuckPath.csv", self.csv, delimiter = ",")
             np.savetxt("PuckPath_all.csv", self.csv2, delimiter = ",")
 
