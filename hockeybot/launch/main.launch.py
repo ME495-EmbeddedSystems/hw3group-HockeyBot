@@ -13,8 +13,12 @@ import os
 
 def generate_launch_description():
     """Launch node and moveit/rviz."""
-    DeclareLaunchArgument('launch_rviz', default_value='true',
-                                         description='Determines if moveit.launch.py is called.')
+    robot = DeclareLaunchArgument(name = 'robot', 
+    				  default_value='none',
+    				  choices = ['true',
+    				  'false',
+    				  'none'],
+                                  description='Determines if moveit.launch.py is called.')
     main = Node(
         package='hockeybot',
         executable='main',
@@ -43,14 +47,14 @@ def generate_launch_description():
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
         [os.path.join(get_package_share_directory('franka_moveit_config')),
         '/launch/moveit.launch.py']),
-        launch_arguments={'robot_ip': []}.items(),
-        condition = LaunchConfigurationEquals('launch_rviz', 'true') #launch moveit.launch.py
+        launch_arguments={'robot_ip': 'dont-care','use_fake_hardware': 'true'}.items(),
+        condition = LaunchConfigurationEquals('robot', 'false') #launch moveit.launch.py
         ),
 
         IncludeLaunchDescription(PythonLaunchDescriptionSource(
         [os.path.join(get_package_share_directory('franka_moveit_config')),
         '/launch/rviz.launch.py']),
-        launch_arguments={'robot_ip': []}.items(),
-        condition = LaunchConfigurationEquals('launch_rviz', 'false') #launch rviz.launch.py
+        launch_arguments={'robot_ip': 'panda0.robot'}.items(),
+        condition = LaunchConfigurationEquals('robot', 'true') #launch rviz.launch.py
         )
     ])
