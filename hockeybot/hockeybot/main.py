@@ -128,10 +128,33 @@ class main(Node):
         self.start_rq = Goal.Request()
         self.start_rq.x = wpx0
         self.start_rq.y = wpy0
-        self.start_rq.z = wpz0
+        self.start_rq.z = 0.5
         self.start_rq.roll = 3.1416
         self.start_rq.pitch = 0.0
         self.start_rq.yaw = 1.5707
+
+        self.goal1 = Goal.Request()
+        self.goal1.x = wpx0
+        self.goal1.y = wpy0
+        self.goal1.z = 0.3
+        self.goal1.roll = 3.1416
+        self.goal1.pitch = 0.0
+        self.goal1.yaw = 1.5707
+
+        self.waypoint_client.call_async(self.start_rq)
+        self.goal_client.call_async(self.goal1)
+
+        time.sleep(3)
+
+        self.start_wp2 = Goal.Request()
+        self.start_wp2.x = wpx0
+        self.start_wp2.y = wpy0
+        self.start_wp2.z = 0.1
+        self.start_wp2.roll = 3.1416
+        self.start_wp2.pitch = 0.0
+        self.start_wp2.yaw = 1.5707
+
+
         self.start_goal = Goal.Request()
         self.start_goal.x = wpx0
         self.start_goal.y = wpy0
@@ -140,7 +163,7 @@ class main(Node):
         self.start_goal.roll = 3.1416
         self.start_goal.pitch = 0.0
         self.start_goal.yaw = 1.5707
-        self.start_wp_future = self.waypoint_client.call_async(self.start_rq)
+        self.start_wp_future = self.waypoint_client.call_async(self.start_wp2)
         self.start_goal_future = self.goal_client.call_async(self.start_goal)
 
         time.sleep(5)
@@ -194,16 +217,19 @@ class main(Node):
         if self.state == State.INIT_CV:
             # self.get_logger().info(f'data.y {data.y}')
             if data.y >= 1.0:
-                self.get_logger().info(f'data.y {data.y}')
+                # self.get_logger().info(f'data.y {data.y}')
                 if self.initial_puck == True:
                     self.initial_puck_pose = data
+                    self.get_logger().info(f'initial pose {self.initial_puck_pose}')
                     self.initial_puck = False
                 elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
                     if self.puck_pose_count == 0:
                         self.pucks_tmp.append(data)
+                        self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
                     elif data.y < (self.pucks_tmp[0].y - 0.10):     # distance between puck posns # 0.03
                         self.pucks_tmp.append(data)
+                        self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
 
     def wp1_callback(self, data):
         """
