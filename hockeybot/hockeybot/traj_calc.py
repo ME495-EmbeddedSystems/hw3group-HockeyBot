@@ -301,6 +301,12 @@ class TrajCalc(Node):
 
         # Select best waypoint x values to publish
         for i in range(len(self.wx1)):
+            # TODO:
+            """[traj_calc-3]   File "/home/ritz/FallQ/Embedded/hw3_ws/build/hockeybot/hockeybot/traj_calc.py", line 303, in trajectory
+[traj_calc-3]     for i in range(len(self.wx1)):
+[traj_calc-3] TypeError: object of type 'float' has no len()
+[ERROR] [traj_calc-3]: process has died [pid 91924, exit code 1, cmd '/home/ritz/FallQ/Embedded/hw3_ws/install/hockeybot/lib/hockeybot/traj_calc --ros-args -r __node:=traj_node'].
+"""
             if self.wx1[i] < self.xmax and self.wx1[i] > self.xmin:
                 for j in range(len(self.wx2)):
                     if self.wx2[j] < self.xmax and self.wx2[j] > self.xmin:
