@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 import pyrealsense2 as rs
 from geometry_msgs.msg import Point
+import matplotlib.pyplot as plt
 
 class CamNode(Node):
 
@@ -40,7 +41,13 @@ class CamNode(Node):
         self.y = 0
         self.cx = 0.0
         self.cy = 0.0
-        self.timer = self.create_timer(0.01, self.timer_callback)
+        self.hist = 1
+        self.checkx = np.array([])
+        self.checky = np.array([])
+
+        self.csv = np.array([[0, 0]])
+        self.csv2 = np.array([[0, 0]])
+        self.timer = self.create_timer(0.01, self.timer_callback, )
     
     def GetCenter(self, frame, depth_frame, depth_intrin):
         circles = cv2.HoughCircles(frame, cv2.HOUGH_GRADIENT, 2, 70, param1=300, param2=40, minRadius=10, maxRadius=28)
@@ -68,17 +75,16 @@ class CamNode(Node):
         ir_image = np.asanyarray(ir_frame.get_data())
         depth_image = np.asanyarray(depth_frame.get_data())
         depth_intrin = depth_frame.profile.as_video_stream_profile().intrinsics
-
-        if self.count < 50:
+        if self.count < 25:
             # print(self.cx, self.cy)
             self.GetCenter(ir_image, depth_frame, depth_intrin)
             if self.cx != 0 and self.cy != 0:
                 self.count +=1
-        elif self.count == 50:
+        elif self.count == 25:
             self.GetCenter(ir_image, depth_frame, depth_intrin)
             
-            self.cx = self.cx/50 + 1.015
-            self.cy = self.cy/50 #1.0541 -
+            self.cx = self.cx/25 + 1.015
+            self.cy = self.cy/25 #1.0541 -
             print('Center: ', self.cx, self.cy )
             # print(self.cx, self.cy)
             self.count +=1
@@ -97,28 +103,61 @@ class CamNode(Node):
                 # corresponding to the center of the circle
                 cv2.circle(ir_image, (x, y), r, (0, 255, 0), 4)
                 cv2.rectangle(ir_image, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-                
-                self.x += depth_point[0]
-                self.y += depth_point[1]
+                self.checkx = np.append(self.checkx,  depth_point[0])
+                self.checky = np.append(self.checky, depth_point[1])
+                self.csv2 = np.vstack((self.csv2, [depth_point[0], depth_point[1]]))
             # cv2.rectangle(ir_image, (self.cx - 5, self.cy - 5), (self.cx + 5, self.cy + 5), (0, 128, 255), -1)
             # show the output image
             cv2.namedWindow('output', cv2.WINDOW_AUTOSIZE)
             cv2.imshow("output", ir_image)
             # print ('Position: ')
-            
-            # frames per batch
-            self.fpb = 2 # 3
-            if self.i == self.fpb-1: 
-                self.i = 0
-                self.pos.x = - self.y/self.fpb
-                self.pos.y = - self.x/self.fpb + self.cx
-                self.currentpos.publish(self.pos)
-                # print('center', self.cx, self.cy)
-                # print('These are the point values', self.x/self.fpb, self.y/self.fpb)
-                self.x = 0
-                self.y = 0
-            elif circles is not None:
-                self.i += 1
+            if np.shape(self.checkx)[0] == 4:
+                print(self.checkx)
+                if (self.checkx[2]) > (self.checkx[3]):
+                    print('Fucking up incoming!!!!!!')
+                    self.checkx[3] = self.checkx[2]
+                if (self.checkx[0]) <= (self.checkx[1]) and (self.checkx[1]) <= (self.checkx[2]) and \
+                    (self.checkx[2]) <= (self.checkx[3]):
+                    print('DIRECTION IS RIGHT')
+                    m, b= np.polyfit(self.checkx, self.checky, 1)
+                    d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
+                    if d < 0.005:
+                        print('VALUE WITHIN RANGE')
+                        self.x += self.checkx[0]
+                        self.y += self.checky[0]
+                        self.csv = np.vstack((self.csv, [self.checkx[0], self.checky[0]]))
+                    else:
+                        print('VALUE NOT WITHIN RANGE')
+                        self.x += self.checkx[1]
+                        self.y += self.checky[1]
+                        self.csv = np.vstack((self.csv, [self.checkx[1], self.checky[1]]))
+                
+                # else:
+                #     self.checkx = np.delete(self.checkx, 0)
+                #     self.checkx = np.delete(self.checkx, 0)
+                #     self.checkx = np.delete(self.checkx, 0)
+                #     self.checky = np.delete(self.checky, 0)
+                #     self.checky = np.delete(self.checky, 0)
+                #     self.checky = np.delete(self.checky, 0)
+                # frames per batch
+                    self.fpb = 1 # 3
+                    if self.i == self.fpb-1: 
+                        self.i = 0
+                        self.pos.x = - self.y/self.fpb
+                        self.pos.y = - self.x/self.fpb + self.cx
+                        self.currentpos.publish(self.pos)
+                        
+                        print('PUBLISHING')
+                        # print('center', self.cx, self.cy)
+                        # print('These are the point values', self.x/self.fpb, self.y/self.fpb)
+                        self.x = 0
+                        self.y = 0
+                    elif circles is not None:
+                        self.i += 1
+                self.checkx = np.delete(self.checkx, 0)
+                self.checky = np.delete(self.checky, 0)
+            np.savetxt("PuckPath.csv", self.csv, delimiter = ",")
+            np.savetxt("PuckPath_all.csv", self.csv2, delimiter = ",")
 
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q') or key == 27:
@@ -126,6 +165,7 @@ class CamNode(Node):
 
 def frames_entry(args=None):
     rclpy.init(args=args)
+    
     node = CamNode()
     rclpy.spin(node)
     node.pipeline.stop()
