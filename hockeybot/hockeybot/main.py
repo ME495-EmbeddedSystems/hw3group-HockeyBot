@@ -215,7 +215,7 @@ class main(Node):
 
         # Distance-based
         if self.state == State.INIT_CV:
-            # self.get_logger().info(f'data.y {data.y}')
+            self.get_logger().info(f'data.y {data.y} ITER {self.iter_count}')
             if data.y >= 1.0:
                 # self.get_logger().info(f'data.y {data.y}')
                 if self.initial_puck == True:
