@@ -296,7 +296,7 @@ class TrajCalc(Node):
                 else: # No collision
                     self.collision = False
 
-        print(f"wx1 = {self.wx1}, wx2 = {self.wx2}")
+        self.get_logger().info(f"wx1 = {self.wx1}, wx2 = {self.wx2}")
         # print(f"clist = {c_list}, m_list = {m_list}")
 
         # Select best waypoint x values to publish
