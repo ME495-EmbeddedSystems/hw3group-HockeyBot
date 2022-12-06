@@ -560,7 +560,7 @@ class SimpleMove(Node):
             None
 
         """
-        self.cartesian_velocity_scaling_factor = 1.9 # Can go up to 1.7 # Increase velocities and acceleration
+        self.cartesian_velocity_scaling_factor = 1.8 # Can go up to 1.9 # Increase velocities and acceleration
         self.cartesian_time_scaling_factor = 0.8 # Decrease time
 
         self.car_path.joint_state.header.frame_id = 'panda_link0'
