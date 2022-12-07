@@ -11,10 +11,7 @@ the puck is on the air hockey table and get the velocity of the puck, predict wh
 tell the Franka to meet the puck there.
 
 ## **Prerequisites**
-<<<<<<< HEAD
 ## **User Guide**
-=======
->>>>>>> c16f13ef0c64be1617394e7b74791a48c11337a0
 1. Make sure ROS packages are most recent and up-to-date
 ```
 sudo apt update
@@ -146,7 +143,6 @@ The process loop of the robot is as follows:
 4. To execute the plan, use `ros2 service call /execute_service moveit_interface/srv/Execute "exec_bool: True"`.
     a. If you wish to cancel your plan without executing, pass exec_bool: `False` instead of `True`.
 5. To add a box in the planning scene, use `ros2 service call /add_obj moveit_interface/srv/Addobj "{id: 1, x: 0.3, y: 0.6, z: 0.5, dim_x: 0.2, dim_y: 0.2, dim_z: 0.2}"`.
-<<<<<<< HEAD
 * `traj_calc`:
 ##Instructions: Manually launch the services for robot.
 1. To launch the franka along with the simple_move node ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true.
@@ -156,6 +152,4 @@ The process loop of the robot is as follows:
 4. To execute the plan, use ros2 service call /execute_service moveit_interface/srv/Execute "exec_bool: True".
     a. If you wish to cancel your plan without executing, pass exec_bool: False instead of True.
 5. To add a box in the planning scene, use ros2 service call /add_obj moveit_interface/srv/Addobj "{id: 1, x: 0.3, y: 0.6, z: 0.5, dim_x: 0.2, dim_y: 0.2, dim_z: 0.2}".
-=======
->>>>>>> c16f13ef0c64be1617394e7b74791a48c11337a0
 
