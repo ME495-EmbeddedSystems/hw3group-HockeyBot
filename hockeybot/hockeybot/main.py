@@ -115,13 +115,19 @@ class main(Node):
         self.ee_posn.position.z = data.position.z
 
     def starting_posn(self):
-        """Move robot from original startup position to home configuration for playing."""
+        # """Move robot from original startup position to home configuration for playing."""
+        """
+        Move robot from original startup position to home configuration for playing.
+        Have robot make the first move.
+        """
 
         self.get_logger().info('inside starting_posn call')
 
         wpx0 = 0.0
         wpy0 = 0.407
-        time.sleep(10)
+        time.sleep(10)  # 10s buffer before robot starts moving
+
+        # Segment 1 of path to home
         self.start_rq = Goal.Request()
         self.start_rq.x = wpx0
         self.start_rq.y = wpy0
@@ -143,6 +149,7 @@ class main(Node):
 
         time.sleep(3)
 
+        # Segment 2 of path to home
         self.start_wp2 = Goal.Request()
         self.start_wp2.x = wpx0
         self.start_wp2.y = wpy0
@@ -150,7 +157,6 @@ class main(Node):
         self.start_wp2.roll = 3.1416
         self.start_wp2.pitch = 0.0
         self.start_wp2.yaw = 1.5707
-
 
         self.start_goal = Goal.Request()
         self.start_goal.x = wpx0
@@ -164,10 +170,14 @@ class main(Node):
         self.start_goal_future = self.goal_client.call_async(self.start_goal)
 
         time.sleep(5)
+        
+        # Close gripper to grab paddle
         self.gripper_open.open = False
         self.gripper_future = self.gripper_client.call_async(self.gripper_open)
+
         time.sleep(2)
 
+        # Raise adapter to provide extra room for z movement while playing
         adapter_offsetwp = Goal.Request()
         adapter_offsetwp.x = wpx0
         adapter_offsetwp.y = wpy0
@@ -182,6 +192,44 @@ class main(Node):
         self.get_logger().info('start asyncs called')
 
         time.sleep(3)
+
+        # We are now at the home position, ready to play
+
+        # Make the first move
+        self.first_move_wp = Goal.Request()
+        self.first_move_wp.x = 0.0
+        self.first_move_wp.y = 0.45
+        self.first_move_wp.z = -0.008
+        self.first_move_wp.roll = 3.1416
+        self.first_move_wp.pitch = 0.0
+        self.first_move_wp.yaw = 1.5707
+
+        self.first_move_goal = Goal.Request()
+        self.first_move_goal.x = 0.0
+        self.first_move_goal.y = 0.7
+        self.first_move_goal.z = -0.008
+        self.first_move_goal.roll = 3.1416
+        self.first_move_goal.pitch = 0.0
+        self.first_move_goal.yaw = 1.5707
+
+        self.first_move_wp_future = self.waypoint_client.call_async(self.first_move_wp)
+        self.first_move_goal_future = self.goal_client.call_async(self.first_move_goal)
+
+        time.sleep(3)
+
+        # Finally return to home
+        self.first_ret_home_wp = Goal.Request()
+        self.first_ret_home_wp.x = 0.0
+        self.first_ret_home_wp.y = 0.45
+        self.first_ret_home_wp.z = -0.008
+        self.first_ret_home_wp.roll = 3.1416
+        self.first_ret_home_wp.pitch = 0.0
+        self.first_ret_home_wp.yaw = 1.5707
+
+        self.first_ret_wp_future = self.waypoint_client.call_async(self.first_ret_home_wp)
+        self.first_ret_future = self.goal_client.call_async(self.home_posn)
+
+        time.sleep(2)
 
     def exec_error_code_callback(self, data):
         if data.data != 1:
@@ -203,7 +251,7 @@ class main(Node):
             self.errorwp_future = self.waypoint_client.call_async(self.error_return_rq)
             self.errorgoal_future = self.goal_client.call_async(self.home_posn)
             self.state = State.RESET
-            time.sleep(3)
+            time.sleep(2)
 
     def puck_pose_filter(self, data):
         """
