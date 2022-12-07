@@ -99,12 +99,12 @@ class main(Node):
         self.gripper_client = self.create_client(GripperSrv, "/gripper_service")
 
         # Always have the robot start with its grippers open
-        time.sleep(2)
+        time.sleep(1)
         self.gripper_open = GripperSrv.Request()
         self.gripper_open.open = True
         self.gripper_client.call_async(self.gripper_open)
         self.get_logger().info('gripper should open')
-        time.sleep(5)
+        time.sleep(5) # 5s buffer before beginning startup sequence
 
         self.timer = self.create_timer(1/self.frequency, self.timer_callback)
 
@@ -125,7 +125,6 @@ class main(Node):
 
         wpx0 = 0.0
         wpy0 = 0.407
-        time.sleep(10)  # 10s buffer before robot starts moving
 
         # Segment 1 of path to home
         self.start_rq = Goal.Request()
