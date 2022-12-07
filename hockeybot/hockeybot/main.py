@@ -186,7 +186,24 @@ class main(Node):
     def exec_error_code_callback(self, data):
         if data.data != 1:
             self.get_logger().info(f'RESET !!!!!!!!!!!!!!!!!!!! error code value =============== {data.data}')
+            # Set waypoint to halfway between current posn and home
+            # Set goal to home
+            errorwpx = (self.ee_posn.position.x + self.home_posn.x)/2
+            errorwpy = (self.ee_posn.position.y + self.home_posn.y)/2
+            errorwpz = self.home_posn.z
+
+            self.error_return_rq = Goal.Request()
+            self.error_return_rq.x = errorwpx
+            self.error_return_rq.y = errorwpy
+            self.error_return_rq.z = errorwpz
+            self.error_return_rq.roll = self.home_posn.roll
+            self.error_return_rq.pitch = self.home_posn.pitch
+            self.error_return_rq.yaw = self.home_posn.yaw
+
+            self.errorwp_future = self.waypoint_client.call_async(self.error_return_rq)
+            self.errorgoal_future = self.goal_client.call_async(self.home_posn)
             self.state = State.RESET
+            time.sleep(3)
 
     def puck_pose_filter(self, data):
         """
@@ -215,7 +232,7 @@ class main(Node):
                         self.pucks_tmp.append(data)
                         self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
-                    elif data.y < (self.pucks_tmp[0].y - 0.10):     # 0.05 distance between puck posns
+                    elif data.y < (self.pucks_tmp[0].y - 0.10):     # 0.05 # distance between puck posns
                         if self.puck_pose_count == 1:
                             self.pucks_tmp.append(data)
                             self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
@@ -313,30 +330,6 @@ class main(Node):
             self.time1 = time.time()
             if (self.time1 - self.time0) > 0.5 and self.puck_pose_count != 2:
                 self.state = State.RESET
-                # # Reset initial variables
-                # self.state = State.INIT_CV
-                # self.initial_puck = True
-                # self.puck_pose_count = 0
-                # self.p1_msg = Pose()
-                # self.p2_msg = Pose()
-                # self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                # self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                # self.pucks_tmp = []
-                # self.puck_posns = PoseArray()
-                # self.sm_plan_done = False
-                # self.sm_execute_done = False
-                # self.wp1_prev = PointStamped()
-                # self.wp2_prev = PointStamped()
-                # self.wp1_prev.point.y = 0.45
-                # self.wp2_prev.point.y = 0.7
-                # self.wp1_flag = 0
-                # self.wp2_flag = 0
-                # self.return_flag = 0
-                # self.initial_flag = 0
-                # self.start_home_flag = 0
-                # self.cv_to_traj_flag = 0
-                # self.one = 0
-                # self.tmr_count = 0
             if self.puck_pose_count == 2:
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
@@ -358,30 +351,6 @@ class main(Node):
                 if self.wp1_traj.point.x == 0.0 and self.wp1_traj.point.y == 0.407 \
                     and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
                     self.state = State.RESET
-                    # # Reset initial variables
-                    # self.state = State.INIT_CV
-                    # self.initial_puck = True
-                    # self.puck_pose_count = 0
-                    # self.p1_msg = Pose()
-                    # self.p2_msg = Pose()
-                    # self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                    # self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                    # self.pucks_tmp = []
-                    # self.puck_posns = PoseArray()
-                    # self.sm_plan_done = False
-                    # self.sm_execute_done = False
-                    # self.wp1_prev = PointStamped()
-                    # self.wp2_prev = PointStamped()
-                    # self.wp1_prev.point.y = 0.45
-                    # self.wp2_prev.point.y = 0.7
-                    # self.wp1_flag = 0
-                    # self.wp2_flag = 0
-                    # self.return_flag = 0
-                    # self.initial_flag = 0
-                    # self.start_home_flag = 0
-                    # self.cv_to_traj_flag = 0
-                    # self.one = 0
-                    # self.tmr_count = 0
 
                 # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet the puck
                 else:
@@ -452,31 +421,7 @@ class main(Node):
                 if self.waypoint_future2.done() and self.goal_future2.done():
                     if abs(self.ee_posn.position.x - self.home_posn.x) < 0.01 and \
                         abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
-                        self.state = State.RESET                        
-                        # # Reset initial variables
-                        # self.state = State.INIT_CV
-                        # self.initial_puck = True
-                        # self.puck_pose_count = 0
-                        # self.p1_msg = Pose()
-                        # self.p2_msg = Pose()
-                        # self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                        # self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                        # self.pucks_tmp = []
-                        # self.puck_posns = PoseArray()
-                        # self.sm_plan_done = False
-                        # self.sm_execute_done = False
-                        # self.wp1_prev = PointStamped()
-                        # self.wp2_prev = PointStamped()
-                        # self.wp1_prev.point.y = 0.45
-                        # self.wp2_prev.point.y = 0.7
-                        # self.wp1_flag = 0
-                        # self.wp2_flag = 0
-                        # self.return_flag = 0
-                        # self.initial_flag = 0
-                        # self.start_home_flag = 0
-                        # self.cv_to_traj_flag = 0
-                        # self.one = 0
-                        # self.tmr_count = 0
+                        self.state = State.RESET
                         self.iter_count += 1
                         
                         self.get_logger().info(f'_________________________ DONE RESET___________________')
