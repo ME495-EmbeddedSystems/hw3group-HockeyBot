@@ -161,6 +161,7 @@ class SimpleMove(Node):
         self.Flag_execute = 0
         self.Flag_asyc_call = 0
         self.Execute_error_code = Int32()
+        self.Execute_error_code.data = 1
 
         # Compute_IK variables
         self.joint_constr_list = []
@@ -822,7 +823,7 @@ class SimpleMove(Node):
                     self.future_execute_result = self.future_execute_traj.result().get_result_async()
                 if self.future_execute_result.done():
                     self.future_result_result = copy.deepcopy(self.future_execute_result.result().result)
-                    # self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code.val}')
+                    self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code.val}')
                     self.Execute_error_code.data = self.future_result_result.error_code.val
                     self.pub_execute_error_code.publish(self.Execute_error_code)
                     self.Flag_asyc_call = 0

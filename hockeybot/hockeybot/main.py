@@ -184,7 +184,8 @@ class main(Node):
         time.sleep(3)
 
     def exec_error_code_callback(self, data):
-        if data != 1:
+        if data.data != 1:
+            self.get_logger().info(f'RESET !!!!!!!!!!!!!!!!!!!! error code value =============== {data.data}')
             self.state = State.RESET
 
     def puck_pose_filter(self, data):
