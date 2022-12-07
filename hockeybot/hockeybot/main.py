@@ -214,7 +214,7 @@ class main(Node):
 
         # Distance-based
         if self.state == State.INIT_CV:
-            self.get_logger().info(f'data.y {data.y} ITER {self.iter_count}')
+            # self.get_logger().info(f'data.y {data.y} ITER {self.iter_count}')
             if data.y >= 1.0:
                 # self.get_logger().info(f'data.y {data.y}')
                 if self.initial_puck == True:
@@ -226,7 +226,11 @@ class main(Node):
                         self.pucks_tmp.append(data)
                         self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
+<<<<<<< HEAD
                     elif data.y < (self.pucks_tmp[0].y - 0.05):     # distance between puck posns # 0.03
+=======
+                    elif data.y < (self.pucks_tmp[0].y - 0.05):     # distance between puck posns # 0.10
+>>>>>>> 592a503 (made saving puck posns more robust, hopefully no more of rare issue getting stuck on puckpose2)
                         if self.puck_pose_count == 1:
                             self.pucks_tmp.append(data)
                             self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
@@ -297,6 +301,7 @@ class main(Node):
             # self.get_logger().info(f'iteration {self.iter_count}')
             # self.get_logger().info(f'iter {self.iter_count} puck_pose_count {self.puck_pose_count}')
             # if self.puck_pose_count > self.puck_interval:
+<<<<<<< HEAD
             # if len(self.pucks_tmp) == 2:
             if self.tmr_count == 0:
                 self.time0 = time.time()
@@ -328,6 +333,10 @@ class main(Node):
                 self.one = 0
                 self.tmr_count = 0
             if self.puck_pose_count == 2:
+=======
+            if self.puck_pose_count == 2:
+            # if len(self.pucks_tmp) == 2:
+>>>>>>> 592a503 (made saving puck posns more robust, hopefully no more of rare issue getting stuck on puckpose2)
                 self.get_logger().info('pucks tmp has 2 posns')
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
@@ -449,7 +458,7 @@ class main(Node):
                         self.tmr_count = 0
                         self.iter_count += 1
                         
-                        self.get_logger().info(f'_________________________ DONE RESET___________________')
+                        self.get_logger().info(f'_________________________ DONE RESET___________________ FINISHED ITER {self.iter_count-1}')
 
 def main_entry(args=None):
     """Run Main node."""
