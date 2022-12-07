@@ -453,8 +453,8 @@ class TrajCalc(Node):
         plt.plot([0],[self.c], 'x', color = 'red', label = 'Traj intercect with y-axis')
 
         # Puck trajectory line
-        if self.Slope_Zero == 0:
-            plt.plot([self.p1.x,self.wx1_CORRECT],[self.p1.y,self.wy2_CORRECT], ':', color = 'darkviolet', label = 'New puck trajectory line')
+        # if self.Slope_Zero == 0:
+        #     plt.plot([self.p1.x,self.wx1_CORRECT],[self.p1.y,self.wy2_CORRECT], ':', color = 'darkviolet', label = 'New puck trajectory line')
             # plt.axline((self.p1.x, self.p1.y), slope=self.m, color="blue", linestyle=(0, (5, 5)), label = 'Puck trajectory line')
         # else: # TODO commented this out
         #     plt.plot([self.p1.x,self.wx1],[self.p1.y,self.wy1], color = 'blue', linestyle=(0, (5, 5)), label = 'Puck trajectory line')
