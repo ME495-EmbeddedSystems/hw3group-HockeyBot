@@ -51,9 +51,6 @@ class CamNode(Node):
         #Array to check direction and noise values
         self.checkx = np.array([])
         self.checky = np.array([])
-        #Array to save to csv files
-        self.csv = np.array([[0, 0]])
-        self.csv2 = np.array([[0, 0]])
         #Initiating realsense pipeline
         self.pipeline = rs.pipeline()
         self.config = rs.config()
@@ -147,7 +144,6 @@ class CamNode(Node):
             self.GetCenter(ir_image, depth_frame, depth_intrin)
             self.cx = self.cx/25 + 1.015
             self.cy = self.cy/25
-            print(f'GOT CENTER: {self.cx} and {self.cy}')
             self.count +=1
         else:
             circles = cv2.HoughCircles(ir_image, cv2.HOUGH_GRADIENT, 2, 70, param1=200, param2=40,\
@@ -175,20 +171,15 @@ class CamNode(Node):
             # show the output image
             cv2.namedWindow('output', cv2.WINDOW_AUTOSIZE)
             cv2.imshow("output", ir_image)
-            # print ('Position: ')
             #Checks if a circle was detected
             if circles is not None:
-                # print(f'circle detected {self.checkx}')
                 #Checks if the x in cam frame if on the right side of the table
                 if self.checkx[0] <= 0.005:
-                    # print('negative val')
                     #Checks if 4 values were in the check arrays
                     if np.shape(self.checkx)[0] == 4:
-                        # print('more than 4')
                         #checks if the current puck position is other side of the table
                         if self.checkx[3] >= 0.005:
                             #Entering the other side of the table so makes reset flag True
-                            # print('Needs to reset')
                             self.reset = 1
                         #Now its in correct side of the table
                         #Checks if the current puck position is less than the previous position
@@ -198,11 +189,9 @@ class CamNode(Node):
                                 (self.checkx[1]) < (self.checkx[2]):
                                 #This means puck is moving in the right direction, encountered noise
                                 #Replaces noise current value to previous position
-                                # print('Fucking up incoming!!!!!!')
                                 self.checkx[3] = self.checkx[2]
                         if (self.checkx[0]) <= (self.checkx[1]) and (self.checkx[1]) <= (self.checkx[2]) and \
                             (self.checkx[2]) <= (self.checkx[3]):
-                            #     print('DIRECTION IS RIGHT')
                             #Calculating slope and intercept of best fit line
                             m, b= np.polyfit(self.checkx, self.checky, 1)
                             ##Calculating distance between last point of check array 
@@ -210,18 +199,13 @@ class CamNode(Node):
                             d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
                             #Checks if the distance is less than a tolerance of 0.005
                             if d < 0.005:
-                                # print('VALUE WITHIN RANGE')
                                 #Adding these points to averaging sum of x and y
                                 self.x += self.checkx[0]
                                 self.y += self.checky[0]
-                                # self.csv = np.vstack((self.csv, [self.checkx[0], self.checky[0]]))
                             else:
                                 #this means this value is is noisy
-                                #TO DO MAKE A MORE MEANING VALUE TO BE PUBLISHED
-                                # print('VALUE NOT WITHIN RANGE')
                                 self.x += self.checkx[1]
                                 self.y += self.checky[1]
-                                # self.csv = np.vstack((self.csv, [self.checkx[1], self.checky[1]]))
                             #frames per batch
                             self.fpb = 1 # 3
                             if self.i == self.fpb-1:
@@ -252,8 +236,6 @@ class CamNode(Node):
                 else:
                     self.checkx = np.delete(self.checkx, 0)
                     self.checky = np.delete(self.checky, 0)
-            # np.savetxt("PuckPath.csv", self.csv, delimiter = ",")
-            # np.savetxt("PuckPath_all.csv", self.csv2, delimiter = ",")
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q') or key == 27:
             cv2.destroyAllWindows()
