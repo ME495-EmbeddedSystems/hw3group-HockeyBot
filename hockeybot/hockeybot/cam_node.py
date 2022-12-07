@@ -23,6 +23,10 @@ class CamNode(Node):
     puck in the robot frame when it is going towards the robot, only on one half of the airhockey
     table.
     """
+<<<<<<< HEAD
+=======
+
+>>>>>>> d52528c (Now puck is not tracked when returning)
 
     def __init__(self):
         """
@@ -30,6 +34,10 @@ class CamNode(Node):
 
         Also initializes class variables, counters and flags to calculate puck positions.
         """
+<<<<<<< HEAD
+=======
+
+>>>>>>> d52528c (Now puck is not tracked when returning)
         super().__init__('cam_node')
         self.currentpos = self.create_publisher(Point, '/puck_pose', 10)
         self.pos = Point()
@@ -49,6 +57,12 @@ class CamNode(Node):
         #Array to check direction and noise values
         self.checkx = np.array([])
         self.checky = np.array([])
+<<<<<<< HEAD
+=======
+        #Array to save to csv files
+        self.csv = np.array([[0, 0]])
+        self.csv2 = np.array([[0, 0]])
+>>>>>>> d52528c (Now puck is not tracked when returning)
         #Initiating realsense pipeline
         self.pipeline = rs.pipeline()
         self.config = rs.config()
@@ -75,7 +89,11 @@ class CamNode(Node):
 
     def GetCenter(self, frame, depth_frame, depth_intrin):
         """
+<<<<<<< HEAD
         Capture the center of the table.
+=======
+        Runs to capture the center of the table.
+>>>>>>> d52528c (Now puck is not tracked when returning)
 
         Detects the large circle at the center of the table which coincides with the center of the
         table and updates the center real world coordinates in the camera frame. Used in the
@@ -88,8 +106,13 @@ class CamNode(Node):
         ---------
             None
         """
+<<<<<<< HEAD
         circles = cv2.HoughCircles(frame, cv2.HOUGH_GRADIENT, 2, 70, param1=300, param2=40,\
                                     minRadius=10, maxRadius=28)
+=======
+
+        circles = cv2.HoughCircles(frame, cv2.HOUGH_GRADIENT, 2, 70, param1=300, param2=40, minRadius=10, maxRadius=28)
+>>>>>>> d52528c (Now puck is not tracked when returning)
         # To make sure only circle was found
         if circles is not None:
             self.center_flag = True
@@ -115,7 +138,11 @@ class CamNode(Node):
 
     def timer_callback(self):
         """
+<<<<<<< HEAD
         Detect the puck, filter noise and publish points moving in the right direction.
+=======
+        Detects the puck, filters noise and publishes points moving in the right direction.
+>>>>>>> d52528c (Now puck is not tracked when returning)
 
         Gets frames from both IR and depth camera and with the help of depth intrinsics, it
         converts pixel coordinates to real world coordinates wrt realsense camera. It transforms
