@@ -11,7 +11,6 @@ the puck is on the air hockey table and get the velocity of the puck, predict wh
 tell the Franka to meet the puck there.
 
 ## **Prerequisites**
-## **User Guide**
 1. Make sure ROS packages are most recent and up-to-date
 ```
 sudo apt update
@@ -91,7 +90,7 @@ configuration.
 ## Concepts and Overall System Architecture
 The process loop of the robot is as follows:
 
-##Instructions: Manually launch the services for robot.
+## Instructions: Manually launch the services for robot.
 1. To launch the franka along with the simple_move node ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true.
 2. Run the simple_move node with ros2 run moveit_helper simple_move.
     (Optional) Provide a starting configuration for planning with ros2 service call /initial_service moveit_interface/srv/Initial "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}".
