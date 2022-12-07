@@ -46,7 +46,7 @@ class main(Node):
         self.home_posn = Goal.Request()
         self.home_posn.x = 0.0
         # self.home_posn.z = -0.015
-        self.home_posn.y = 0.405    # paddle is right up against the wall - for repeatability 
+        self.home_posn.y = 0.407    # paddle is right up against the wall - for repeatability 
         self.home_posn.z = -0.008   # includes offset to account for robot heigh variability
         self.home_posn.roll = 3.1416
         self.home_posn.pitch = 0.0
@@ -120,7 +120,7 @@ class main(Node):
         self.get_logger().info('inside starting_posn call')
 
         wpx0 = 0.0
-        wpy0 = 0.405
+        wpy0 = 0.407
         wpz0 = 0.3
 
         ### Might need to make two sets of waypoints to ensure we don't hit joint limits w repeated play ###
@@ -227,9 +227,11 @@ class main(Node):
                         self.pucks_tmp.append(data)
                         self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
-                    elif data.y < (self.pucks_tmp[0].y - 0.10):     # distance between puck posns # 0.03
-                        self.pucks_tmp.append(data)
-                        self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
+                    elif data.y < (self.pucks_tmp[0].y - 0.05):     # distance between puck posns # 0.03
+                        if self.puck_pose_count == 1:
+                            self.pucks_tmp.append(data)
+                            self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
+                            self.puck_pose_count = 2
 
     def wp1_callback(self, data):
         """
@@ -296,7 +298,8 @@ class main(Node):
             # self.get_logger().info(f'iteration {self.iter_count}')
             # self.get_logger().info(f'iter {self.iter_count} puck_pose_count {self.puck_pose_count}')
             # if self.puck_pose_count > self.puck_interval:
-            if len(self.pucks_tmp) == 2:
+            # if len(self.pucks_tmp) == 2:
+            if self.puck_pose_count == 2:
                 self.get_logger().info('pucks tmp has 2 posns')
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
