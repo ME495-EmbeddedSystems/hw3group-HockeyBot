@@ -43,41 +43,6 @@ class AprilTag_c(Node):
         else:
             self.get_logger().info('detected less than 4 apriltags')
 
-        #     self.tf_x0 = self.tf_info[0].transform.translation.x
-        #     self.tf_y0 = self.tf_info[0].transform.translation.y
-        #     self.tf_z0 = self.tf_info[0].transform.translation.z
-        #     self.tf_xr0 = self.tf_info[0].transform.rotation.x
-        #     self.tf_yr0 = self.tf_info[0].transform.rotation.y
-        #     self.tf_zy0 = self.tf_info[0].transform.rotation.z
-        #     self.tf_w0 = self.tf_info[0].transform.rotation.w
-
-        # if self.tf_info.child_frame_id == 'tag36h11:27':
-        #     self.tf_x1 = self.tf_info[1].transform.translation.x
-        #     self.tf_y1 = self.tf_info[1].transform.translation.y
-        #     self.tf_z1 = self.tf_info[1].transform.translation.z
-        #     self.tf_xr1 = self.tf_info[1].transform.rotation.x
-        #     self.tf_yr1 = self.tf_info[1].transform.rotation.y
-        #     self.tf_zy1 = self.tf_info[1].transform.rotation.z
-        #     self.tf_w1 = self.tf_info[1].transform.rotation.w
-        # if self.tf_info.child_frame_id[1] == 'tag36h11:28':
-        #     self.get_logger().info('its id 28 ')
-        #     self.tf_x2 = self.tf_info.transform.translation.x
-        #     self.tf_y2 = self.tf_info.transform.translation.y
-        #     self.tf_z2 = self.tf_info.transform.translation.z
-        #     self.tf_xr2 = self.tf_info.transform.rotation.x
-        #     self.tf_yr2 = self.tf_info.transform.rotation.y
-        #     self.tf_zy2 = self.tf_info.transform.rotation.z
-        #     self.tf_w2 = self.tf_info.transform.rotation.w
-        # if self.tf_info.child_frame_id == 'tag36h11:30':
-        #     self.get_logger().info('its id 30 ')
-        #     self.tf_x3 = self.tf_info.transform.translation.x
-        #     self.tf_y3 = self.tf_info.transform.translation.y
-        #     self.tf_z3 = self.tf_info.transform.translation.z
-        #     self.tf_xr3 = self.tf_info.transform.rotation.x
-        #     self.tf_yr3 = self.tf_info.transform.rotation.y
-        #     self.tf_zy3 = self.tf_info.transform.rotation.z
-        #     self.tf_w3 = self.tf_info.transform.rotation.w
-
 
 def main(args=None):                                       
     rclpy.init(args=args)                                   
