@@ -54,11 +54,10 @@ from moveit_msgs.action import ExecuteTrajectory
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from shape_msgs.msg import SolidPrimitive
-from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents
+from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents, Constraints
 from moveit_msgs.srv import GetPlanningScene
-from std_msgs.msg import Bool
-
-
+from std_msgs.msg import Bool, Int32
+import copy
 
 class State(Enum):
     """
@@ -122,6 +121,7 @@ class SimpleMove(Node):
         self.pub_sm_plan = self.create_publisher(Bool, "/sm_plan", 10)
         self.pub_sm_execute = self.create_publisher(Bool, "/sm_execute", 10)
         self.pub_ee_posn = self.create_publisher(Pose, "/ee_posn", 10)
+        self.pub_execute_error_code = self.create_publisher(Int32, "/execute_error_code", 10)
 
         # Subscribers
         self.sub = self.create_subscription(
@@ -157,6 +157,10 @@ class SimpleMove(Node):
         self.sm_execute_msg = Bool()
         self.sm_execute_msg.data = False
         self.ee_posn_msg = Pose()
+        # Execute trajectory error code flags
+        self.Flag_execute = 0
+        self.Flag_asyc_call = 0
+        self.Execute_error_code = Int32()
 
         # Compute_IK variables
         self.joint_constr_list = []
@@ -233,7 +237,7 @@ class SimpleMove(Node):
             self.get_logger().info('Unable to change gripper state')
             return
 
-        # self.get_logger().info('Changing gripper state')
+        self.get_logger().info('Changing gripper state')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.gripper_result_callback)
     
@@ -544,8 +548,8 @@ class SimpleMove(Node):
             constraint = JointConstraint()
             constraint.joint_name = self.ik_result.solution.joint_state.name[i]
             constraint.position = self.ik_result.solution.joint_state.position[i]
-            constraint.tolerance_above = 0.01 #0.0001
-            constraint.tolerance_below = 0.01 #0.0001
+            constraint.tolerance_above = 0.005 # TODO Previous 0.01 #0.0001
+            constraint.tolerance_below = 0.005 # TODO Previous 0.01 #0.0001
             constraint.weight = 1.0
             self.joint_constr_list.append(constraint)
 
@@ -573,10 +577,14 @@ class SimpleMove(Node):
         self.car_path.joint_state.header.frame_id = 'panda_link0'
         self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()
         # Set start position of Franka
-        if self.Flag_start_ik == 1:
-            self.car_path.joint_state = self.start_joint_states
-        else:
-            self.car_path.joint_state = self.joint_states
+        # if self.Flag_start_ik == 1:
+        #     self.get_logger().info('!!!!!!!!!! ************  USED IK JOINT  ************** !!!!!!!!!!!!!')
+        #     self.car_path.joint_state = self.start_joint_states
+        # else:
+        #     self.get_logger().info('************  !!!!!!!!!!  USED Joint TOPIC  !!!!!!!!!!  *************')
+        #     self.car_path.joint_state = self.joint_states
+
+        self.car_path.joint_state = self.joint_states
 
         self.group_name = 'panda_manipulator'
 
@@ -602,11 +610,26 @@ class SimpleMove(Node):
 
         self.waypoints = [wp2,wp1]
 
-        self.max_step = 10.0
+        self.max_step = 5.0 # 10.0
         self.jump_threshold = 10.0
         self.prismatic_jump_threshold = 10.0
         self.revolute_jump_threshold = 10.0
         self.avoid_collisions = True
+
+
+        # self.ik_result = self.future_compute_IK.result()
+        # for i in range(len(self.ik_result.solution.joint_state.name)):
+        #     constraint = JointConstraint()
+        #     constraint.joint_name = self.ik_result.solution.joint_state.name[i]
+        #     constraint.position = self.ik_result.solution.joint_state.position[i]
+        #     constraint.tolerance_above = 0.005 # TODO Previous 0.01 #0.0001
+        #     constraint.tolerance_below = 0.005 # TODO Previous 0.01 #0.0001
+        #     constraint.weight = 1.0
+        #     self.joint_constr_list.append(constraint)
+
+        # self.path_constraints = Constraints()
+        # self.path_constraints.joint_constraints = [moveit_msgs.msg.JointConstraint(joint_name='panda_joint1', position=-0.2783118071720283, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint2', position=0.5561769123109166, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint3', position=-0.3284530826835772, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint4', position=-0.8883695936747683, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint5', position=0.17305761845989487, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint6', position=1.4224359966379985, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint7', position=0.2511861260062665, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0)]
+        # self.path_constraints.joint_constraints = [moveit_msgs.msg.JointConstraint(joint_name='panda_joint1', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint2', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint3', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint4', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint5', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint6', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint7', tolerance_above=0.001, tolerance_below=0.001, weight=1.0)]
 
         # Call plan cartesian path
         self.future_plan_cartesian = \
@@ -619,6 +642,7 @@ class SimpleMove(Node):
                 prismatic_jump_threshold = self.prismatic_jump_threshold,
                 revolute_jump_threshold = self.revolute_jump_threshold,
                 avoid_collisions = self.avoid_collisions))
+                # path_constraints = self.path_constraints)) # TODO new joint constraints
 
         self.get_logger().info('Done Calling Cartesian')
 
@@ -737,51 +761,31 @@ class SimpleMove(Node):
         """
         execute_traj_msg = moveit_msgs.action.ExecuteTrajectory.Goal()
         # execute_traj_msg.trajectory = self.plan_result.planned_trajectory # MoveGroup plan result
-        # self.get_logger().info(f'self.future_plan_cartesian.result().solution = {self.future_plan_cartesian.result().solution}')
-        # self.future_plan_cartesian.result().solution.joint_trajectory
-        # self.get_logger().info(f'self.future_plan_cartesian.result().solution.joint_trajectory.points = {self.future_plan_cartesian.result().solution.joint_trajectory.points}')
-        # self.get_logger().info(f'len(--.points) = {len(self.future_plan_cartesian.result().solution.joint_trajectory.points)}')
-        # self.get_logger().info(f'time = {self.future_plan_cartesian.result().solution.joint_trajectory.points[1].time_from_start.nanosec}')
 
-
-
+        # Post plan processing - Velocity increase
         for i in range(len(self.future_plan_cartesian.result().solution.joint_trajectory.points)):
-            # Time
-            # self.get_logger().info(f'time Before Sec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec}')
-            # self.get_logger().info(f'time Before NanoSec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec}')
-
             # Add seconds and nanoseconds together
             StoNS = self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec * 1000000000
             Total_nanoSec = self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec + StoNS
-            # self.get_logger().info(f'StoNS = {StoNS}')
-            # self.get_logger().info(f'Total_nanoSec = {Total_nanoSec}')
 
             New_Total_nanoSec = Total_nanoSec / self.cartesian_velocity_scaling_factor
             New_sec = New_Total_nanoSec // 1000000000
             New_nanoSec = New_Total_nanoSec % 1000000000
 
-            # self.get_logger().info(f'New_Total_nanoSec = Total_nanoSec / factor = {New_Total_nanoSec}')
-            # self.get_logger().info(f'New_sec // = {New_sec}')
-            # self.get_logger().info(f'New_nanoSec % = {New_nanoSec}')
-
             self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec = int(New_sec)
             self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec = int(New_nanoSec)
 
-            # self.get_logger().info(f'time After sec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec}')
-            # self.get_logger().info(f'time After nanosec = {self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec} \n \n ')
             # Velocity
             for j in range(len(self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities)):
-                # self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities[j]= \
-                #     self.future_plan_cartesian.result().solution.joint_trajectory.points[j].velocities[j] * 2
                 self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities[j] *= self.cartesian_velocity_scaling_factor
                 self.future_plan_cartesian.result().solution.joint_trajectory.points[i].accelerations[j] *= self.cartesian_velocity_scaling_factor
-
-        # self.get_logger().info(f"self.future_plan_cartesian.result().solution - {self.future_plan_cartesian.result().solution}")
 
         execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
         # self.get_logger().info('EXECUTE ________ service called')
 
-        self._action_client_execute_traj.send_goal_async(execute_traj_msg)
+        self.future_execute_traj = self._action_client_execute_traj.send_goal_async(execute_traj_msg)
+        
+        self.Flag_execute = 1
 
     def timer_callback(self):
         """
@@ -809,6 +813,18 @@ class SimpleMove(Node):
             None
 
         """
+        if self.Flag_execute == 1:
+            if self.future_execute_traj.done():
+                if self.Flag_asyc_call == 0:
+                    self.Flag_asyc_call = 1
+                    self.future_execute_result = self.future_execute_traj.result().get_result_async()
+                if self.future_execute_result.done():
+                    self.future_result_result = copy.deepcopy(self.future_execute_result.result().result)
+                    self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code}')
+                    self.Execute_error_code = self.future_result_result.error_code
+                    self.pub_execute_error_code.publish(self.Execute_error_code)
+                    self.Flag_asyc_call = 0
+
         try:
             t = self.tf_buffer.lookup_transform(
                 'panda_link0',

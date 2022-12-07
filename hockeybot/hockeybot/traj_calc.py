@@ -296,7 +296,7 @@ class TrajCalc(Node):
                 else: # No collision
                     self.collision = False
 
-        self.get_logger().info(f"wx1 = {self.wx1}, wx2 = {self.wx2}")
+        # self.get_logger().info(f"wx1 = {self.wx1}, wx2 = {self.wx2}")
         # print(f"clist = {c_list}, m_list = {m_list}")
 
         # Select best waypoint x values to publish
@@ -317,19 +317,19 @@ class TrajCalc(Node):
 
 
 
-        if self.wx1[self.impact_count] > self.xmin and self.wx1[self.impact_count] < self.xmax:
-            if self.wx2[self.impact_count] > self.xmin and self.wx2[self.impact_count] < self.xmax:
-                print(f"self.wx1 & self.wx2 inside workspace!!")
-                # not_straight_traj = 1
-        else:
-            print(f"self.wx1 or self.wx2 outside workspace!!")
+        # if self.wx1[self.impact_count] > self.xmin and self.wx1[self.impact_count] < self.xmax:
+        #     if self.wx2[self.impact_count] > self.xmin and self.wx2[self.impact_count] < self.xmax:
+        #         print(f"self.wx1 & self.wx2 inside workspace!!")
+        #         # not_straight_traj = 1
+        # else:
+        #     print(f"self.wx1 or self.wx2 outside workspace!!")
 
 
         self.choose_best_waypoints()
         
         self.draw_2D_sim()
 
-        print(f"\n m = {self.m}, c = {self.c}, wx1 = {self.wx1}, wx2 = {self.wx2}")
+        # print(f"\n m = {self.m}, c = {self.c}, wx1 = {self.wx1}, wx2 = {self.wx2}")
 
 
     def choose_best_waypoints(self):
@@ -377,7 +377,6 @@ class TrajCalc(Node):
             self.wx2_CORRECT = 0.0
             self.wy2_CORRECT = 0.407
             self.get_logger().info(f"___________ JUST BLOCK ____________ ")
-            print(f"JUST BLOCK")
 
 
 
