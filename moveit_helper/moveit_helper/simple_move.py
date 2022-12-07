@@ -813,6 +813,8 @@ class SimpleMove(Node):
             None
 
         """
+
+        # Check if the execute trajectory finished successfully
         if self.Flag_execute == 1:
             if self.future_execute_traj.done():
                 if self.Flag_asyc_call == 0:
@@ -820,8 +822,8 @@ class SimpleMove(Node):
                     self.future_execute_result = self.future_execute_traj.result().get_result_async()
                 if self.future_execute_result.done():
                     self.future_result_result = copy.deepcopy(self.future_execute_result.result().result)
-                    self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code}')
-                    self.Execute_error_code = self.future_result_result.error_code
+                    # self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code.val}')
+                    self.Execute_error_code.data = self.future_result_result.error_code.val
                     self.pub_execute_error_code.publish(self.Execute_error_code)
                     self.Flag_asyc_call = 0
 
