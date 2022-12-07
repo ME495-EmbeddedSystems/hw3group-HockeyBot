@@ -168,6 +168,7 @@ class SimpleMove(Node):
 
         # Compute cartesian path variables
         self.car_path = RobotState()
+        self.Flag_slow = 0
 
         # Transform lister
         self.tf_buffer = Buffer()
@@ -560,8 +561,14 @@ class SimpleMove(Node):
             None
 
         """
-        self.cartesian_velocity_scaling_factor = 1.8 # Can go up to 1.9 # Increase velocities and acceleration
-        self.cartesian_time_scaling_factor = 0.8 # Decrease time
+        # Move to home position slow
+        if self.Flag_slow <3:
+            self.Flag_slow += 1
+            self.cartesian_velocity_scaling_factor = 1.2
+        else:
+            # Play speed
+            self.cartesian_velocity_scaling_factor = 1.8 # Can go up to 1.9 # Increase velocities and acceleration
+        # self.cartesian_time_scaling_factor = 0.8 # Decrease time
 
         self.car_path.joint_state.header.frame_id = 'panda_link0'
         self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()

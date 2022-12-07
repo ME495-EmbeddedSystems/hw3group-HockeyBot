@@ -162,16 +162,19 @@ class CamNode(Node):
                                 self.i = 0
                                 self.pos.x = - self.y/self.fpb
                                 self.pos.y = - self.x/self.fpb + self.cx
-                                if self.firstpub == 0: #TO DO This value can change if table is moved
-                                    self.currentpos.publish(self.pos)
-                                    self.prev_x = self.pos.x
-                                    self.prev_y = self.pos.y
-                                    self.firstpub = 1
-                                else:
-                                    if self.pos.y <= self.prev_y:
-                                        self.currentpos.publish(self.pos)
-                                        self.prev_x = self.pos.x
-                                        self.prev_y = self.pos.y
+                                self.currentpos.publish(self.pos)
+                                # if self.firstpub == 0 : #and self.pos.y > 1.1 : #TO DO This value can change if table is moved
+                                #     self.currentpos.publish(self.pos)
+                                #     self.prev_x = self.pos.x
+                                #     self.prev_y = self.pos.y
+                                #     self.firstpub = 1
+                                # else:
+                                #     if self.pos.y < self.prev_y: # and self.pos.y > 1.1:
+                                #         self.currentpos.publish(self.pos)
+                                #         self.prev_x = self.pos.x
+                                #         self.prev_y = self.pos.y
+                                #     if self.prev_y < 1.1:
+                                #         self.firstpub = 0
                                 
                                 print('PUBLISHING')
                                 # print('center', self.cx, self.cy)

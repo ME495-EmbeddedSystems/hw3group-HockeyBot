@@ -196,7 +196,7 @@ class TrajCalc(Node):
         # p1[0] = p2[0] situation where x1 = x2 then m = infinity (Slope)
         if self.p1.x == self.p2.x:
             self.Slope_Zero = 1
-            self.wx1 = self.p1.x
+            self.wx1 = np.array([self.p1.x])
             self.wx2 = self.wx1
             self.m = 0
             self.c = np.inf

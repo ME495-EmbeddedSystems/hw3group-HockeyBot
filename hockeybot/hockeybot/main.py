@@ -123,9 +123,7 @@ class main(Node):
         wpx0 = 0.0
         wpy0 = 0.407
         wpz0 = 0.3
-
-        ### Might need to make two sets of waypoints to ensure we don't hit joint limits w repeated play ###
-
+        time.sleep(10)
         self.start_rq = Goal.Request()
         self.start_rq.x = wpx0
         self.start_rq.y = wpy0
@@ -300,35 +298,35 @@ class main(Node):
             # self.get_logger().info(f'iter {self.iter_count} puck_pose_count {self.puck_pose_count}')
             # if self.puck_pose_count > self.puck_interval:
             # if len(self.pucks_tmp) == 2:
-            # if self.tmr_count == 0:
-            #     self.time0 = time.time()
-            #     self.tmr_count = 1
-            # self.time1 = time.time()
-            # if (self.time1 - self.time0) > 0.5 and self.puck_pose_count != 2:
-            #     # Reset initial variables
-            #     self.state = State.INIT_CV
-            #     self.initial_puck = True
-            #     self.puck_pose_count = 0
-            #     self.p1_msg = Pose()
-            #     self.p2_msg = Pose()
-            #     self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-            #     self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-            #     self.pucks_tmp = []
-            #     self.puck_posns = PoseArray()
-            #     self.sm_plan_done = False
-            #     self.sm_execute_done = False
-            #     self.wp1_prev = PointStamped()
-            #     self.wp2_prev = PointStamped()
-            #     self.wp1_prev.point.y = 0.45
-            #     self.wp2_prev.point.y = 0.7
-            #     self.wp1_flag = 0
-            #     self.wp2_flag = 0
-            #     self.return_flag = 0
-            #     self.initial_flag = 0
-            #     self.start_home_flag = 0
-            #     self.cv_to_traj_flag = 0
-            #     self.one = 0
-            #     self.tmr_count = 0
+            if self.tmr_count == 0:
+                self.time0 = time.time()
+                self.tmr_count = 1
+            self.time1 = time.time()
+            if (self.time1 - self.time0) > 0.5 and self.puck_pose_count != 2:
+                # Reset initial variables
+                self.state = State.INIT_CV
+                self.initial_puck = True
+                self.puck_pose_count = 0
+                self.p1_msg = Pose()
+                self.p2_msg = Pose()
+                self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                self.pucks_tmp = []
+                self.puck_posns = PoseArray()
+                self.sm_plan_done = False
+                self.sm_execute_done = False
+                self.wp1_prev = PointStamped()
+                self.wp2_prev = PointStamped()
+                self.wp1_prev.point.y = 0.45
+                self.wp2_prev.point.y = 0.7
+                self.wp1_flag = 0
+                self.wp2_flag = 0
+                self.return_flag = 0
+                self.initial_flag = 0
+                self.start_home_flag = 0
+                self.cv_to_traj_flag = 0
+                self.one = 0
+                self.tmr_count = 0
             if self.puck_pose_count == 2:
                 self.get_logger().info('pucks tmp has 2 posns')
                 # This means both puck positions were selected
