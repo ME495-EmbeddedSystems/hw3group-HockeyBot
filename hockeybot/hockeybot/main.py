@@ -3,7 +3,7 @@ from rclpy.node import Node
 import numpy as np
 import matplotlib.pyplot as plt
 from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Int32
 from enum import Enum, auto
 from moveit_interface.srv import Initial, Goal, GripperSrv
 import time
@@ -20,7 +20,8 @@ class State(Enum):
     TRAJ = auto(),
     START_PLAN = auto(),
     AWAIT_PLAN = auto(),
-    RETURN_HOME = auto()
+    RETURN_HOME = auto(),
+    RESET = auto()
 
 class main(Node):
     """
@@ -85,6 +86,8 @@ class main(Node):
         self.sub_sm_execute = self.create_subscription(Bool, '/sm_execute', 
                                                         self.sm_execute_callback, 10)
         self.sub_ee_posn = self.create_subscription(Pose, "/ee_posn", self.ee_posn_callback, 10)
+        self.sub_execute_error_code = self.create_subscription(Int32, "/execute_error_code", 
+                                                                self.exec_error_code_callback, 10)
 
         # Publishers
         self.pub_puck_posn = self.create_publisher(PoseArray, '/puck_position', 10)
@@ -180,6 +183,10 @@ class main(Node):
 
         time.sleep(3)
 
+    def exec_error_code_callback(self, data):
+        if data != 1:
+            self.state = State.RESET
+
     def puck_pose_filter(self, data):
         """
         Callback for subscription to /puck_pose topic published from CV.
@@ -263,6 +270,32 @@ class main(Node):
         self.puck_posns.poses = [self.p1_msg, self.p2_msg]
         self.pub_puck_posn.publish(self.puck_posns)
 
+        if self.state == State.RESET:
+            # Reset initial variables
+            self.state = State.INIT_CV
+            self.initial_puck = True
+            self.puck_pose_count = 0
+            self.p1_msg = Pose()
+            self.p2_msg = Pose()
+            self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+            self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+            self.pucks_tmp = []
+            self.puck_posns = PoseArray()
+            self.sm_plan_done = False
+            self.sm_execute_done = False
+            self.wp1_prev = PointStamped()
+            self.wp2_prev = PointStamped()
+            self.wp1_prev.point.y = 0.45
+            self.wp2_prev.point.y = 0.7
+            self.wp1_flag = 0
+            self.wp2_flag = 0
+            self.return_flag = 0
+            self.initial_flag = 0
+            self.start_home_flag = 0
+            self.cv_to_traj_flag = 0
+            self.one = 0
+            self.tmr_count = 0
+
         if self.state == State.SETUP:
             if self.start_home_flag == 0:
                 self.starting_posn()
@@ -278,30 +311,31 @@ class main(Node):
                 self.tmr_count = 1
             self.time1 = time.time()
             if (self.time1 - self.time0) > 0.5 and self.puck_pose_count != 2:
-                # Reset initial variables
-                self.state = State.INIT_CV
-                self.initial_puck = True
-                self.puck_pose_count = 0
-                self.p1_msg = Pose()
-                self.p2_msg = Pose()
-                self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                self.pucks_tmp = []
-                self.puck_posns = PoseArray()
-                self.sm_plan_done = False
-                self.sm_execute_done = False
-                self.wp1_prev = PointStamped()
-                self.wp2_prev = PointStamped()
-                self.wp1_prev.point.y = 0.45
-                self.wp2_prev.point.y = 0.7
-                self.wp1_flag = 0
-                self.wp2_flag = 0
-                self.return_flag = 0
-                self.initial_flag = 0
-                self.start_home_flag = 0
-                self.cv_to_traj_flag = 0
-                self.one = 0
-                self.tmr_count = 0
+                self.state = State.RESET
+                # # Reset initial variables
+                # self.state = State.INIT_CV
+                # self.initial_puck = True
+                # self.puck_pose_count = 0
+                # self.p1_msg = Pose()
+                # self.p2_msg = Pose()
+                # self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                # self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                # self.pucks_tmp = []
+                # self.puck_posns = PoseArray()
+                # self.sm_plan_done = False
+                # self.sm_execute_done = False
+                # self.wp1_prev = PointStamped()
+                # self.wp2_prev = PointStamped()
+                # self.wp1_prev.point.y = 0.45
+                # self.wp2_prev.point.y = 0.7
+                # self.wp1_flag = 0
+                # self.wp2_flag = 0
+                # self.return_flag = 0
+                # self.initial_flag = 0
+                # self.start_home_flag = 0
+                # self.cv_to_traj_flag = 0
+                # self.one = 0
+                # self.tmr_count = 0
             if self.puck_pose_count == 2:
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
@@ -322,30 +356,31 @@ class main(Node):
                 # If TrajCalc decides that we should just block, stay at home position and reset
                 if self.wp1_traj.point.x == 0.0 and self.wp1_traj.point.y == 0.407 \
                     and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
-                    # Reset initial variables
-                    self.state = State.INIT_CV
-                    self.initial_puck = True
-                    self.puck_pose_count = 0
-                    self.p1_msg = Pose()
-                    self.p2_msg = Pose()
-                    self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                    self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                    self.pucks_tmp = []
-                    self.puck_posns = PoseArray()
-                    self.sm_plan_done = False
-                    self.sm_execute_done = False
-                    self.wp1_prev = PointStamped()
-                    self.wp2_prev = PointStamped()
-                    self.wp1_prev.point.y = 0.45
-                    self.wp2_prev.point.y = 0.7
-                    self.wp1_flag = 0
-                    self.wp2_flag = 0
-                    self.return_flag = 0
-                    self.initial_flag = 0
-                    self.start_home_flag = 0
-                    self.cv_to_traj_flag = 0
-                    self.one = 0
-                    self.tmr_count = 0
+                    self.state = State.RESET
+                    # # Reset initial variables
+                    # self.state = State.INIT_CV
+                    # self.initial_puck = True
+                    # self.puck_pose_count = 0
+                    # self.p1_msg = Pose()
+                    # self.p2_msg = Pose()
+                    # self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                    # self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                    # self.pucks_tmp = []
+                    # self.puck_posns = PoseArray()
+                    # self.sm_plan_done = False
+                    # self.sm_execute_done = False
+                    # self.wp1_prev = PointStamped()
+                    # self.wp2_prev = PointStamped()
+                    # self.wp1_prev.point.y = 0.45
+                    # self.wp2_prev.point.y = 0.7
+                    # self.wp1_flag = 0
+                    # self.wp2_flag = 0
+                    # self.return_flag = 0
+                    # self.initial_flag = 0
+                    # self.start_home_flag = 0
+                    # self.cv_to_traj_flag = 0
+                    # self.one = 0
+                    # self.tmr_count = 0
 
                 # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet the puck
                 else:
@@ -416,30 +451,31 @@ class main(Node):
                 if self.waypoint_future2.done() and self.goal_future2.done():
                     if abs(self.ee_posn.position.x - self.home_posn.x) < 0.01 and \
                         abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
-                        # Reset initial variables
-                        self.state = State.INIT_CV
-                        self.initial_puck = True
-                        self.puck_pose_count = 0
-                        self.p1_msg = Pose()
-                        self.p2_msg = Pose()
-                        self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                        self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                        self.pucks_tmp = []
-                        self.puck_posns = PoseArray()
-                        self.sm_plan_done = False
-                        self.sm_execute_done = False
-                        self.wp1_prev = PointStamped()
-                        self.wp2_prev = PointStamped()
-                        self.wp1_prev.point.y = 0.45
-                        self.wp2_prev.point.y = 0.7
-                        self.wp1_flag = 0
-                        self.wp2_flag = 0
-                        self.return_flag = 0
-                        self.initial_flag = 0
-                        self.start_home_flag = 0
-                        self.cv_to_traj_flag = 0
-                        self.one = 0
-                        self.tmr_count = 0
+                        self.state = State.RESET                        
+                        # # Reset initial variables
+                        # self.state = State.INIT_CV
+                        # self.initial_puck = True
+                        # self.puck_pose_count = 0
+                        # self.p1_msg = Pose()
+                        # self.p2_msg = Pose()
+                        # self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                        # self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                        # self.pucks_tmp = []
+                        # self.puck_posns = PoseArray()
+                        # self.sm_plan_done = False
+                        # self.sm_execute_done = False
+                        # self.wp1_prev = PointStamped()
+                        # self.wp2_prev = PointStamped()
+                        # self.wp1_prev.point.y = 0.45
+                        # self.wp2_prev.point.y = 0.7
+                        # self.wp1_flag = 0
+                        # self.wp2_flag = 0
+                        # self.return_flag = 0
+                        # self.initial_flag = 0
+                        # self.start_home_flag = 0
+                        # self.cv_to_traj_flag = 0
+                        # self.one = 0
+                        # self.tmr_count = 0
                         self.iter_count += 1
                         
                         self.get_logger().info(f'_________________________ DONE RESET___________________')
