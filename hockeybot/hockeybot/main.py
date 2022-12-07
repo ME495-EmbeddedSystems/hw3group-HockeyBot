@@ -369,8 +369,8 @@ class main(Node):
                         self.goal_future = self.goal_client.call_async(self.wp2_request)
                         self.one = 1
 
-                    if abs(self.ee_posn.position.x - self.wp2_request.x) < 0.008 and \
-                        abs(self.ee_posn.position.y - self.wp2_request.y) < 0.008:
+                    if abs(self.ee_posn.position.x - self.wp2_request.x) < 0.006 and \
+                        abs(self.ee_posn.position.y - self.wp2_request.y) < 0.006:
                         self.state = State.AWAIT_PLAN
 
                 
