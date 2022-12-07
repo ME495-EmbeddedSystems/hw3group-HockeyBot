@@ -375,8 +375,8 @@ class main(Node):
                     self.one = 1
                     # self.state = State.AWAIT_PLAN
 
-                if abs(self.ee_posn.position.x - self.wp2_request.x) < 0.01 and \
-                    abs(self.ee_posn.position.y - self.wp2_request.y) < 0.01:
+                if abs(self.ee_posn.position.x - self.wp2_request.x) < 0.008 and \
+                    abs(self.ee_posn.position.y - self.wp2_request.y) < 0.008:
                     self.state = State.AWAIT_PLAN
 
                 
