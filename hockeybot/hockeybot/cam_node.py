@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import pyrealsense2 as rs
 from geometry_msgs.msg import Point
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 class CamNode(Node):
 
@@ -121,9 +121,16 @@ class CamNode(Node):
                         if self.checkx[3] >= 0.005:
                             print('Needs to reset')
                             self.reset = 1
+                        # elif (self.checkx[0]) >= (self.checkx[1]) and (self.checkx[1]) >= (self.checkx[2]) and \
+                        #     (self.checkx[2]) >= (self.checkx[3]):
+                        #     print('DIRECTION IS WRONG')
+
                         elif (self.checkx[2]) > (self.checkx[3]):
-                            print('Fucking up incoming!!!!!!')
-                            self.checkx[3] = self.checkx[2]
+                            if (self.checkx[0]) >= (self.checkx[1]) and (self.checkx[1]) >= (self.checkx[2]):
+                                print('DIRECTION IS WRONG')
+                            else:
+                                print('Fucking up incoming!!!!!!')
+                                self.checkx[3] = self.checkx[2]
                         if (self.checkx[0]) <= (self.checkx[1]) and (self.checkx[1]) <= (self.checkx[2]) and \
                             (self.checkx[2]) <= (self.checkx[3]):
                             print('DIRECTION IS RIGHT')
