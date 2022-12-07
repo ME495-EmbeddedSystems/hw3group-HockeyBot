@@ -45,7 +45,9 @@ class CamNode(Node):
         self.reset = 0
         self.checkx = np.array([])
         self.checky = np.array([])
-
+        self.prev_x = 0
+        self.prev_y = 0
+        self.firstpub = 0
         self.csv = np.array([[0, 0]])
         self.csv2 = np.array([[0, 0]])
         self.timer = self.create_timer(0.01, self.timer_callback, )
@@ -160,7 +162,16 @@ class CamNode(Node):
                                 self.i = 0
                                 self.pos.x = - self.y/self.fpb
                                 self.pos.y = - self.x/self.fpb + self.cx
-                                self.currentpos.publish(self.pos)
+                                if self.firstpub == 0: #TO DO This value can change if table is moved
+                                    self.currentpos.publish(self.pos)
+                                    self.prev_x = self.pos.x
+                                    self.prev_y = self.pos.y
+                                    self.firstpub = 1
+                                else:
+                                    if self.pos.y <= self.prev_y:
+                                        self.currentpos.publish(self.pos)
+                                        self.prev_x = self.pos.x
+                                        self.prev_y = self.pos.y
                                 
                                 print('PUBLISHING')
                                 # print('center', self.cx, self.cy)
