@@ -376,6 +376,7 @@ class TrajCalc(Node):
             self.wy1_CORRECT = 0.407
             self.wx2_CORRECT = 0.0
             self.wy2_CORRECT = 0.407
+            self.get_logger().info(f"___________ JUST BLOCK ____________ ")
             print(f"JUST BLOCK")
 
 
@@ -492,8 +493,12 @@ class TrajCalc(Node):
                 # self.wp2.point.x = self.wx2[self.impact_count]
                 self.wp1.point.x = self.wx1_CORRECT
                 self.wp2.point.x = self.wx2_CORRECT
+                self.wp1.point.y = self.wy1_CORRECT # NEW TODO
+                self.wp2.point.y = self.wy2_CORRECT # NEW TODO
                 self.get_logger().info(f"Waypoint1x -  {self.wp1.point.x}")
                 self.get_logger().info(f"Waypoint2x -  {self.wp2.point.x}")
+                self.get_logger().info(f"Waypoint1y -  {self.wp1.point.y}")
+                self.get_logger().info(f"Waypoint2y -  {self.wp2.point.y}")
 
                 # Publish waypoints
                 self.pub_wp1.publish(self.wp1)

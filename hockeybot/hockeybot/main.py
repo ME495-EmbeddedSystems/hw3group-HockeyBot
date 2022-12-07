@@ -207,7 +207,7 @@ class main(Node):
                         self.pucks_tmp.append(data)
                         self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
-                    elif data.y < (self.pucks_tmp[0].y - 0.05):     # distance between puck posns # 0.03
+                    elif data.y < (self.pucks_tmp[0].y - 0.10):     # 0.05 distance between puck posns
                         if self.puck_pose_count == 1:
                             self.pucks_tmp.append(data)
                             self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
@@ -223,6 +223,7 @@ class main(Node):
             self.wp1_traj = data
             self.wp1_flag = 1
             self.wp1_prev = data
+            self.get_logger().info(f'wp1_traj {self.wp1_traj}')
 
     def wp2_callback(self, data):
         """
@@ -234,6 +235,7 @@ class main(Node):
             self.wp2_traj = data
             self.wp2_flag = 1
             self.wp2_prev = data
+            self.get_logger().info(f'wp2_traj {self.wp2_traj}')
 
     def sm_plan_callback(self, msg):
         """Checks if SimpleMove has finished planning the trajectory to hit the puck."""
@@ -316,37 +318,37 @@ class main(Node):
         if self.state == State.START_PLAN:
             # Store trajectory calculations from TrajCalc
 
-            # If TrajCalc decides that we should just block, stay at home position and reset
-            if self.wp1_traj.point.x == 0.0 and self.wp1_traj.point.y == 0.407 \
-                and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
-                # Reset initial variables
-                self.state = State.INIT_CV
-                self.initial_puck = True
-                self.puck_pose_count = 0
-                self.p1_msg = Pose()
-                self.p2_msg = Pose()
-                self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
-                self.pucks_tmp = []
-                self.puck_posns = PoseArray()
-                self.sm_plan_done = False
-                self.sm_execute_done = False
-                self.wp1_prev = PointStamped()
-                self.wp2_prev = PointStamped()
-                self.wp1_prev.point.y = 0.45
-                self.wp2_prev.point.y = 0.7
-                self.wp1_flag = 0
-                self.wp2_flag = 0
-                self.return_flag = 0
-                self.initial_flag = 0
-                self.start_home_flag = 0
-                self.cv_to_traj_flag = 0
-                self.one = 0
-                self.tmr_count = 0
+            if self.wp1_flag == 1 and self.wp2_flag == 1:
+                # If TrajCalc decides that we should just block, stay at home position and reset
+                if self.wp1_traj.point.x == 0.0 and self.wp1_traj.point.y == 0.407 \
+                    and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
+                    # Reset initial variables
+                    self.state = State.INIT_CV
+                    self.initial_puck = True
+                    self.puck_pose_count = 0
+                    self.p1_msg = Pose()
+                    self.p2_msg = Pose()
+                    self.p1_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                    self.p2_msg.position = Point(x=0.0, y=0.0, z=0.0)
+                    self.pucks_tmp = []
+                    self.puck_posns = PoseArray()
+                    self.sm_plan_done = False
+                    self.sm_execute_done = False
+                    self.wp1_prev = PointStamped()
+                    self.wp2_prev = PointStamped()
+                    self.wp1_prev.point.y = 0.45
+                    self.wp2_prev.point.y = 0.7
+                    self.wp1_flag = 0
+                    self.wp2_flag = 0
+                    self.return_flag = 0
+                    self.initial_flag = 0
+                    self.start_home_flag = 0
+                    self.cv_to_traj_flag = 0
+                    self.one = 0
+                    self.tmr_count = 0
 
-            # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet the puck
-            else:
-                if self.wp1_flag == 1 and self.wp2_flag == 1:
+                # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet the puck
+                else:
                     if self.one == 0:
                         self.get_logger().info(f'inside START_PLAN {self.iter_count}')
                         self.wp1_request = Goal.Request()
