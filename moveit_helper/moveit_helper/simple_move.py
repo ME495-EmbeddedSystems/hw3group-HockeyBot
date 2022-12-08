@@ -47,8 +47,7 @@ from moveit_msgs.action import MoveGroup
 import moveit_msgs.action
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Vector3, Pose
-from moveit_msgs.msg import PositionIKRequest, JointConstraint, CartesianTrajectory,\
-    CartesianTrajectoryPoint, CartesianPoint, GenericTrajectory, RobotState
+from moveit_msgs.msg import PositionIKRequest, JointConstraint, RobotState
 from control_msgs.action import GripperCommand
 from moveit_interface.srv import Initial, Goal, Execute, Addobj, GripperSrv
 from moveit_msgs.srv import GetPositionIK, GetCartesianPath
@@ -58,7 +57,7 @@ from moveit_msgs.action import ExecuteTrajectory
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from shape_msgs.msg import SolidPrimitive
-from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents, Constraints
+from moveit_msgs.msg import CollisionObject, PlanningScene, PlanningSceneComponents
 from moveit_msgs.srv import GetPlanningScene
 from std_msgs.msg import Bool, Int32
 import copy
@@ -345,8 +344,8 @@ class SimpleMove(Node):
         self.init_yaw = request.yaw
         self.init_ori_x, self.init_ori_y, self.init_ori_z, self.init_ori_w = euler_quaternion(
                                                     self.init_roll, self.init_pitch, self.init_yaw)
-
-        # self.start_IK_Callback() # TODO Uncomment this
+        self.get_logger().info('Initial service called')
+        # self.start_IK_Callback() # For move group plan request
         return response
 
     def goal_service(self, request, response):
@@ -372,7 +371,7 @@ class SimpleMove(Node):
         self.goal_yaw = request.yaw
         self.goal_ori_x, self.goal_ori_y, self.goal_ori_z, self.goal_ori_w = euler_quaternion(
                                                     self.goal_roll, self.goal_pitch, self.goal_yaw)
-        self.get_logger().info('Goal service called')
+        self.get_logger().info('Goal service called \n\n')
         return response
 
     def waypoint_service(self, request, response):
@@ -571,13 +570,10 @@ class SimpleMove(Node):
             constraint = JointConstraint()
             constraint.joint_name = self.ik_result.solution.joint_state.name[i]
             constraint.position = self.ik_result.solution.joint_state.position[i]
-            constraint.tolerance_above = 0.005 # TODO Previous 0.01 #0.0001
-            constraint.tolerance_below = 0.005 # TODO Previous 0.01 #0.0001
+            constraint.tolerance_above = 0.005
+            constraint.tolerance_below = 0.005
             constraint.weight = 1.0
             self.joint_constr_list.append(constraint)
-
-    # def play_waypoints(self,c1,c2):
-
 
     def plan_cartesian(self):
         """
@@ -594,18 +590,10 @@ class SimpleMove(Node):
             self.cartesian_velocity_scaling_factor = 1.2
         else:
             # Play speed
-            self.cartesian_velocity_scaling_factor = 1.8 # Can go up to 1.9 # Increase velocities and acceleration
-        # self.cartesian_time_scaling_factor = 0.8 # Decrease time
+            self.cartesian_velocity_scaling_factor = 1.8 # Increase velocities and acceleration
 
         self.car_path.joint_state.header.frame_id = 'panda_link0'
         self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()
-        # Set start position of Franka
-        # if self.Flag_start_ik == 1:
-        #     self.get_logger().info('!!!!!!!!!! ************  USED IK JOINT  ************** !!!!!!!!!!!!!')
-        #     self.car_path.joint_state = self.start_joint_states
-        # else:
-        #     self.get_logger().info('************  !!!!!!!!!!  USED Joint TOPIC  !!!!!!!!!!  *************')
-        #     self.car_path.joint_state = self.joint_states
 
         self.car_path.joint_state = self.joint_states
 
@@ -639,21 +627,6 @@ class SimpleMove(Node):
         self.revolute_jump_threshold = 10.0
         self.avoid_collisions = True
 
-
-        # self.ik_result = self.future_compute_IK.result()
-        # for i in range(len(self.ik_result.solution.joint_state.name)):
-        #     constraint = JointConstraint()
-        #     constraint.joint_name = self.ik_result.solution.joint_state.name[i]
-        #     constraint.position = self.ik_result.solution.joint_state.position[i]
-        #     constraint.tolerance_above = 0.005 # TODO Previous 0.01 #0.0001
-        #     constraint.tolerance_below = 0.005 # TODO Previous 0.01 #0.0001
-        #     constraint.weight = 1.0
-        #     self.joint_constr_list.append(constraint)
-
-        # self.path_constraints = Constraints()
-        # self.path_constraints.joint_constraints = [moveit_msgs.msg.JointConstraint(joint_name='panda_joint1', position=-0.2783118071720283, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint2', position=0.5561769123109166, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint3', position=-0.3284530826835772, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint4', position=-0.8883695936747683, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint5', position=0.17305761845989487, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint6', position=1.4224359966379985, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint7', position=0.2511861260062665, tolerance_above=0.0001, tolerance_below=0.0001, weight=1.0)]
-        # self.path_constraints.joint_constraints = [moveit_msgs.msg.JointConstraint(joint_name='panda_joint1', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint2', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint3', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint4', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint5', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint6', tolerance_above=0.001, tolerance_below=0.001, weight=1.0), moveit_msgs.msg.JointConstraint(joint_name='panda_joint7', tolerance_above=0.001, tolerance_below=0.001, weight=1.0)]
-
         # Call plan cartesian path
         self.future_plan_cartesian = \
             self.cartesian_path_client.call_async(GetCartesianPath.Request(
@@ -665,7 +638,6 @@ class SimpleMove(Node):
                 prismatic_jump_threshold = self.prismatic_jump_threshold,
                 revolute_jump_threshold = self.revolute_jump_threshold,
                 avoid_collisions = self.avoid_collisions))
-                # path_constraints = self.path_constraints)) # TODO new joint constraints
 
         self.get_logger().info('Done Calling Cartesian')
 
@@ -710,28 +682,6 @@ class SimpleMove(Node):
         # Goal joint_states of Franka - From compute_ik
         plan_request_msg.request.goal_constraints = [moveit_msgs.msg.Constraints(
             joint_constraints=self.joint_constr_list)]
-
-        #### CartesianTrajectory ####
-
-
-
-        # # self.cartesian_point = CartesianPoint()
-
-        # self.cartesianTrajectory_point = CartesianTrajectoryPoint()
-        # self.cartesianTrajectory_point.point.pose.position.x = 0.6
-        # self.cartesianTrajectory_point.point.pose.position.y = 0.0
-        # self.cartesianTrajectory_point.point.pose.position.z = 0.5
-
-
-        # self.cartesianTrajectory = CartesianTrajectory()
-        # self.cartesianTrajectory.points = [self.cartesianTrajectory_point]
-
-        # self.gen_traj = GenericTrajectory()
-        # self.gen_traj.cartesian_trajectory = [self.cartesianTrajectory]
-
-        # self.get_logger().info(f"self.gen_traj - {[self.gen_traj]}")
-        
-        # plan_request_msg.request.reference_trajectories = [self.gen_traj]
 
         # Future object of plan request
         self.future_plan_request = self._action_client_plan_request.send_goal_async(
@@ -804,10 +754,7 @@ class SimpleMove(Node):
                 self.future_plan_cartesian.result().solution.joint_trajectory.points[i].accelerations[j] *= self.cartesian_velocity_scaling_factor
 
         execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
-        # self.get_logger().info('EXECUTE ________ service called')
-
         self.future_execute_traj = self._action_client_execute_traj.send_goal_async(execute_traj_msg)
-        
         self.Flag_execute = 1
 
     def timer_callback(self):
@@ -844,7 +791,6 @@ class SimpleMove(Node):
                     self.future_execute_result = self.future_execute_traj.result().get_result_async()
                 if self.future_execute_result.done():
                     self.future_result_result = copy.deepcopy(self.future_execute_result.result().result)
-                    # self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code.val}')
                     self.Execute_error_code.data = self.future_result_result.error_code.val
                     self.pub_execute_error_code.publish(self.Execute_error_code)
                     self.Flag_asyc_call = 0

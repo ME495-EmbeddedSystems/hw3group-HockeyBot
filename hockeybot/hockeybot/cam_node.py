@@ -190,36 +190,40 @@ class CamNode(Node):
                             (self.checkx[1]) <= (self.checkx[2]) and \
                             (self.checkx[2]) <= (self.checkx[3]):
                             #Calculating slope and intercept of best fit line
-                            m, b= np.polyfit(self.checkx, self.checky, 1)
-                            #Calculating distance between last point of check array 
-                            #to the best fit line
-                            d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
-                            #Checks if the distance is less than a tolerance of 0.005
-                            if d < 0.005:
-                                #Adding these points to averaging sum of x and y
-                                self.x += self.checkx[0]
-                                self.y += self.checky[0]
-                            else:
-                                #this means this value is is noisy
-                                self.x += self.checkx[1]
-                                self.y += self.checky[1]
-                            #frames per batch
-                            self.fpb = 1 # 3
-                            if self.i == self.fpb-1:
-                                #resetting counter 
-                                self.i = 0
-                                #Transforming to robot manipulator frame
-                                self.pos.x = - self.y/self.fpb + self.cy
-                                self.pos.y = - self.x/self.fpb + self.cx
-                                #publishing the point
-                                self.currentpos.publish(self.pos)
-                                #resetting the averagin sum x and y variables
-                                self.x = 0
-                                self.y = 0
-                            # elif circles is not None:
-                            elif len(circles) == 1:
-                                #updates counter is only 1 circle was detected
-                                self.i += 1
+                            try:
+                                m, b= np.polyfit(self.checkx, self.checky, 1)
+                                #Calculating distance between last point of check array 
+                                #to the best fit line
+                                d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
+                                #Checks if the distance is less than a tolerance of 0.005
+                                if d < 0.005:
+                                    #Adding these points to averaging sum of x and y
+                                    self.x += self.checkx[0]
+                                    self.y += self.checky[0]
+                                else:
+                                    #this means this value is is noisy
+                                    self.x += self.checkx[1]
+                                    self.y += self.checky[1]
+                                #frames per batch
+                                self.fpb = 1 # 3
+                                if self.i == self.fpb-1:
+                                    #resetting counter 
+                                    self.i = 0
+                                    #Transforming to robot manipulator frame
+                                    self.pos.x = - self.y/self.fpb + self.cy
+                                    self.pos.y = - self.x/self.fpb + self.cx
+                                    #publishing the point
+                                    self.currentpos.publish(self.pos)
+                                    #resetting the averagin sum x and y variables
+                                    self.x = 0
+                                    self.y = 0
+                                # elif circles is not None:
+                                elif len(circles) == 1:
+                                    #updates counter is only 1 circle was detected
+                                    self.i += 1
+                            except:
+                                self.get_logger().info('POLYFIT FAILED')
+                                pass
                         #If the reset flag is set reset the check arrays
                         if self.reset ==1:
                             self.reset = 0
