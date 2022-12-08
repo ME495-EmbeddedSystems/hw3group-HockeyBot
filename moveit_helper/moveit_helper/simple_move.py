@@ -202,7 +202,16 @@ class SimpleMove(Node):
         self.gripper_service = self.create_service(GripperSrv, "/gripper_service", self.gripper_service_callback)
 
     def gripper_service_callback(self, request, response):
-        """Call function to open or close the gripper."""
+        '''
+        Call function to open or close the gripper. 
+        
+        If the request message is true, the gripper will open, and if the request message is false, 
+        the gripper will close
+
+        Returns
+        -------
+        
+        '''
         if request.open == True:
             self.gripper(open=True)
         elif request.open == False:
