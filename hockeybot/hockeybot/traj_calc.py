@@ -6,7 +6,7 @@ the robot to hit the puck is constrained in the robots workspace on the air hock
 optimal waypoints are slected by considering all four sides of the robots workspace. The robot will
 then move to the first waypoint that is on the predicted trajectory line of the puck and then moce
 along the line to the second wayoint and hit the puck. A plot is dynamically generated and updated
-each time a new trajectory is calculated. The robot blocks if the trajectory is out of the 
+each time a new trajectory is calculated. The robot blocks if the trajectory is out of the
 workspace and unreachable.
 
 PUBLISHERS:
@@ -44,7 +44,7 @@ class TrajCalc(Node):
         # Subscribers
         self.sub_puck_position = self.create_subscription(
             PoseArray, '/puck_position', self.update_puck_position, 10)
-        self.puck_array = PoseArray() # Contains the coordinates of the two puck positions
+        self.puck_array = PoseArray()  # Contains the coordinates of the two puck positions
         self.p1 = Point()  # Puck first position
         self.p2 = Point()  # Puck second position
 
@@ -63,7 +63,7 @@ class TrajCalc(Node):
         # Airhockey table 4 corners [meters] - Minus the puck radius for
         # collision detection - Centre of Puck movement space
         self.Table_xmin = -(0.345 - self.Puck_radius)
-        self.Table_xmax = 0.345- self.Puck_radius
+        self.Table_xmax = 0.345 - self.Puck_radius
         self.Table_ymin = 0.3683 + self.Puck_radius
         self.Table_ymax = 1.7526 - self.Puck_radius
         # Real table inside corners
@@ -123,7 +123,8 @@ class TrajCalc(Node):
 
         Subscribtion topic: /puck_position
         Args:
-            + data - geometry_msgs/msg/PoseArray: Contains the x,y,z coordinates of the puck at frame
+            + data - geometry_msgs/msg/PoseArray: Contains the x,y,z coordinates of the puck at
+            frame
                 1 and 2
         Return:
             + None
@@ -134,7 +135,7 @@ class TrajCalc(Node):
 
     def traj_puck(self):
         """
-        Calculates trajectory of by fitting a strainght line through two points, self.p1 and 
+        Calculates trajectory of by fitting a strainght line through two points, self.p1 and
         salf.p2, by calculating the slope of the line, self.m, and the y-intercect of the line,
         self.c.
         """
@@ -145,8 +146,8 @@ class TrajCalc(Node):
 
         self.c = self.p2.y-self.m*self.p2.x
 
-    def after_impact_traj_puck(self,impact,m):
-        """ 
+    def after_impact_traj_puck(self, impact, m):
+        """
         Calculates y-intersect for after impact trajectory lines.
         Args:
             + impact - Impact coordinates against the air airhockey table
@@ -162,9 +163,10 @@ class TrajCalc(Node):
         Calculates the x coordinates, self.wx1 and self.wx2, of the two waypoints for the robot to
         hit the puck along its predicted trajectory line.
         """
-        self.wx2 = np.append(self.wx2, (self.wy2-self.c_list[self.impact_count])/self.m_list[self.impact_count])
-        self.wx1 = np.append(self.wx1, (self.wy1-self.c_list[self.impact_count])/self.m_list[self.impact_count])
-
+        self.wx2 = np.append(self.wx2, (self.wy2 -
+                             self.c_list[self.impact_count])/self.m_list[self.impact_count])
+        self.wx1 = np.append(self.wx1, (self.wy1 -
+                             self.c_list[self.impact_count])/self.m_list[self.impact_count])
 
     def trajectory(self):
         # p1[0] = p2[0] situation where x1 = x2 then m = infinity (Slope)
@@ -189,7 +191,7 @@ class TrajCalc(Node):
                 self.play_waypoints()
 
                 if self.Flag_collision_WS == 1 or self.impact_count > 5:
-                    break # Immediately stops while loop
+                    break  # Immediately stops while loop
 
                 if y_xmin < self.Table_ymax and y_xmin > self.Table_ymin and y_xmin < y_xmax:
                     # Check for collisions in the ws
@@ -203,13 +205,15 @@ class TrajCalc(Node):
                         # Upddate number of impacts with table
                         self.impact_count += 1
                         # Reflect impact angle
-                        self.m_list = np.append(self.m_list,-self.m_list[self.impact_count-1])
+                        self.m_list = np.append(self.m_list, -self.m_list[self.impact_count-1])
                         # Impact coordinates
                         self.ImpX = np.append(self.ImpX, self.Table_xmin)
                         self.ImpY = np.append(self.ImpY, y_xmin)
                         # Call trajectory calculation for new trajectory y-axis intercept
-                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck([self.ImpX[self.impact_count],\
-                            self.ImpY[self.impact_count]],self.m_list[self.impact_count]))
+                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck(
+                                               [self.ImpX[self.impact_count],
+                                                self.ImpY[self.impact_count]],
+                                               self.m_list[self.impact_count]))
                         # Set current c,m equal to final cf and mf
                         self.cf = self.c_list[self.impact_count]
                         self.mf = self.m_list[self.impact_count]
@@ -226,19 +230,22 @@ class TrajCalc(Node):
                     else:
                         self.impact_count += 1
                         # Reflect impact angle
-                        self.m_list = np.append(self.m_list,-self.m_list[self.impact_count-1])
+                        self.m_list = np.append(self.m_list, -self.m_list[self.impact_count-1])
                         # Impact coordinates
                         self.ImpX = np.append(self.ImpX, self.Table_xmax)
                         self.ImpY = np.append(self.ImpY, y_xmax)
                         # Call trajectory calculation for new trajectory y-axis intercept
-                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck([self.ImpX[self.impact_count], self.ImpY[self.impact_count]],self.m_list[self.impact_count]))
+                        self.c_list = np.append(self.c_list, self.after_impact_traj_puck(
+                                               [self.ImpX[self.impact_count],
+                                                self.ImpY[self.impact_count]],
+                                               self.m_list[self.impact_count]))
                         # Set current c,m equal to final cf and mf
                         self.cf = self.c_list[self.impact_count]
                         self.mf = self.m_list[self.impact_count]
                         # Set a flag to indicate that there was a wall collision
-                        self.collision = True 
+                        self.collision = True
 
-                else: # No collision with the walls
+                else:  # No collision with the walls
                     self.collision = False
 
         # Select best waypoint x values to publish
@@ -253,7 +260,7 @@ class TrajCalc(Node):
         self.draw_2D_sim()
 
     def choose_best_waypoints(self):
-        """ 
+        """
         Selects best waypoints for the robot in its workspace from two lists of all possible
         waypoints in the one predicted trajectory. If the waypoints are outside the robots
         workspace then the robot will block by setting the waypoints to the home position in front
@@ -290,96 +297,94 @@ class TrajCalc(Node):
             self.wy1_CORRECT = 0.407
             self.wx2_CORRECT = 0.0
             self.wy2_CORRECT = 0.407
-            self.get_logger().info(f"___________ BLOCK ____________ ")
-
+            self.get_logger().info("___________ BLOCK ____________ ")
 
         if self.Flag_BLOCK == 1:
-             self.get_logger().info(f"___________ HIT ____________ ")
-
+            self.get_logger().info("___________ HIT ____________ ")
 
     def draw_2D_sim(self):
         """
-        Plot a dynamic 2D representation of the airhockey table, the predicted trajectory, 
+        Plot a dynamic 2D representation of the airhockey table, the predicted trajectory,
         the robots play waypoints and all the impacts.
         """
         # Interactive plot
         plt.ion()
         # Collision boundary
-        plt.plot([self.Table_xmin,self.Table_xmin],[self.Table_ymin,self.Table_ymax], '--',
-                  color="grey", label = 'Puck collision boundary')
-        plt.plot([self.Table_xmax,self.Table_xmax],[self.Table_ymin,self.Table_ymax], '--',
-                  color="grey")
-        plt.plot([self.Table_xmin,self.Table_xmax],[self.Table_ymin,self.Table_ymin], '--',
-                  color="grey")
-        plt.plot([self.Table_xmin,self.Table_xmax],[self.Table_ymax,self.Table_ymax], '--',
-                  color="grey")
+        plt.plot([self.Table_xmin, self.Table_xmin], [self.Table_ymin, self.Table_ymax], '--',
+                 color="grey", label='Puck collision boundary')
+        plt.plot([self.Table_xmax, self.Table_xmax], [self.Table_ymin, self.Table_ymax], '--',
+                 color="grey")
+        plt.plot([self.Table_xmin, self.Table_xmax], [self.Table_ymin, self.Table_ymin], '--',
+                 color="grey")
+        plt.plot([self.Table_xmin, self.Table_xmax], [self.Table_ymax, self.Table_ymax], '--',
+                 color="grey")
         # Air hockey table inner boundary
-        plt.plot([self.Real_Table_xmin,self.Real_Table_xmin],
-                 [self.Real_Table_ymin,self.Real_Table_ymax], color="black",
-                  label = 'Airhockey table')
-        plt.plot([self.Real_Table_xmax,self.Real_Table_xmax],
-                 [self.Real_Table_ymin,self.Real_Table_ymax], color="black")
-        plt.plot([self.Real_Table_xmin,self.Real_Table_xmax],
-                 [self.Real_Table_ymin,self.Real_Table_ymin], color="black")
-        plt.plot([self.Real_Table_xmin,self.Real_Table_xmax],
-                 [self.Real_Table_ymax,self.Real_Table_ymax], color="black")
+        plt.plot([self.Real_Table_xmin, self.Real_Table_xmin],
+                 [self.Real_Table_ymin, self.Real_Table_ymax], color="black",
+                 label='Airhockey table')
+        plt.plot([self.Real_Table_xmax, self.Real_Table_xmax],
+                 [self.Real_Table_ymin, self.Real_Table_ymax], color="black")
+        plt.plot([self.Real_Table_xmin, self.Real_Table_xmax],
+                 [self.Real_Table_ymin, self.Real_Table_ymin], color="black")
+        plt.plot([self.Real_Table_xmin, self.Real_Table_xmax],
+                 [self.Real_Table_ymax, self.Real_Table_ymax], color="black")
         # Robot workspace
-        plt.plot([self.xmin,self.xmin],[self.ymin,self.ymax], color="orange",
-                  label = 'Robot workspace')
-        plt.plot([self.xmax,self.xmax],[self.ymin,self.ymax], color="orange")
-        plt.plot([self.xmin,self.xmax],[self.ymin,self.ymin], color="orange")
-        plt.plot([self.xmin,self.xmax],[self.ymax,self.ymax], color="orange")
+        plt.plot([self.xmin, self.xmin], [self.ymin, self.ymax], color="orange",
+                 label='Robot workspace')
+        plt.plot([self.xmax, self.xmax], [self.ymin, self.ymax], color="orange")
+        plt.plot([self.xmin, self.xmax], [self.ymin, self.ymin], color="orange")
+        plt.plot([self.xmin, self.xmax], [self.ymax, self.ymax], color="orange")
         # Center lines of table
-        plt.plot([0,0],[self.Table_ymin,self.Table_ymax], '--', color = 'grey')
-        plt.plot([self.Table_xmin,self.Table_xmax],[(self.Table_ymax+self.Table_ymin)/2,
-                 (self.Table_ymax+self.Table_ymin)/2], '--', color = 'grey')
+        plt.plot([0, 0], [self.Table_ymin, self.Table_ymax], '--', color='grey')
+        plt.plot([self.Table_xmin, self.Table_xmax], [(self.Table_ymax+self.Table_ymin)/2,
+                 (self.Table_ymax+self.Table_ymin)/2], '--', color='grey')
         # Robot axis
-        plt.plot([0,0],[0,0.2], color = 'black', label = 'Robot axis')
-        plt.plot([0,0.2],[0,0], color = 'black')
+        plt.plot([0, 0], [0, 0.2], color='black', label='Robot axis')
+        plt.plot([0, 0.2], [0, 0], color='black')
         # Plot Robot Waypoints
-        plt.plot([self.wx1_CORRECT,self.wx2_CORRECT],[self.wy1_CORRECT,self.wy2_CORRECT], 'ro',
-                 color = 'green', label = 'Robot move waypoints')
+        plt.plot([self.wx1_CORRECT, self.wx2_CORRECT], [self.wy1_CORRECT, self.wy2_CORRECT], 'ro',
+                 color='green', label='Robot move waypoints')
 
         """Plot after impact the dashed trajectory"""
         if len(self.c_list) != 0:
-            if len(self.ImpX)>1:
-                plt.plot([self.ImpX[1]],[self.ImpY[1]], 'ro', color = 'blue',
-                          label = 'Impact point')
-            for imp in range(2,len(self.c_list)):
+            if len(self.ImpX) > 1:
+                plt.plot([self.ImpX[1]], [self.ImpY[1]], 'ro', color='blue',
+                         label='Impact point')
+            for imp in range(2, len(self.c_list)):
                 # Impact point
-                plt.plot([self.ImpX[imp]],[self.ImpY[imp]], 'ro', color = 'blue')
-            for imp in range(1,len(self.c_list)):
+                plt.plot([self.ImpX[imp]], [self.ImpY[imp]], 'ro', color='blue')
+            for imp in range(1, len(self.c_list)):
                 # Y-intercect
-                plt.plot([0],[self.c_list[imp]], 'x', color = 'red')
+                plt.plot([0], [self.c_list[imp]], 'x', color='red')
 
         """ Plot only in airhockey table the trajectory"""
         if len(self.ImpX) >= 2:
             # Puck cv point to first impact
-            plt.plot([self.p1.x,self.p2.x],[self.p1.y,self.p2.y], ':', color = 'darkviolet',
-                      label = 'New puck trajectory line')
-            plt.plot([self.p2.x,self.ImpX[1]],[self.p2.y,self.ImpY[1]], ':', color = 'darkviolet')
-            for imp in range(2,len(self.ImpX)):
+            plt.plot([self.p1.x, self.p2.x], [self.p1.y, self.p2.y], ':', color='darkviolet',
+                     label='New puck trajectory line')
+            plt.plot([self.p2.x, self.ImpX[1]], [self.p2.y, self.ImpY[1]], ':', color='darkviolet')
+            for imp in range(2, len(self.ImpX)):
                 # After impact solid trajectory line only in airhockey task space
-                plt.plot([self.ImpX[imp-1],self.ImpX[imp]],[self.ImpY[imp-1],self.ImpY[imp]], ':',
-                          color = 'darkviolet')
+                plt.plot([self.ImpX[imp-1], self.ImpX[imp]], [self.ImpY[imp-1],
+                         self.ImpY[imp]], ':', color='darkviolet')
             # Last impact to robot waypoints
-            plt.plot([self.ImpX[-1],self.wx1_CORRECT],[self.ImpY[-1],self.wy1_CORRECT], ':',
-                      color = 'darkviolet')
-            plt.plot([self.ImpX[-1],self.wx2_CORRECT],[self.ImpY[-1],self.wy2_CORRECT], ':',
-                      color = 'darkviolet')
-        else: # No side collisions
-            plt.plot([self.p1.x,self.wx1_CORRECT],[self.p1.y,self.wy1_CORRECT], ':',
-                      color = 'darkviolet', label = 'New puck trajectory line')
-            plt.plot([self.p2.x,self.wx2_CORRECT],[self.p2.y,self.wy2_CORRECT], ':',
-                      color = 'darkviolet')
+            plt.plot([self.ImpX[-1], self.wx1_CORRECT], [self.ImpY[-1], self.wy1_CORRECT], ':',
+                     color='darkviolet')
+            plt.plot([self.ImpX[-1], self.wx2_CORRECT], [self.ImpY[-1], self.wy2_CORRECT], ':',
+                     color='darkviolet')
+        else:  # No side collisions
+            plt.plot([self.p1.x, self.wx1_CORRECT], [self.p1.y, self.wy1_CORRECT], ':',
+                     color='darkviolet', label='New puck trajectory line')
+            plt.plot([self.p2.x, self.wx2_CORRECT], [self.p2.y, self.wy2_CORRECT], ':',
+                     color='darkviolet')
 
         # Robot home position
-        plt.plot([0],[0.405], '8', color = 'pink', label = 'Robot home location')
+        plt.plot([0], [0.405], '8', color='pink', label='Robot home location')
         # Two puck points from CV
-        plt.plot([self.p1.x,self.p2.x],[self.p1.y,self.p2.y], 'ro', color = 'red',
-                  label = 'CV puck centres')
+        plt.plot([self.p1.x, self.p2.x], [self.p1.y, self.p2.y], 'ro', color='red',
+                 label='CV puck centres')
         # Trajectory - Y-axis intercect
-        plt.plot([0],[self.c], 'x', color = 'red', label = 'Trajectory intercect with y-axis')
+        plt.plot([0], [self.c], 'x', color='red', label='Trajectory intercect with y-axis')
         # Window size
         plt.axis([-0.5, 1.5, -0.1, 1.9])
         plt.legend(loc="upper right")
@@ -415,7 +420,7 @@ class TrajCalc(Node):
                 # Set previous values
                 self.wx1_prev = self.p1.x
                 self.wx2_prev = self.p2.x
-                
+
                 # Reset all varibales and flags
                 self.impact_count = 0
                 self.c_list = np.array([])
@@ -432,6 +437,7 @@ class TrajCalc(Node):
         else:
             self.pub_wp1.publish(self.wp1)
             self.pub_wp2.publish(self.wp2)
+
 
 def traj_calc_entry(args=None):
     """Run TrajCalc node."""
