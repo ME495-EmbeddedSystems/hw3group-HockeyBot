@@ -198,6 +198,7 @@ class SimpleMove(Node):
         self.gripper_service = self.create_service(GripperSrv, "/gripper_service", self.gripper_service_callback)
 
     def gripper_service_callback(self, request, response):
+        """Call function to open or close the gripper."""
         if request.open == True:
             self.gripper(open=True)
         elif request.open == False:
@@ -207,9 +208,17 @@ class SimpleMove(Node):
 
     def gripper(self, open):
         """
+        Call gripper service to open or close the gripper.
+
+        Args
+        ----
         open: boolean
         open = True if gripper should be open
         open = False if gripper should be closed
+
+        Returns
+        -------
+        None
         """
         gripper_msg = GripperCommand.Goal()
         if open is False:
@@ -814,7 +823,6 @@ class SimpleMove(Node):
             None
 
         """
-
         # Check if the execute trajectory finished successfully
         if self.Flag_execute == 1:
             if self.future_execute_traj.done():
@@ -823,7 +831,7 @@ class SimpleMove(Node):
                     self.future_execute_result = self.future_execute_traj.result().get_result_async()
                 if self.future_execute_result.done():
                     self.future_result_result = copy.deepcopy(self.future_execute_result.result().result)
-                    self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code.val}')
+                    # self.get_logger().info(f' ERROR CODE ++++++++++++++++++++++++++++++++ = {self.future_result_result.error_code.val}')
                     self.Execute_error_code.data = self.future_result_result.error_code.val
                     self.pub_execute_error_code.publish(self.Execute_error_code)
                     self.Flag_asyc_call = 0
