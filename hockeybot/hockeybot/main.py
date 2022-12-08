@@ -1,3 +1,9 @@
+"""
+Main file for the hockeybot package.
+
+This bridges computer vision, trajectory calculations, and robot movement.
+"""
+
 import rclpy
 from rclpy.node import Node
 import numpy as np
@@ -11,6 +17,7 @@ import time
 class State(Enum):
     """
     These are the 7 states of the system.
+
     It determines what the main timer function and other callback functions should be doing
     on each iteration in the correct order.
     """
@@ -26,6 +33,7 @@ class State(Enum):
 class main(Node):
     """
     Main node for bridging CV with trajectory calculations to be passed into API to move the robot.
+
     This node receives data from the computer vision node to be passed into the trajectory
     calculations (TrajCalc) node. It also receives the calculations back from TrajCalc for
     additional processing to ultimately be passed into the SimpleMove API.
@@ -33,25 +41,26 @@ class main(Node):
 
     def __init__(self):
         """
-        Initialize services, clients, publishers, and subscribers.
-        Also initializes class variables for ----.
+        Initialize the main node.
+
+        Initializes services, clients, publishers, and subscribers. Also initializes flags that 
+        need to be reset in every iteration of the robot playing.
         """
         super().__init__("main")
 
         # True initial variables - these only get set once
         self.frequency = 100 # Hz
-        # self.puck_interval = 5  # 1 means getting consecutive waypoints, 2 means every other, etc.
-        self.home_posn = Goal.Request()
-        self.home_posn.x = 0.0
-        # self.home_posn.z = -0.015
-        self.home_posn.y = 0.407    # paddle is right up against the wall - for repeatability 
-        self.home_posn.z = -0.008   # includes offset to account for robot heigh variability
-        self.home_posn.roll = 3.1416
-        self.home_posn.pitch = 0.0
-        self.home_posn.yaw = 1.5707
         self.state = State.SETUP
         self.ee_posn = Pose()
         self.iter_count = 0
+        # Home position
+        self.home_posn = Goal.Request()
+        self.home_posn.x = 0.0
+        self.home_posn.y = 0.407    # paddle is right up against the wall - for repeatability 
+        self.home_posn.z = -0.008   # includes offset to account for robot height variability
+        self.home_posn.roll = 3.1416
+        self.home_posn.pitch = 0.0
+        self.home_posn.yaw = 1.5707
 
         # Re-initializable variables - these get reset every cycle
         self.initial_puck = True
@@ -115,12 +124,11 @@ class main(Node):
         self.ee_posn.position.z = data.position.z
 
     def starting_posn(self):
-        # """Move robot from original startup position to home configuration for playing."""
         """
         Move robot from original startup position to home configuration for playing.
+
         Have robot make the first move.
         """
-
         self.get_logger().info('inside starting_posn call')
 
         wpx0 = 0.0
@@ -192,8 +200,7 @@ class main(Node):
 
         time.sleep(3)
 
-        # We are now at the home position, ready to play
-
+        ## We are now at the home position. Ready to play. ##
         # Make the first move
         self.first_move_wp = Goal.Request()
         self.first_move_wp.x = 0.0
@@ -231,9 +238,9 @@ class main(Node):
         time.sleep(2)
 
     def exec_error_code_callback(self, data):
+        """Continuously check if MoveIt has thrown an error. If so, handle it."""
         if data.data != 1:
-            self.get_logger().info(f'RESET !!!!!!!!!!!!!!!!!!!! error code value =============== {data.data}')
-            # Set waypoint to halfway between current posn and home
+            # Set waypoint to halfway between current position and home
             # Set goal to home
             errorwpx = (self.ee_posn.position.x + self.home_posn.x)/2
             errorwpy = (self.ee_posn.position.y + self.home_posn.y)/2
@@ -254,83 +261,80 @@ class main(Node):
 
     def puck_pose_filter(self, data):
         """
-        Callback for subscription to /puck_pose topic published from CV.
+        Subscription callback for /puck_pose topic published from CV.
+
         Checks that puck is moving towards the robot.
         Selects two waypoints to be passed into TrajCalc.
         Args
         ----
         data: Data from /puck_pose topic
+
         Returns
         -------
         None
         """
-
         # Distance-based puck position selection
         if self.state == State.INIT_CV:
-            self.get_logger().info(f'data.y {data.y} ITER {self.iter_count}')
+            # self.get_logger().info(f'data.y {data.y} ITER {self.iter_count}')
             if data.y >= 1.0:
                 # self.get_logger().info(f'data.y {data.y}')
                 if self.initial_puck == True:
                     self.initial_puck_pose = data
-                    self.get_logger().info(f'initial pose {self.initial_puck_pose}')
+                    # self.get_logger().info(f'initial pose {self.initial_puck_pose}')
                     self.initial_puck = False
-                elif data.y < (self.initial_puck_pose.y - 0.01):    # tolerance to check puck direction
+                elif data.y < (self.initial_puck_pose.y - 0.01): # tolerance to check direction
                     if self.puck_pose_count == 0:
                         self.pucks_tmp.append(data)
-                        self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
+                        # self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
-                    elif data.y < (self.pucks_tmp[0].y - 0.10):     # 0.05 # distance between puck posns
+                    elif data.y < (self.pucks_tmp[0].y - 0.07): # 0.10 # distance between puck posn
                         if self.puck_pose_count == 1:
                             self.pucks_tmp.append(data)
-                            self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
+                            # self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
                             self.puck_pose_count = 2
 
     def wp1_callback(self, data):
         """
-        Checks if data is being published to /waypoint1.
-        Saving PointStamped to be used in goal service.
-        """
+        Check if data is being published to /waypoint1.
 
+        Save PointStamped to be used in goal service.
+        """
         if self.wp1_prev != data and self.cv_to_traj_flag == 1:
             self.wp1_traj = data
             self.wp1_flag = 1
             self.wp1_prev = data
-            self.get_logger().info(f'wp1_traj {self.wp1_traj}')
 
     def wp2_callback(self, data):
         """
-        Checks if data is being published to /waypoint2.
-        Saving PointStamped to be used in waypoint service.
-        """
+        Check if data is being published to /waypoint2.
 
+        Save PointStamped to be used in waypoint service.
+        """
         if self.wp2_prev != data and self.cv_to_traj_flag == 1:
             self.wp2_traj = data
             self.wp2_flag = 1
             self.wp2_prev = data
-            self.get_logger().info(f'wp2_traj {self.wp2_traj}')
 
     def sm_plan_callback(self, msg):
-        """Checks if SimpleMove has finished planning the trajectory to hit the puck."""
-
+        """Check if SimpleMove has finished planning the trajectory to hit the puck."""
         if msg.data == False:
             self.sm_plan_done = True
 
     def sm_execute_callback(self, msg):
-        """Checks if SimpleMove has finished executing a trajectory."""
-
+        """Check if SimpleMove has finished executing a trajectory."""
         if msg.data == False:
             self.sm_execute_done = True
 
     def timer_callback(self):
         """
         Continuously running timer callback.
+
         Uses the state machine to detect when data for an oncoming puck as been received, select
         waypoints for TrajCalc, and receive trajectories to send to the API.
         Returns
         -------
         None
         """
-
         # Continuously publish puck positions
         self.puck_posns.poses = [self.p1_msg, self.p2_msg]
         self.pub_puck_posn.publish(self.puck_posns)
@@ -367,7 +371,7 @@ class main(Node):
                 self.start_home_flag = 1
             # self.get_logger().info('waiting for start calls to finish')
             if self.start_wp_future.done() and self.start_goal_future.done():
-                self.get_logger().info('----------- start calls finished-------------')
+                self.get_logger().info('----------- start calls finished-----------')
                 self.state = State.INIT_CV
 
         if self.state == State.INIT_CV:
@@ -399,10 +403,11 @@ class main(Node):
                     and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
                     self.state = State.RESET
 
-                # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet the puck
+                # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet
+                # the puck
                 else:
                     if self.one == 0:
-                        self.get_logger().info(f'inside START_PLAN {self.iter_count}')
+                        # self.get_logger().info(f'inside START_PLAN {self.iter_count}')
                         self.wp1_request = Goal.Request()
                         self.wp1_request.x = self.wp1_traj.point.x
                         self.wp1_request.y = self.wp1_traj.point.y
@@ -444,7 +449,7 @@ class main(Node):
                 self.initial_future = self.initial_client.call_async(self.init_request)
                 self.initial_flag = 1
             if self.initial_future.done() and self.return_flag == 0:
-                self.get_logger().info(f'preparing return')
+                # self.get_logger().info(f'Preparing return')
                 # Set waypoint to halfway between initial and home
                 # Set goal to home
                 wpx1 = (self.init_request.x + self.home_posn.x)/2
@@ -464,14 +469,13 @@ class main(Node):
                 self.return_flag = 1    # We only want to do these calls once
 
             if self.return_flag == 1:
-                # self.get_logger().info(f'_________________________-Waiting to RESET')
                 if self.waypoint_future2.done() and self.goal_future2.done():
                     if abs(self.ee_posn.position.x - self.home_posn.x) < 0.01 and \
                         abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
                         self.state = State.RESET
                         self.iter_count += 1
                         
-                        self.get_logger().info(f'_________________________ DONE RESET___________________')
+                        self.get_logger().info(f'___________________DONE RESET___________________')
 
 def main_entry(args=None):
     """Run Main node."""
