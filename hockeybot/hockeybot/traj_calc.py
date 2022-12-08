@@ -339,7 +339,6 @@ class TrajCalc(Node):
 
         """Plot after impact the dashed trajectory"""
         if len(self.c_list) != 0:
-            self.get_logger().info(f'IMPX _____________elf.ImpX ====p[][]]] = {self.ImpX}')
             if len(self.ImpX)>1:
                 plt.plot([self.ImpX[1]],[self.ImpY[1]], 'ro', color = 'blue',
                           label = 'Impact point')
