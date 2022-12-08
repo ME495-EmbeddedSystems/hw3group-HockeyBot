@@ -284,7 +284,6 @@ class TrajCalc(Node):
                         self.wy1_CORRECT = self.y_ws_impact_Left
                         self.wx2_CORRECT = self.wx2[i]
                         self.wy2_CORRECT = self.wy2
-                self.get_logger().info(f"___________ HIT ____________ ")
         if self.Flag_BLOCK == 0:
             # Block/Stay in front of goal
             self.wx1_CORRECT = 0.0
@@ -292,6 +291,10 @@ class TrajCalc(Node):
             self.wx2_CORRECT = 0.0
             self.wy2_CORRECT = 0.407
             self.get_logger().info(f"___________ BLOCK ____________ ")
+
+
+        if self.Flag_BLOCK == 1:
+             self.get_logger().info(f"___________ HIT ____________ ")
 
 
     def draw_2D_sim(self):
