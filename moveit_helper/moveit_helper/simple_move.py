@@ -26,6 +26,10 @@ ACTION CLIENTS:
 PUBLISHERS:
     + /planning_scene (moveit_msgs/msg/PlanningScene) - Publishes the box object to the planning
     scene
+    + /sm_plan - Bool type for node is planned or not
+    + /sm_execute - Bool type for node is executed or not
+    + /ee_posn - Publish end effector position
+    + /execute_error_code - Publish error code
 SUBSCRIPTIONS:
     + /joint_states (sensor_msgs/msg/JointStates) - Gets the current joint vector of the robot
     manipulator
@@ -198,7 +202,6 @@ class SimpleMove(Node):
         self.gripper_service = self.create_service(GripperSrv, "/gripper_service", self.gripper_service_callback)
 
     def gripper_service_callback(self, request, response):
-        """Call function to open or close the gripper."""
         if request.open == True:
             self.gripper(open=True)
         elif request.open == False:
