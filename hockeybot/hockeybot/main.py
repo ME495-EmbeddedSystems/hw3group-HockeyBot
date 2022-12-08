@@ -6,13 +6,12 @@ This bridges computer vision, trajectory calculations, and robot movement.
 
 import rclpy
 from rclpy.node import Node
-import numpy as np
-import matplotlib.pyplot as plt
 from geometry_msgs.msg import PointStamped, Point, PoseArray, Pose
 from std_msgs.msg import Bool, Int32
 from enum import Enum, auto
 from moveit_interface.srv import Initial, Goal, GripperSrv
 import time
+
 
 class State(Enum):
     """
@@ -30,6 +29,7 @@ class State(Enum):
     RETURN_HOME = auto(),
     RESET = auto()
 
+
 class main(Node):
     """
     Main node for bridging CV with trajectory calculations to be passed into API to move the robot.
@@ -43,20 +43,20 @@ class main(Node):
         """
         Initialize the main node.
 
-        Initializes services, clients, publishers, and subscribers. Also initializes flags that 
+        Initializes services, clients, publishers, and subscribers. Also initializes flags that
         need to be reset in every iteration of the robot playing.
         """
         super().__init__("main")
 
         # True initial variables - these only get set once
-        self.frequency = 100 # Hz
+        self.frequency = 100  # Hz
         self.state = State.SETUP
         self.ee_posn = Pose()
         self.iter_count = 0
         # Home position
         self.home_posn = Goal.Request()
         self.home_posn.x = 0.0
-        self.home_posn.y = 0.407    # paddle is right up against the wall - for repeatability 
+        self.home_posn.y = 0.407    # paddle is right up against the wall - for repeatability
         self.home_posn.z = -0.008   # includes offset to account for robot height variability
         self.home_posn.roll = 3.1416
         self.home_posn.pitch = 0.0
@@ -89,14 +89,14 @@ class main(Node):
         # Subscribers
         self.sub_wp1 = self.create_subscription(PointStamped, '/waypoint1', self.wp1_callback, 10)
         self.sub_wp2 = self.create_subscription(PointStamped, '/waypoint2', self.wp2_callback, 10)
-        self.sub_puck_pose = self.create_subscription(Point, '/puck_pose', 
-                                                        self.puck_pose_filter, 10)
+        self.sub_puck_pose = self.create_subscription(Point, '/puck_pose',
+                                                      self.puck_pose_filter, 10)
         self.sub_sm_plan = self.create_subscription(Bool, '/sm_plan', self.sm_plan_callback, 10)
-        self.sub_sm_execute = self.create_subscription(Bool, '/sm_execute', 
-                                                        self.sm_execute_callback, 10)
+        self.sub_sm_execute = self.create_subscription(Bool, '/sm_execute',
+                                                       self.sm_execute_callback, 10)
         self.sub_ee_posn = self.create_subscription(Pose, "/ee_posn", self.ee_posn_callback, 10)
-        self.sub_execute_error_code = self.create_subscription(Int32, "/execute_error_code", 
-                                                                self.exec_error_code_callback, 10)
+        self.sub_execute_error_code = self.create_subscription(Int32, "/execute_error_code",
+                                                               self.exec_error_code_callback, 10)
 
         # Publishers
         self.pub_puck_posn = self.create_publisher(PoseArray, '/puck_position', 10)
@@ -113,7 +113,7 @@ class main(Node):
         self.gripper_open.open = True
         self.gripper_client.call_async(self.gripper_open)
         self.get_logger().info('gripper should open')
-        time.sleep(5) # 5s buffer before beginning startup sequence
+        time.sleep(5)  # 5s buffer before beginning startup sequence
 
         self.timer = self.create_timer(1/self.frequency, self.timer_callback)
 
@@ -177,7 +177,7 @@ class main(Node):
         self.start_goal_future = self.goal_client.call_async(self.start_goal)
 
         time.sleep(5)
-        
+
         # Close gripper to grab paddle
         self.gripper_open.open = False
         self.gripper_future = self.gripper_client.call_async(self.gripper_open)
@@ -200,7 +200,7 @@ class main(Node):
 
         time.sleep(3)
 
-        ## We are now at the home position. Ready to play. ##
+        # We are now at the home position. Ready to play. #
         # Make the first move
         self.first_move_wp = Goal.Request()
         self.first_move_wp.x = 0.0
@@ -282,12 +282,12 @@ class main(Node):
                     self.initial_puck_pose = data
                     # self.get_logger().info(f'initial pose {self.initial_puck_pose}')
                     self.initial_puck = False
-                elif data.y < (self.initial_puck_pose.y - 0.01): # tolerance to check direction
+                elif data.y < (self.initial_puck_pose.y - 0.01):  # tolerance to check direction
                     if self.puck_pose_count == 0:
                         self.pucks_tmp.append(data)
                         # self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
-                    elif data.y < (self.pucks_tmp[0].y - 0.07): # 0.10 # distance between puck posn
+                    elif data.y < (self.pucks_tmp[0].y - 0.07):  #0.10 # distance between puck posn
                         if self.puck_pose_count == 1:
                             self.pucks_tmp.append(data)
                             # self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
@@ -385,7 +385,7 @@ class main(Node):
                 # This means both puck positions were selected
                 self.cv_to_traj_flag = 1
                 self.state = State.TRAJ
-        
+
         if self.state == State.TRAJ:
             # Update the puck positions
             self.p1_msg.position = self.pucks_tmp[0]
@@ -432,7 +432,6 @@ class main(Node):
                         abs(self.ee_posn.position.y - self.wp2_request.y) < 0.006:
                         self.state = State.AWAIT_PLAN
 
-                
         if self.state == State.AWAIT_PLAN:
             if self.waypoint_future.done() and self.goal_future.done():
                 if self.sm_plan_done == True:
@@ -474,8 +473,9 @@ class main(Node):
                         abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
                         self.state = State.RESET
                         self.iter_count += 1
-                        
-                        self.get_logger().info(f'___________________DONE RESET___________________')
+
+                        self.get_logger().info('___________________DONE RESET___________________')
+
 
 def main_entry(args=None):
     """Run Main node."""
