@@ -26,10 +26,7 @@ from geometry_msgs.msg import PointStamped, Point, PoseArray
 
 
 class TrajCalc(Node):
-    """
-    Node for trajectory prediction calculations, visualization and robot play waypoint
-    calculations.
-    """
+    """Node for trajectory prediction, visualization and robot play waypoint calculations."""
 
     def __init__(self):
         """Initialize publishers, subscribers, timer and variables."""
@@ -123,11 +120,13 @@ class TrajCalc(Node):
 
         Subscribtion topic: /puck_position
         Args:
-            + data - geometry_msgs/msg/PoseArray: Contains the x,y,z coordinates of the puck at
-            frame
-                1 and 2
+        ----
+            + data : geometry_msgs/msg/PoseArray: Contains the x,y,z coordinates of the puck at
+            frame 1 and 2
         Return:
+        ------
             + None
+
         """
         self.puck_array = data
         self.p1 = self.puck_array.poses[0].position
@@ -135,7 +134,9 @@ class TrajCalc(Node):
 
     def traj_puck(self):
         """
-        Calculates trajectory of by fitting a strainght line through two points, self.p1 and
+        Claculate pucks predicted trajectory.
+
+        Calculate trajectory of by fitting a straight line through two points, self.p1 and
         salf.p2, by calculating the slope of the line, self.m, and the y-intercect of the line,
         self.c.
         """
@@ -148,19 +149,25 @@ class TrajCalc(Node):
 
     def after_impact_traj_puck(self, impact, m):
         """
-        Calculates y-intersect for after impact trajectory lines.
+        Calculate y-intersect for after impact trajectory lines.
+
         Args:
-            + impact - Impact coordinates against the air airhockey table
-            + m - Reflected slope at impact
+        ----
+            + impact : Impact coordinates against the air airhockey table.
+            + m : Reflected slope, angle, at impact
         Returns:
-            + c - New trajectory y-intercect
+        -------
+            + c : New trajectory y-intercect
+
         """
         c = impact[1]-m*impact[0]
         return c
 
     def play_waypoints(self):
         """
-        Calculates the x coordinates, self.wx1 and self.wx2, of the two waypoints for the robot to
+        Calculate x-coordinates for robot play points.
+
+        Calculate the x coordinates, self.wx1 and self.wx2, of the two waypoints for the robot to
         hit the puck along its predicted trajectory line.
         """
         self.wx2 = np.append(self.wx2, (self.wy2 -
@@ -261,7 +268,9 @@ class TrajCalc(Node):
 
     def choose_best_waypoints(self):
         """
-        Selects best waypoints for the robot in its workspace from two lists of all possible
+        Select best waypoints for robot to hit puck.
+
+        Select best waypoints for the robot in its workspace from two lists of all possible
         waypoints in the one predicted trajectory. If the waypoints are outside the robots
         workspace then the robot will block by setting the waypoints to the home position in front
         of the goal.
@@ -304,6 +313,8 @@ class TrajCalc(Node):
 
     def draw_2D_sim(self):
         """
+        Plot the predicted trajectory.
+
         Plot a dynamic 2D representation of the airhockey table, the predicted trajectory,
         the robots play waypoints and all the impacts.
         """
