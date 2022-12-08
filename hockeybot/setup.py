@@ -1,3 +1,9 @@
+"""
+Setup for hockeybot package.
+
+Contains traj_calc, cam_node, main, and simple_move.
+"""
+
 from setuptools import setup
 import os
 from glob import glob
@@ -19,8 +25,8 @@ setup(
     zip_safe=True,
     maintainer='avaz',
     maintainer_email='AvaZahedi2023@u.northwestern.edu',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    description='Enables the robot to play air hockey provided data from CV.',
+    license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
