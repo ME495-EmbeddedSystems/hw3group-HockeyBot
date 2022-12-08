@@ -24,14 +24,12 @@ class CamNode(Node):
     table.
     """
 
-
     def __init__(self):
         """
         Initialize services, clients, and subscribers.
 
         Also initializes class variables, counters and flags to calculate puck positions.
         """
-
         super().__init__('cam_node')
         self.currentpos = self.create_publisher(Point, '/puck_pose', 10)
         self.pos = Point()
@@ -77,7 +75,7 @@ class CamNode(Node):
 
     def GetCenter(self, frame, depth_frame, depth_intrin):
         """
-        Runs to capture the center of the table.
+        Capture the center of the table.
 
         Detects the large circle at the center of the table which coincides with the center of the
         table and updates the center real world coordinates in the camera frame. Used in the
@@ -90,8 +88,8 @@ class CamNode(Node):
         ---------
             None
         """
-
-        circles = cv2.HoughCircles(frame, cv2.HOUGH_GRADIENT, 2, 70, param1=300, param2=40, minRadius=10, maxRadius=28)
+        circles = cv2.HoughCircles(frame, cv2.HOUGH_GRADIENT, 2, 70, param1=300, param2=40,\
+                                    minRadius=10, maxRadius=28)
         # To make sure only circle was found
         if circles is not None:
             self.center_flag = True
@@ -117,7 +115,7 @@ class CamNode(Node):
 
     def timer_callback(self):
         """
-        Detects the puck, filters noise and publishes points moving in the right direction.
+        Detect the puck, filter noise and publish points moving in the right direction.
 
         Gets frames from both IR and depth camera and with the help of depth intrinsics, it
         converts pixel coordinates to real world coordinates wrt realsense camera. It transforms
@@ -166,7 +164,6 @@ class CamNode(Node):
                     #Updates the checkx and checky arrays
                     self.checkx = np.append(self.checkx,  depth_point[0])
                     self.checky = np.append(self.checky, depth_point[1])
-                    # self.csv2 = np.vstack((self.csv2, [depth_point[0], depth_point[1]]))
 
             # show the output image
             cv2.namedWindow('output', cv2.WINDOW_AUTOSIZE)
@@ -190,12 +187,13 @@ class CamNode(Node):
                                 #This means puck is moving in the right direction, encountered noise
                                 #Replaces noise current value to previous position
                                 self.checkx[3] = self.checkx[2]
-                        if (self.checkx[0]) <= (self.checkx[1]) and (self.checkx[1]) <= (self.checkx[2]) and \
+                        if (self.checkx[0]) <= (self.checkx[1]) and\
+                            (self.checkx[1]) <= (self.checkx[2]) and \
                             (self.checkx[2]) <= (self.checkx[3]):
                             #Calculating slope and intercept of best fit line
                             m, b= np.polyfit(self.checkx, self.checky, 1)
-                            ##Calculating distance between last point of check array 
-                            # to the best fit line
+                            #Calculating distance between last point of check array 
+                            #to the best fit line
                             d = abs(-1 * m*self.checkx[0] + self.checky[0] - b)/ (m**2 +1)**0.5
                             #Checks if the distance is less than a tolerance of 0.005
                             if d < 0.005:
@@ -241,7 +239,7 @@ class CamNode(Node):
             cv2.destroyAllWindows()
 
 def frames_entry(args=None):
-    """Run CamNode node"""
+    """Run CamNode node."""
     rclpy.init(args=args)
     node = CamNode()
     rclpy.spin(node)
