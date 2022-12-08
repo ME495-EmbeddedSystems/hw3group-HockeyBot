@@ -221,7 +221,7 @@ class main(Node):
         self.first_move_wp_future = self.waypoint_client.call_async(self.first_move_wp)
         self.first_move_goal_future = self.goal_client.call_async(self.first_move_goal)
 
-        time.sleep(3)
+        time.sleep(1.0)
 
         # Finally return to home
         self.first_ret_home_wp = Goal.Request()
@@ -235,7 +235,7 @@ class main(Node):
         self.first_ret_wp_future = self.waypoint_client.call_async(self.first_ret_home_wp)
         self.first_ret_future = self.goal_client.call_async(self.home_posn)
 
-        time.sleep(2)
+        time.sleep(0.5)
 
     def exec_error_code_callback(self, data):
         """Continuously check if MoveIt has thrown an error. If so, handle it."""
