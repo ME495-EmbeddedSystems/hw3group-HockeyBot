@@ -62,6 +62,7 @@ from moveit_msgs.srv import GetPlanningScene
 from std_msgs.msg import Bool, Int32
 import copy
 
+
 class State(Enum):
     """
     These are the 7 states of the system.
@@ -198,22 +199,23 @@ class SimpleMove(Node):
             "panda_gripper/gripper_action"
             )
 
-        self.gripper_service = self.create_service(GripperSrv, "/gripper_service", self.gripper_service_callback)
+        self.gripper_service = self.create_service(GripperSrv, "/gripper_service",
+                                                   self.gripper_service_callback)
 
     def gripper_service_callback(self, request, response):
-        '''
-        Call function to open or close the gripper. 
-        
-        If the request message is true, the gripper will open, and if the request message is false, 
-        the gripper will close
+        """
+        Call function to open or close the gripper.
+
+        If the request message is true, the gripper will open, and if the request message is false,
+        the gripper will close.
 
         Returns
         -------
-        
-        '''
-        if request.open == True:
+        None
+        """
+        if request.open is True:
             self.gripper(open=True)
-        elif request.open == False:
+        elif request.open is False:
             self.gripper(open=False)
 
         return response
@@ -239,10 +241,11 @@ class SimpleMove(Node):
             gripper_msg.command.position = 0.0226
             gripper_msg.command.max_effort = 10.0
         elif open is True:
-            gripper_msg.command.position = 0.04 # max open
+            gripper_msg.command.position = 0.04  # max open
 
         if self.gripper_action_client.server_is_ready():
-            self.future_gripper_action_request = self.gripper_action_client.send_goal_async(gripper_msg)
+            self.future_gripper_action_request = self.gripper_action_client.send_goal_async(
+                                                                                    gripper_msg)
             self.future_gripper_action_request.add_done_callback(self.gripper_response_callback)
 
     def gripper_response_callback(self, future):
@@ -262,7 +265,7 @@ class SimpleMove(Node):
         self.get_logger().info('Changing gripper state')
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.gripper_result_callback)
-    
+
     def gripper_result_callback(self, future):
         """
         Store the gripper future result in a variable.
@@ -397,8 +400,8 @@ class SimpleMove(Node):
         self.waypoint_roll = request.roll
         self.waypoint_pitch = request.pitch
         self.waypoint_yaw = request.yaw
-        self.waypoint_ori_x, self.waypoint_ori_y, self.waypoint_ori_z, self.waypoint_ori_w = euler_quaternion(
-                                                    self.waypoint_roll, self.waypoint_pitch, self.waypoint_yaw)
+        self.waypoint_ori_x, self.waypoint_ori_y, self.waypoint_ori_z, self.waypoint_ori_w = \
+            euler_quaternion(self.waypoint_roll, self.waypoint_pitch, self.waypoint_yaw)
 
         self.get_logger().info('Waypoint service called')
         return response
@@ -447,7 +450,7 @@ class SimpleMove(Node):
         """
         self.Flag_start_ik = 1
         # Compute_IK variables
-        self.rq.group_name = 'panda_manipulator'#'panda_arm'
+        self.rq.group_name = 'panda_manipulator'  # 'panda_arm'
         self.rq.robot_state.joint_state.header.stamp = self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id = 'panda_link0'
         self.rq.robot_state.joint_state.name = ['panda_joint1', 'panda_joint2', 'panda_joint3',
@@ -501,7 +504,7 @@ class SimpleMove(Node):
         # Compute_IK variables
         self.joint_constr_list = []
 
-        self.rq.group_name = 'panda_manipulator' #'panda_arm'
+        self.rq.group_name = 'panda_manipulator'  # 'panda_arm'
         self.rq.robot_state.joint_state.header.stamp = self.get_clock().now().to_msg()
         self.rq.robot_state.joint_state.header.frame_id = 'panda_link0'
         self.rq.robot_state.joint_state.name = ['panda_joint1', 'panda_joint2', 'panda_joint3',
@@ -587,12 +590,12 @@ class SimpleMove(Node):
 
         """
         # Move to home position slow
-        if self.Flag_slow <3:
+        if self.Flag_slow < 3:
             self.Flag_slow += 1
             self.cartesian_velocity_scaling_factor = 1.2
         else:
             # Play speed
-            self.cartesian_velocity_scaling_factor = 1.8 # Increase velocities and acceleration
+            self.cartesian_velocity_scaling_factor = 1.8  # Increase velocities and acceleration
 
         self.car_path.joint_state.header.frame_id = 'panda_link0'
         self.car_path.joint_state.header.stamp = self.get_clock().now().to_msg()
@@ -609,7 +612,7 @@ class SimpleMove(Node):
         wp1.orientation.x = self.goal_ori_x
         wp1.orientation.y = self.goal_ori_y
         wp1.orientation.z = self.goal_ori_z
-        wp1.orientation.w =  self.goal_ori_w
+        wp1.orientation.w = self.goal_ori_w
 
         # End goal waypoint
         wp2 = Pose()
@@ -619,11 +622,11 @@ class SimpleMove(Node):
         wp2.orientation.x = self.waypoint_ori_x
         wp2.orientation.y = self.waypoint_ori_y
         wp2.orientation.z = self.waypoint_ori_z
-        wp2.orientation.w =  self.waypoint_ori_w
+        wp2.orientation.w = self.waypoint_ori_w
 
-        self.waypoints = [wp2,wp1]
+        self.waypoints = [wp2, wp1]
 
-        self.max_step = 5.0 # 10.0
+        self.max_step = 5.0  # 10.0
         self.jump_threshold = 10.0
         self.prismatic_jump_threshold = 10.0
         self.revolute_jump_threshold = 10.0
@@ -632,14 +635,14 @@ class SimpleMove(Node):
         # Call plan cartesian path
         self.future_plan_cartesian = \
             self.cartesian_path_client.call_async(GetCartesianPath.Request(
-                start_state = self.car_path,
-                group_name = self.group_name,
-                waypoints = self.waypoints,
-                max_step = self.max_step,
-                jump_threshold = self.jump_threshold,
-                prismatic_jump_threshold = self.prismatic_jump_threshold,
-                revolute_jump_threshold = self.revolute_jump_threshold,
-                avoid_collisions = self.avoid_collisions))
+                start_state=self.car_path,
+                group_name=self.group_name,
+                waypoints=self.waypoints,
+                max_step=self.max_step,
+                jump_threshold=self.jump_threshold,
+                prismatic_jump_threshold=self.prismatic_jump_threshold,
+                revolute_jump_threshold=self.revolute_jump_threshold,
+                avoid_collisions=self.avoid_collisions))
 
         self.get_logger().info('Done Calling Cartesian')
 
@@ -672,7 +675,7 @@ class SimpleMove(Node):
         plan_request_msg.request.start_state.multi_dof_joint_state.header.frame_id = 'panda_link0'
         # Additional parameters
         plan_request_msg.request.pipeline_id = 'move_group'
-        plan_request_msg.request.group_name = 'panda_manipulator' # panda_arm
+        plan_request_msg.request.group_name = 'panda_manipulator'  # panda_arm
         plan_request_msg.request.num_planning_attempts = 10
         plan_request_msg.request.allowed_planning_time = 5.0
         plan_request_msg.request.max_velocity_scaling_factor = 0.1
@@ -740,23 +743,31 @@ class SimpleMove(Node):
         # Post plan processing - Velocity increase
         for i in range(len(self.future_plan_cartesian.result().solution.joint_trajectory.points)):
             # Add seconds and nanoseconds together
-            StoNS = self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec * 1000000000
-            Total_nanoSec = self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec + StoNS
+            StoNS = self.future_plan_cartesian.result().solution.joint_trajectory.points[i]\
+                .time_from_start.sec * 1000000000
+            Total_nanoSec = self.future_plan_cartesian.result().solution.joint_trajectory\
+                .points[i].time_from_start.nanosec + StoNS
 
             New_Total_nanoSec = Total_nanoSec / self.cartesian_velocity_scaling_factor
             New_sec = New_Total_nanoSec // 1000000000
             New_nanoSec = New_Total_nanoSec % 1000000000
 
-            self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.sec = int(New_sec)
-            self.future_plan_cartesian.result().solution.joint_trajectory.points[i].time_from_start.nanosec = int(New_nanoSec)
+            self.future_plan_cartesian.result().solution.joint_trajectory.points[i]\
+                .time_from_start.sec = int(New_sec)
+            self.future_plan_cartesian.result().solution.joint_trajectory.points[i]\
+                .time_from_start.nanosec = int(New_nanoSec)
 
             # Velocity
-            for j in range(len(self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities)):
-                self.future_plan_cartesian.result().solution.joint_trajectory.points[i].velocities[j] *= self.cartesian_velocity_scaling_factor
-                self.future_plan_cartesian.result().solution.joint_trajectory.points[i].accelerations[j] *= self.cartesian_velocity_scaling_factor
+            for j in range(len(self.future_plan_cartesian.result().solution
+                           .joint_trajectory.points[i].velocities)):
+                self.future_plan_cartesian.result().solution.joint_trajectory.points[i]\
+                    .velocities[j] *= self.cartesian_velocity_scaling_factor
+                self.future_plan_cartesian.result().solution.joint_trajectory.points[i]\
+                    .accelerations[j] *= self.cartesian_velocity_scaling_factor
 
-        execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution # CartesianPath result
-        self.future_execute_traj = self._action_client_execute_traj.send_goal_async(execute_traj_msg)
+        execute_traj_msg.trajectory = self.future_plan_cartesian.result().solution  # CarPath res
+        self.future_execute_traj = self._action_client_execute_traj\
+            .send_goal_async(execute_traj_msg)
         self.Flag_execute = 1
 
     def timer_callback(self):
@@ -790,9 +801,11 @@ class SimpleMove(Node):
             if self.future_execute_traj.done():
                 if self.Flag_asyc_call == 0:
                     self.Flag_asyc_call = 1
-                    self.future_execute_result = self.future_execute_traj.result().get_result_async()
+                    self.future_execute_result = self.future_execute_traj.result()\
+                        .get_result_async()
                 if self.future_execute_result.done():
-                    self.future_result_result = copy.deepcopy(self.future_execute_result.result().result)
+                    self.future_result_result = \
+                        copy.deepcopy(self.future_execute_result.result().result)
                     self.Execute_error_code.data = self.future_result_result.error_code.val
                     self.pub_execute_error_code.publish(self.Execute_error_code)
                     self.Flag_asyc_call = 0
@@ -841,7 +854,7 @@ class SimpleMove(Node):
                 # self.plan_request()
                 self.sm_plan_msg.data = True
                 self.plan_cartesian()
-            elif self.future_plan_cartesian.done(): # Automatically execute when planning is done
+            elif self.future_plan_cartesian.done():  # Automatically execute when planning is done
                 self.sm_plan_msg.data = False
                 self.state = State.EXECUTE
 
