@@ -1,4 +1,4 @@
-"""Test after impact y-intercept  """
+"""Test after impact y-intercept."""
 
 from hockeybot.traj_calc import after_impact_traj_puck
 

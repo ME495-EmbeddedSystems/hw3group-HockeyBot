@@ -209,7 +209,7 @@ class TrajCalc(Node):
             self.mf = self.m
             self.cf = self.c
 
-            while self.collision == True:
+            while self.collision is True:
 
                 y_xmin = self.mf*self.Table_xmin + self.cf
                 y_xmax = self.mf*self.Table_xmax + self.cf
