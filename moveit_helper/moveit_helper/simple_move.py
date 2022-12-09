@@ -327,11 +327,12 @@ class SimpleMove(Node):
         Obtain and store the starting position and orientation of the end effector.
 
         Args:
+        ----
             request: (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
                      pitch and yaw orientation values
             response: None
 
-        Returns
+        Returns:
         -------
             None
 
@@ -353,11 +354,12 @@ class SimpleMove(Node):
         Obtain and store the desired end pose of the end-effector.
 
         Args:
+        ----
             request (moveit_interface/srv/Goal): Contains the x, y, z position and the roll,
             pitch and yaw orientation values
             response: None
 
-        Returns
+        Returns:
         -------
             None
 

@@ -25,6 +25,24 @@ import matplotlib.pyplot as plt
 from geometry_msgs.msg import PointStamped, Point, PoseArray
 
 
+def after_impact_traj_puck(impact, m):
+    """
+    Calculate y-intersect for after impact trajectory lines.
+
+    Args:
+    ----
+        + impact : Impact coordinates against the air airhockey table.
+        + m : Reflected slope, angle, at impact
+
+    Return:
+    ------
+        + c : New trajectory y-intercept
+
+    """
+    c = impact[1]-m*impact[0]
+    return c
+
+
 class TrajCalc(Node):
     """Node for trajectory prediction, visualization and robot play waypoint calculations."""
 
@@ -137,7 +155,7 @@ class TrajCalc(Node):
         Claculate pucks predicted trajectory.
 
         Calculate trajectory of by fitting a straight line through two points, self.p1 and
-        salf.p2, by calculating the slope of the line, self.m, and the y-intercect of the line,
+        salf.p2, by calculating the slope of the line, self.m, and the y-intercept of the line,
         self.c.
         """
         if self.p1.x == self.p2.x:
@@ -157,7 +175,7 @@ class TrajCalc(Node):
             + m : Reflected slope, angle, at impact
         Returns:
         -------
-            + c : New trajectory y-intercect
+            + c : New trajectory y-intercept
 
         """
         c = impact[1]-m*impact[0]
@@ -365,7 +383,7 @@ class TrajCalc(Node):
                 # Impact point
                 plt.plot([self.ImpX[imp]], [self.ImpY[imp]], 'ro', color='blue')
             for imp in range(1, len(self.c_list)):
-                # Y-intercect
+                # Y-intercept
                 plt.plot([0], [self.c_list[imp]], 'x', color='red')
 
         """ Plot only in airhockey table the trajectory"""
@@ -394,8 +412,8 @@ class TrajCalc(Node):
         # Two puck points from CV
         plt.plot([self.p1.x, self.p2.x], [self.p1.y, self.p2.y], 'ro', color='red',
                  label='CV puck centres')
-        # Trajectory - Y-axis intercect
-        plt.plot([0], [self.c], 'x', color='red', label='Trajectory intercect with y-axis')
+        # Trajectory - Y-axis intercept
+        plt.plot([0], [self.c], 'x', color='red', label='Trajectory intercept with y-axis')
         # Window size
         plt.axis([-0.5, 1.5, -0.1, 1.9])
         plt.legend(loc="upper right")
