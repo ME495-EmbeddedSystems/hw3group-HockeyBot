@@ -15,6 +15,8 @@
   <exec_depend>rclpy</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>moveit_helper</exec_depend>
+  <exec_depend>moveit_interface</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>
