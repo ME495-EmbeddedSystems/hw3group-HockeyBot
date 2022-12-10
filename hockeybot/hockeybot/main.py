@@ -272,6 +272,7 @@ class main(Node):
         Returns
         -------
         None
+
         """
         # Distance-based puck position selection
         if self.state == State.INIT_CV:
@@ -331,9 +332,11 @@ class main(Node):
 
         Uses the state machine to detect when data for an oncoming puck as been received, select
         waypoints for TrajCalc, and receive trajectories to send to the API.
+
         Returns
         -------
         None
+
         """
         # Continuously publish puck positions
         self.puck_posns.poses = [self.p1_msg, self.p2_msg]

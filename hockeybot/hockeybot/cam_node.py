@@ -23,6 +23,7 @@ class CamNode(Node):
     puck in the robot frame when it is going towards the robot, only on one half of the airhockey
     table.
     """
+
     def __init__(self):
         """
         Initialize services, clients, and subscribers.
@@ -78,13 +79,17 @@ class CamNode(Node):
         Detects the large circle at the center of the table which coincides with the center of the
         table and updates the center real world coordinates in the camera frame. Used in the
         calibration of realsense frame to robot frame.
+
         Args:
+        -------
             frame: Gets the frame data from IR camera
             depth_frame: Gets the frame from the depth camera
             depth_intrin: The intrinsics data from the depth frame
+
         Returns
-        ---------
+        -------
             None
+
         """
         circles = cv2.HoughCircles(frame, cv2.HOUGH_GRADIENT, 2, 70, param1=300, param2=40,
                                    minRadius=10, maxRadius=28)
