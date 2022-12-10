@@ -16,6 +16,9 @@ where the puck is on the air hockey table. Our TrajCalc node predicts the trajec
 to our SimpleMove API, which tells the Franka to move to meet the puck. All of these tasks are integrated in our Main node, 
 which completes our workflow and allows the robot to play repeatedly.
 
+
+https://user-images.githubusercontent.com/60728026/206879150-de49eb95-b5cf-416f-8f51-24a34890e54b.mp4
+
 ## **Prerequisites**
 1. Make sure ROS packages are most recent and up-to-date
 ```
