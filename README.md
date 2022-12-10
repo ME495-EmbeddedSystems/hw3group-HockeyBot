@@ -66,7 +66,7 @@ All code for this package was developed and tested in Python 3.
 This project requires the following hardware components:
 * RealSense Camera: realsense-ros can be installed with `apt install ros-humble-realsense2-camera`
 * Franka Emika Panda Robot ([Panda Robot](https://nu-msr.github.io/ros_notes/ros2/franka.html))
-* Air-hocket Table (include puck, puddle)
+* Air-Hockey Table (include puck, puddle)
 * To connect to the robot, plug in the ethernet from the robots workstation PC into the ethernet port on the users computer.
 * The hardware must be set up by connecting the RealSense camera via USB cable.
 
