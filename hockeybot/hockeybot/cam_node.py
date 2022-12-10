@@ -1,7 +1,7 @@
 """
 Launches realsense IR and depth camera and tracks the puck when going towards the robot.
 
-It checks if the puck is moving towards the robot upto a center of the table and publishes those
+It checks if the puck is moving towards the robot upto the center of the table and publishes those
 values to the /puck_pose topic.
 
 PUBLISHERS:
@@ -17,9 +17,9 @@ from geometry_msgs.msg import Point
 
 class CamNode(Node):
     """
-    Runs realsense camera and publishes puck position in robot frame coordinates.
+    Run the realsense camera and publish the puck position in robot frame coordinates.
 
-    This node streams IR and depth camera of realsense and using OpenCV tracks the position of the
+    This node streams IR and depth camera of realsense and using OpenCV, tracks the position of the
     puck in the robot frame when it is going towards the robot, only on one half of the airhockey
     table.
     """
@@ -132,7 +132,7 @@ class CamNode(Node):
         if self.count < 25:
             self.GetCenter(ir_image, depth_frame, depth_intrin)
             # Only update counter if values center value was added
-            if self.cx != 0 and self.cy != 0 and self.center_flag == True:
+            if self.cx != 0 and self.cy != 0 and self.center_flag is True:
                 self.count += 1
         # Averaging the center of table coordinates
         elif self.count == 25:

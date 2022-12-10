@@ -1,7 +1,7 @@
 """
 Enables the planning and execution of paths using the move group node.
 
-It can plan a path to a specified pose or just a position or or just an orientation from any start
+It can plan a path to a specified pose or just a position or just an orientation from any start
 configuration and it can also dynamically add a box to the planning scene.
 
 SERVERS:
@@ -204,7 +204,7 @@ class SimpleMove(Node):
 
     def gripper_service_callback(self, request, response):
         """
-        Call function to open or close the gripper.
+        Callback function to open or close the gripper.
 
         If the request message is true, the gripper will open, and if the request message is false,
         the gripper will close.
@@ -330,7 +330,6 @@ class SimpleMove(Node):
         Obtain and store the starting position and orientation of the end effector.
 
         Args:
-        ----
             request: (moveit_interface/srv/Initial): Contains the x, y, z position and the roll,
                      pitch and yaw orientation values
             response: None
@@ -357,7 +356,6 @@ class SimpleMove(Node):
         Obtain and store the desired end pose of the end-effector.
 
         Args:
-        ----
             request (moveit_interface/srv/Goal): Contains the x, y, z position and the roll,
             pitch and yaw orientation values
             response: None
@@ -786,7 +784,6 @@ class SimpleMove(Node):
             Flag_box_dim: trigger conditon for box dimension
 
         Parameters
-        ----------
             param eeX: x-axis position
             param eeY: y-axis position
             param eeZ: z-axis position

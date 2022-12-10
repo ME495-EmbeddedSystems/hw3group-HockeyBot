@@ -278,7 +278,7 @@ class main(Node):
             # self.get_logger().info(f'data.y {data.y} ITER {self.iter_count}')
             if data.y >= 1.0:
                 # self.get_logger().info(f'data.y {data.y}')
-                if self.initial_puck == True:
+                if self.initial_puck is True:
                     self.initial_puck_pose = data
                     # self.get_logger().info(f'initial pose {self.initial_puck_pose}')
                     self.initial_puck = False
@@ -287,7 +287,7 @@ class main(Node):
                         self.pucks_tmp.append(data)
                         # self.get_logger().info(f'puck pose 1 {self.pucks_tmp[0]}')
                         self.puck_pose_count = 1
-                    elif data.y < (self.pucks_tmp[0].y - 0.07):  #0.10 # distance between puck posn
+                    elif data.y < (self.pucks_tmp[0].y - 0.07):  # 0.10 # distance between puck
                         if self.puck_pose_count == 1:
                             self.pucks_tmp.append(data)
                             # self.get_logger().info(f'puck pose 2 {self.pucks_tmp[1]}')
@@ -317,12 +317,12 @@ class main(Node):
 
     def sm_plan_callback(self, msg):
         """Check if SimpleMove has finished planning the trajectory to hit the puck."""
-        if msg.data == False:
+        if msg.data is False:
             self.sm_plan_done = True
 
     def sm_execute_callback(self, msg):
         """Check if SimpleMove has finished executing a trajectory."""
-        if msg.data == False:
+        if msg.data is False:
             self.sm_execute_done = True
 
     def timer_callback(self):
@@ -400,7 +400,7 @@ class main(Node):
             if self.wp1_flag == 1 and self.wp2_flag == 1:
                 # If TrajCalc decides that we should just block, stay at home position and reset
                 if self.wp1_traj.point.x == 0.0 and self.wp1_traj.point.y == 0.407 \
-                    and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
+                   and self.wp2_traj.point.x == 0.0 and self.wp2_traj.point.y == 0.407:
                     self.state = State.RESET
 
                 # Otherwise, if TrajCalc has finished, call Waypoint and Goal services to meet
@@ -429,12 +429,12 @@ class main(Node):
                         self.one = 1
 
                     if abs(self.ee_posn.position.x - self.wp2_request.x) < 0.006 and \
-                        abs(self.ee_posn.position.y - self.wp2_request.y) < 0.006:
+                       abs(self.ee_posn.position.y - self.wp2_request.y) < 0.006:
                         self.state = State.AWAIT_PLAN
 
         if self.state == State.AWAIT_PLAN:
             if self.waypoint_future.done() and self.goal_future.done():
-                if self.sm_plan_done == True:
+                if self.sm_plan_done is True:
                     self.state = State.RETURN_HOME
 
         if self.state == State.RETURN_HOME:
@@ -470,7 +470,7 @@ class main(Node):
             if self.return_flag == 1:
                 if self.waypoint_future2.done() and self.goal_future2.done():
                     if abs(self.ee_posn.position.x - self.home_posn.x) < 0.01 and \
-                        abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
+                       abs(self.ee_posn.position.y - self.home_posn.y) < 0.01:
                         self.state = State.RESET
                         self.iter_count += 1
 
