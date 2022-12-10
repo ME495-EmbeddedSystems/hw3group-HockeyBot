@@ -7,11 +7,13 @@ FINISH THIS
 - **Hanyin Yuan**
 - **Marthinius Nel**
 - **Ritika Ghosh**
+< insert group photo here >
 
 ## **Description**
-The Franka robot will be playing air hockey. A camera will be used to detect where
-the puck is on the air hockey table and get the velocity of the puck, predict where it’s going, and
-tell the Franka to meet the puck there.
+The HockeyBot package allows a Franka robot to play air hockey. We use a realsense camera and computer vision to detect 
+where the puck is on the air hockey table. Our TrajCalc node predicts the trajectory of the puck and sends those positions 
+to our SimpleMove API, which tells the Franka to move to meet the puck. All of these tasks are integrated in our Main node, 
+which completes our workflow and allows the robot to play repeatedly.
 
 ## **Prerequisites**
 1. Make sure ROS packages are most recent and up-to-date
@@ -54,10 +56,10 @@ sudo cp src/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/99-inte
 9. Source the environment
 `source /opt/ros/humble/setup.bash`
 
-10. Git clone `git@github.com:ME495-EmbeddedSystems/hw3group-HockeyBot.git` into the /src directory of the customer workspace. 	This file will install the ros dependencies required to run this project.
+10. Git clone `git@github.com:ME495-EmbeddedSystems/hw3group-HockeyBot.git` into the /src directory of the customer workspace. This file will install the ros dependencies required to run this project.
 
 11. Additionally, users will need to install [Ubuntu install](https://docs.opencv.org/4.5.4/d2/de6/tutorial_py_setup_in_ubuntu.html) by using `sudo apt-get install python3-opencv`
-All code for this package was developed and test in Python 3
+All code for this package was developed and tested in Python 3.
 
 
 ## **Hardware Requirements**
@@ -69,29 +71,43 @@ This project requires the following hardware components:
 * The hardware must be set up by connecting the RealSense camera via USB cable.
 
 
-
 ## **Contents**
-The `hockeybot` package contains:
-1. nodes:
-* `main`:  This node receives data from the CV node to be passed into the trajectory
-    calculations node (Traj_Calc). It also receives the calculations back from Traj_Calc for
-    additional processing to ultimately be passed into the SimpleMove API.
-* `cam_node`: Use computer vision to detect puck and table frame, and send data to Main node.
-* `traj_calc`: This node receives a starting position and an end goal position of the end effector, plans the
-    path to the end goal configuration and then executes the path with the help of different
-    services.
-* `moveit_help`: It can plan a path to a specified pose or just a position or or just an orientation from any start
-configuration. 
-2. launch: 
-* `main.launch.py`: master launch file for the robot - this runs all the nodes required to update the planning scene as well as move the robot 
-* `realsense2.launch.py`: launch file for realsense2 camera node
+Packages:  
+1. [hockeybot](https://github.com/ME495-EmbeddedSystems/hw3group-HockeyBot/tree/main/hockeybot)
+2. [moveit_helper](https://github.com/ME495-EmbeddedSystems/hw3group-HockeyBot/tree/main/moveit_helper)
+3. [moveit_interface](https://github.com/ME495-EmbeddedSystems/hw3group-HockeyBot/tree/main/moveit_interface)
 
 ## **User Guide**
-1. Follow the steps on website([Turn on Franka](https://nu-msr.github.io/ros_notes/ros2/franka.html)) to start the Frank Robot.
+1. Follow the steps on website ([Turn on Franka](https://nu-msr.github.io/ros_notes/ros2/franka.html)) to start the Frank Robot.
 2. Connecting the RealSense camera (via USB cable) and the Franka Emika Panda arm (via Ethernet cable) to the user's computer.
 
 ## Concepts and Overall System Architecture
 The process loop of the robot is as follows:
+
+### Start-Up Sequence
+< insert media here >
+* Upon startup, the robot follows a start-up sequence to reach its home position. The robot follows a series of waypoints 
+to reach the home x- and y-coordinates with an offset in the z. It then reaches down to grasp the paddle (with an adapter) 
+and moves back up slightly. This slight increase in height allows the robot flexibility while moving, so that if it pushes 
+down during movement, it will not apply a force into the table while still keeping the paddle level with the table.
+
+### Computer Vision
+< insert media here >
+
+### Trajectory Calculations
+< insert media here >
+
+### Hit the Puck
+< insert media here >
+* After receiving waypoint and goal positions, the robot receives service calls to move to those points, thereby meeting 
+the puck along its trajectory and hitting it. If there is an edge case where the robot cannot successfully meet the puck 
+given its trajectory, the robot will block instead.
+
+### Return Home
+< insert media here >
+* As the robot is moving to hit the puck, it also plans a path from where it hits the puck back to the home position. 
+Once the robot detects that its end-effector has reached the goal, it begins executing the path back home. This process 
+also resets all internal variables and restarts the loop so that the robot can continue playing.
 
 ## Instructions: Manually launch the services for robot.
 1. To launch the franka along with the simple_move node ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true.

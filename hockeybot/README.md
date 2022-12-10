@@ -70,18 +70,15 @@ This project requires the following hardware components:
 ## **Contents**
 The `hockeybot` package contains:
 1. nodes:
-* `main`:  This node receives data from the CV node to be passed into the trajectory
+* `main`:  This node receives data from cam_node to be passed into the trajectory
     calculations node (Traj_Calc). It also receives the calculations back from Traj_Calc for
     additional processing to ultimately be passed into the SimpleMove API.
-* `cam_node`: Use computer vision to detect puck and table frame, and send data to Main node.
-* `traj_calc`: This node receives a starting position and an end goal position of the end effector, plans the
-    path to the end goal configuration and then executes the path with the help of different
-    services.
-* `moveit_help`: It can plan a path to a specified pose or just a position or or just an orientation from any start
-configuration. 
+* `cam_node`: Uses computer vision (CV) to detect puck, and detect the table for calibration. This data is sent to the Main node.
+* `traj_calc`: This node receives two puck positions selected from CV and calculates the trajectory of the puck to the other side 
+    of the table. The intersection points of this trajectory with the y-boundaries of the workspace are sent back to Main.
 2. launch: 
-* `main.launch.py`: master launch file for the robot - this runs all the nodes required to update the planning scene as well as move the robot 
-* `realsense2.launch.py`: launch file for realsense2 camera node
+* `main.launch.py`: Master launch file for the robot. This runs all the nodes required to update the planning scene as well as move the robot.
+* `realsense2.launch.py`: Launch file for realsense2 camera node.
 
 ## **User Guide**
 1. Follow the steps on website([Turn on Franka](https://nu-msr.github.io/ros_notes/ros2/franka.html)) to start the Frank Robot.
