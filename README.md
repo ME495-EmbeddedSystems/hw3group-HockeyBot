@@ -7,7 +7,8 @@ FINISH THIS
 - **Hanyin Yuan**
 - **Marthinius Nel**
 - **Ritika Ghosh**
-< insert group photo here >
+
+![grouppicture](https://user-images.githubusercontent.com/60728026/206877676-19116921-3ad7-4c1c-8c1e-c41048c0e0fe.jpeg)
 
 ## **Description**
 The HockeyBot package allows a Franka robot to play air hockey. We use a realsense camera and computer vision to detect 
@@ -85,7 +86,9 @@ Packages:
 The process loop of the robot is as follows:
 
 ### Start-Up Sequence
-< insert media here >
+
+https://user-images.githubusercontent.com/60728026/206877658-1238a935-afeb-47ef-81f4-765bfd2c1d19.mp4
+
 * Upon startup, the robot follows a start-up sequence to reach its home position. The robot follows a series of waypoints 
 to reach the home x- and y-coordinates with an offset in the z. It then reaches down to grasp the paddle (with an adapter) 
 and moves back up slightly. This slight increase in height allows the robot flexibility while moving, so that if it pushes 
