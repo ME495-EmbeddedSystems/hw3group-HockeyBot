@@ -27,16 +27,16 @@ from geometry_msgs.msg import PointStamped, Point, PoseArray
 
 def after_impact_traj_puck(impact, m):
     """
-    Calculate y-intersect for after impact trajectory lines.
+    Calculate y-intersept for after impact trajectory lines.
 
     Args:
     ----
-        + impact : Impact coordinates against the air airhockey table.
-        + m : Reflected slope, angle, at impact
+        + impact (float) : Impact coordinates against the air airhockey table
+        + m (float) : Reflected slope, angle, at impact
 
     Return:
     ------
-        + c : New trajectory y-intercept
+        + c (float) : New trajectory y-intercept
 
     """
     c = impact[1]-m*impact[0]
@@ -171,11 +171,11 @@ class TrajCalc(Node):
 
         Args:
         ----
-            + impact : Impact coordinates against the air airhockey table.
-            + m : Reflected slope, angle, at impact
+            + impact (float) : Impact coordinates against the air airhockey table
+            + m (float) : Reflected slope, angle, at impact
         Returns:
         -------
-            + c : New trajectory y-intercept
+            + c (float) : New trajectory y-intercept
 
         """
         c = impact[1]-m*impact[0]
