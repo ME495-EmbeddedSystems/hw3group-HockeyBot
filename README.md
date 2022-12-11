@@ -1,7 +1,5 @@
 # Final Project Package: HockeyBot
 
-FINISH THIS
-
 ## Authors: 
 - **Ava Zahedi**
 - **Hanyin Yuan**
