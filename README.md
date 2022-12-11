@@ -82,6 +82,7 @@ Packages:
 ## **User Guide**
 1. Follow the steps on website ([Turn on Franka](https://nu-msr.github.io/ros_notes/ros2/franka.html)) to start the Frank Robot.
 2. Connecting the RealSense camera (via USB cable) and the Franka Emika Panda arm (via Ethernet cable) to the user's computer.
+3. Launch the hockeybot package using the command `ros2 launch hockeybot main.launch.py robot:=false`.
 
 ## Concepts and Overall System Architecture
 The process loop of the robot is as follows:
@@ -110,22 +111,23 @@ Calculates the predicted trajectory of the puck and the play waypoints for the r
 puck coordinates from computer vision. The node handles collisions by reflecting the impact angle about the normal line. The waypoints for the the robot to hit the puck is constrained in the robots workspace on the air hockey table. The most optimal waypoints are selected by considering all four sides of the robots workspace. The robot will then move to the first waypoint that is on the predicted trajectory line of the puck and then move along the line to the second wayoint and hit the puck. A plot is dynamically generated and updated each time a new trajectory is calculated. The robot blocks if the trajectory is out of the workspace and unreachable.
 
 ### Hit the Puck
-< insert media here >
+
+https://user-images.githubusercontent.com/60728026/206883262-3a7bd3e8-8259-4f35-b5ad-2bc805d5e52b.mp4
+
 * After receiving waypoint and goal positions, the robot receives service calls to move to those points, thereby meeting 
 the puck along its trajectory and hitting it. If there is an edge case where the robot cannot successfully meet the puck 
 given its trajectory, the robot will block instead.
 
 ### Return Home
-< insert media here >
 * As the robot is moving to hit the puck, it also plans a path from where it hits the puck back to the home position. 
 Once the robot detects that its end-effector has reached the goal, it begins executing the path back home. This process 
 also resets all internal variables and restarts the loop so that the robot can continue playing.
 
 ## Instructions: Manually launch the services for robot.
-1. To launch the franka along with the simple_move node ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true.
-2. Run the simple_move node with ros2 run moveit_helper simple_move.
-    (Optional) Provide a starting configuration for planning with ros2 service call /initial_service moveit_interface/srv/Initial "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}".
-3. Call the service to plan path to specifies goal pose ros2 service call /goal_service moveit_interface/srv/Goal "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}".
-4. To execute the plan, use ros2 service call /execute_service moveit_interface/srv/Execute "exec_bool: True".
+1. To launch the franka along with the simple_move node `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true`.
+2. Run the simple_move node with `ros2 run moveit_helper simple_move`.
+    (Optional) Provide a starting configuration for planning with `ros2 service call /initial_service moveit_interface/srv/Initial "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}"`.
+3. Call the service to plan path to specifies goal pose `ros2 service call /goal_service moveit_interface/srv/Goal "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}"`.
+4. To execute the plan, use `ros2 service call /execute_service moveit_interface/srv/Execute "exec_bool: True"`.
     a. If you wish to cancel your plan without executing, pass exec_bool: False instead of True.
-5. To add a box in the planning scene, use ros2 service call /add_obj moveit_interface/srv/Addobj "{id: 1, x: 0.3, y: 0.6, z: 0.5, dim_x: 0.2, dim_y: 0.2, dim_z: 0.2}".
+5. To add a box in the planning scene, use `ros2 service call /add_obj moveit_interface/srv/Addobj "{id: 1, x: 0.3, y: 0.6, z: 0.5, dim_x: 0.2, dim_y: 0.2, dim_z: 0.2}"`.
