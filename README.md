@@ -79,7 +79,7 @@ The process loop of the robot is as follows:
 
 ### Start-Up Sequence
 
-https://user-images.githubusercontent.com/60728026/206879367-18131562-edcb-4b5c-b533-05d4f56a47b5.mp4
+https://user-images.githubusercontent.com/39091881/206932493-6110ad55-7bdc-4c57-898e-caeab954bc97.mp4
 
 * Upon startup, the robot follows a start-up sequence to reach its home position. The robot follows a series of waypoints 
 to reach the home x- and y-coordinates with an offset in the z. It then reaches down to grasp the paddle (with an adapter) 
