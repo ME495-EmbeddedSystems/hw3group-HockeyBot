@@ -1,10 +1,10 @@
-# Final Project Package: HockeyBot
+# ME495 Final Project: HockeyBot
 
 ## Authors: 
 - **Ava Zahedi**
-- **Hanyin Yuan**
 - **Marthinius Nel**
 - **Ritika Ghosh**
+- **Hanyin Yuan**
 
 ![grouppicture](https://user-images.githubusercontent.com/60728026/206877676-19116921-3ad7-4c1c-8c1e-c41048c0e0fe.jpeg)
 
@@ -91,14 +91,14 @@ down during movement, it will not apply a force into the table while still keepi
 https://user-images.githubusercontent.com/60977336/206880795-9153ac89-7eeb-42bf-a819-3e3e85a09f68.mp4
 
 
-* Intel RealSense D435i is used at 480x270x90 allowing the puck to be tracked at 90 fps. As soon as the streaming has been enabled, this node detects the center of the table in pixel coordinates. Then with the help of the depth camera, the deproject function is used to convert pixel coordinates into real world coordinates with respect to the camera.  Since the distance between the air hockey table and the franks robot is known, points from the camera's frame of reference can be transformed to the robot's frame of reference. Next, with the help of OpenCV's HughCircles function the center of the puck is tracked in real time. For the calculation of the trajectory the puck is only tracked when going towards the robot and up to the center of the table. Inorder to get rid of noise, before publishing the puck's position its is checked whether the point is close (to a prefixed tolerance) to the best fit line of the previous positions obtained.Note: The output video shows the tracked puck encircled with a black border, regardless of whether all these points are published (shows the contour for every direction of movement of the puck).
+* Intel RealSense D435i is used at 480x270x90 allowing the puck to be tracked at 90 fps. As soon as the streaming has been enabled, this node detects the center of the table in pixel coordinates. Then with the help of the depth camera, the deproject function is used to convert pixel coordinates into real world coordinates with respect to the camera. Since the distance between the air hockey table and the Franka robot is known, points from the camera's frame of reference can be transformed to the robot's frame of reference. Next, with the help of OpenCV's HughCircles function the center of the puck is tracked in real time. For the calculation of the trajectory, the puck is only tracked when going towards the robot and up to the center of the table. In order to get rid of noise, before publishing the puck's position it is checked whether the point is close (with a prefixed tolerance) to the best fit line of the previous positions obtained. Note: The output video shows the tracked puck encircled with a black border, regardless of whether all these points are published (in other words, the video shows the contour for every direction of movement of the puck).
 
 ### Trajectory Calculations
 
 https://user-images.githubusercontent.com/60977336/206880201-e1849e50-2c71-4b56-8993-bf7feea20640.mp4
 
 Calculates the predicted trajectory of the puck and the play waypoints for the robot by using two
-puck coordinates from computer vision. The node handles collisions by reflecting the impact angle about the normal line. The waypoints for the the robot to hit the puck is constrained in the robots workspace on the air hockey table. The most optimal waypoints are selected by considering all four sides of the robots workspace. The robot will then move to the first waypoint that is on the predicted trajectory line of the puck and then move along the line to the second wayoint and hit the puck. A plot is dynamically generated and updated each time a new trajectory is calculated. The robot blocks if the trajectory is out of the workspace and unreachable.
+puck coordinates from computer vision. The node handles collisions by reflecting the impact angle about the normal line. The waypoints for the robot to hit the puck are constrained by the robot's workspace on the air hockey table. The most optimal waypoints are selected by considering all four sides of the robot's workspace. The robot will then move to the first waypoint that is on the predicted trajectory line of the puck and then move along the line to the second waypoint and hit the puck. A plot is dynamically generated and updated each time a new trajectory is calculated. The robot blocks if the trajectory is out of the workspace and unreachable.
 
 ### Hit the Puck
 
@@ -114,7 +114,7 @@ Once the robot detects that its end-effector has reached the goal, it begins exe
 also resets all internal variables and restarts the loop so that the robot can continue playing.
 
 ## Instructions: Manually launch the services for robot.
-1. To launch the franka along with the simple_move node `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true`.
+1. To launch the Franka along with the simple_move node `ros2 launch franka_moveit_config moveit.launch.py robot_ip:=dont-care use_fake_hardware:=true`.
 2. Run the simple_move node with `ros2 run moveit_helper simple_move`.
     (Optional) Provide a starting configuration for planning with `ros2 service call /initial_service moveit_interface/srv/Initial "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}"`.
 3. Call the service to plan path to specifies goal pose `ros2 service call /goal_service moveit_interface/srv/Goal "{x: 0.5, y: 0.0, z: 0.0, roll: 1.0, pitch: 0.04, yaw: 0.0}"`.
