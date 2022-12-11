@@ -104,7 +104,11 @@ https://user-images.githubusercontent.com/60728026/206877459-3620050d-346b-4bdc-
 * Intel RealSense D435i is used at 480x270x90 allowing the puck to be tracked at 90 fps. As soon as the streaming has been enabled, this node detects the center of the table in pixel coordinates. Then with the help of the depth camera, the deproject function is used to convert pixel coordinates into real world coordinates with respect to the camera.  Since the distance between the air hockey table and the franks robot is known, points from the camera's frame of reference can be transformed to the robot's frame of reference. Next, with the help of OpenCV's HughCircles function the center of the puck is tracked in real time. For the calculation of the trajectory the puck is only tracked when going towards the robot and up to the center of the table. Inorder to get rid of noise, before publishing the puck's position its is checked whether the point is close (to a prefixed tolerance) to the best fit line of the previous positions obtained.Note: The output video shows the tracked puck encircled with a black border, regardless of whether all these points are published (shows the contour for every direction of movement of the puck).
 
 ### Trajectory Calculations
-< insert media here >
+
+https://user-images.githubusercontent.com/60977336/206880201-e1849e50-2c71-4b56-8993-bf7feea20640.mp4
+
+Calculates the predicted trajectory of the puck and the play waypoints for the robot by using two
+puck coordinates from computer vision. The node handles collisions by reflecting the impact angle about the normal line. The waypoints for the the robot to hit the puck is constrained in the robots workspace on the air hockey table. The most optimal waypoints are selected by considering all four sides of the robots workspace. The robot will then move to the first waypoint that is on the predicted trajectory line of the puck and then move along the line to the second wayoint and hit the puck. A plot is dynamically generated and updated each time a new trajectory is calculated. The robot blocks if the trajectory is out of the workspace and unreachable.
 
 ### Hit the Puck
 < insert media here >
