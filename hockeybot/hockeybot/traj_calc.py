@@ -3,8 +3,8 @@ Calculates the predicted trajectory of the puck and the play waypoints for the r
 
 It handles collisions by reflecting the impact angle about the normal line. The waypoints for the
 the robot to hit the puck is constrained in the robots workspace on the air hockey table. The most
-optimal waypoints are slected by considering all four sides of the robots workspace. The robot will
-then move to the first waypoint that is on the predicted trajectory line of the puck and then moce
+optimal waypoints are selected by considering all four sides of the robots workspace. The robot will
+then move to the first waypoint that is on the predicted trajectory line of the puck and then move
 along the line to the second wayoint and hit the puck. A plot is dynamically generated and updated
 each time a new trajectory is calculated. The robot blocks if the trajectory is out of the
 workspace and unreachable.
