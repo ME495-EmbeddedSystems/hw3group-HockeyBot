@@ -44,7 +44,6 @@ colcon mixin update numsr_patches
 7. Install the udev rules
 ```
 sudo cp src/librealsense/config/99-realsense-libusb.rules /etc/udev/rules.d
-sudo cp src/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/99-interbotix-udev.rules /etc/udev/rules.d
 ```
 8. Source the environment
 `source /opt/ros/humble/setup.bash`
