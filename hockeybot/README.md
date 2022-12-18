@@ -2,7 +2,7 @@
 
 ## Authors: 
 - **Ava Zahedi**
-- **Marthinius Nel**
+- **Marthinus Nel**
 - **Ritika Ghosh**
 - **Hanyin Yuan**
 
